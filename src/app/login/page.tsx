@@ -7,6 +7,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+import { MagneticButton } from "@/components/ui/MagneticButton";
+import { FloatingInput } from "@/components/ui/FloatingInput";
+import { Loader } from "@/components/ui/Loader";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -103,7 +107,7 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        <div className="w-full max-w-[420px] glass-panel bg-surface/50 p-8 md:p-10 rounded-3xl relative z-10 shadow-2xl">
+        <GlassPanel premium className="w-full max-w-[420px] p-8 md:p-10 shadow-2xl">
           <div className="mb-8">
             <h1 className="text-3xl font-medium text-text-primary mb-2">Welcome back</h1>
             <p className="text-text-secondary">Sign in to your OrbitDine account</p>
@@ -116,31 +120,29 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="email" className="text-sm font-medium text-text-primary">Email Address</label>
-              <input 
-                type="email" 
+            <div className="flex flex-col gap-6 mt-4">
+              <FloatingInput 
                 id="email"
+                type="email"
+                label="Email Address"
                 {...register("email")}
-                placeholder="name@restaurant.com" 
-                className={`w-full bg-base border rounded-xl px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-1 transition-all ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-border focus:border-accent focus:ring-accent'}`}
+                error={errors.email?.message}
               />
-              {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
-            </div>
-            
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center">
-                <label htmlFor="password" className="text-sm font-medium text-text-primary">Password</label>
-                <Link href="/forgot-password" className="text-sm text-accent hover:text-accent/80 transition-colors">Forgot password?</Link>
+              
+              <div className="flex flex-col gap-1">
+                <FloatingInput 
+                  id="password"
+                  type="password"
+                  label="Password"
+                  {...register("password")}
+                  error={errors.password?.message}
+                />
+                <div className="flex justify-end mt-1">
+                  <Link href="/forgot-password" className="text-sm text-text-secondary hover:text-accent transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
               </div>
-              <input 
-                type="password" 
-                id="password"
-                {...register("password")}
-                placeholder="••••••••" 
-                className={`w-full bg-base border rounded-xl px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-1 transition-all ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-border focus:border-accent focus:ring-accent'}`}
-              />
-              {errors.password && <span className="text-xs text-red-500">{errors.password.message}</span>}
             </div>
 
             <div className="flex items-center gap-3 py-2">
@@ -153,13 +155,14 @@ export default function LoginPage() {
               <label htmlFor="rememberMe" className="text-sm text-text-secondary cursor-pointer">Remember me for 30 days</label>
             </div>
 
-            <button 
+            <MagneticButton 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full bg-text-primary text-base font-medium rounded-xl py-3 mt-2 hover:bg-text-primary/90 transition-colors active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full mt-4"
+              intensity={5}
             >
-              {isSubmitting ? "Signing in..." : "Sign In"}
-            </button>
+              {isSubmitting ? <Loader type="spinner" className="w-5 h-5 border-t-base" /> : "Sign In"}
+            </MagneticButton>
           </form>
 
           <div className="mt-8 text-center">
@@ -167,7 +170,7 @@ export default function LoginPage() {
               Don't have an account? <Link href="/signup" className="text-text-primary font-medium hover:underline">Request Access</Link>
             </p>
           </div>
-        </div>
+        </GlassPanel>
       </div>
     </main>
   );

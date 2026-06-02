@@ -5,9 +5,13 @@ import { ProblemStorySection } from "@/components/landing/ProblemStorySection";
 import { JourneySection } from "@/components/landing/JourneySection";
 import { DeviceShowcase } from "@/components/landing/DeviceShowcase";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { GameZoneSection } from "@/components/landing/GameZoneSection";
+import { LoyaltySection } from "@/components/landing/LoyaltySection";
 import { AnalyticsPreview } from "@/components/landing/AnalyticsPreview";
+import { WhyOrbitDineSection } from "@/components/landing/WhyOrbitDineSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
+import { PartnerSection } from "@/components/landing/PartnerSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/shared/Footer";
@@ -22,9 +26,13 @@ export default function Home() {
       <JourneySection />
       <DeviceShowcase />
       <FeaturesSection />
+      <GameZoneSection />
+      <LoyaltySection />
       <AnalyticsPreview />
+      <WhyOrbitDineSection />
       <TestimonialsSection />
       <PricingSection />
+      <PartnerSection />
       <FAQSection />
       <CTASection />
       <Footer />

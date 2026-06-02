@@ -13,10 +13,10 @@ export function Footer() {
     <footer className="w-full bg-base border-t border-border pt-20 pb-10 relative overflow-hidden">
       {/* Glass overlay */}
       <div className="absolute inset-0 bg-glass backdrop-blur-[40px] pointer-events-none z-0" />
-      
+
       <div className="max-w-[1920px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
         <div className="flex flex-col lg:flex-row justify-between gap-16 mb-20">
-          
+
           <div className="w-full lg:w-1/3">
             <Link href="/" className="text-3xl font-serif tracking-tight text-text-primary mb-6 block">
               Orbit<span className="text-accent">Dine</span>
@@ -61,16 +61,16 @@ export function Footer() {
             © {new Date().getFullYear()} OrbitDine. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
-             <form className="flex border border-border rounded-full overflow-hidden focus-within:border-accent transition-colors">
-               <input 
-                 type="email" 
-                 placeholder="Subscribe to newsletter" 
-                 className="bg-transparent px-4 py-2 text-sm text-text-primary placeholder:text-text-secondary outline-none w-48"
-               />
-               <button type="submit" className="bg-text-primary text-base px-4 py-2 text-sm font-medium hover:bg-text-primary/90 transition-colors">
-                 Subscribe
-               </button>
-             </form>
+            <form className="flex border border-border rounded-full overflow-hidden focus-within:border-accent transition-colors">
+              <input
+                type="email"
+                placeholder="Subscribe to newsletter"
+                className="bg-transparent px-4 py-2 text-sm text-text-primary placeholder:text-text-secondary outline-none w-48"
+              />
+              <button type="submit" className="bg-text-primary text-base px-4 py-2 text-sm font-medium hover:bg-text-primary/90 transition-colors">
+                Subscribe
+              </button>
+            </form>
           </div>
         </div>
       </div>

@@ -8,6 +8,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+import { MagneticButton } from "@/components/ui/MagneticButton";
+import { FloatingInput } from "@/components/ui/FloatingInput";
+import { Loader } from "@/components/ui/Loader";
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
@@ -108,7 +112,7 @@ export default function SignupPage() {
          </Link>
       </div>
 
-      <div className="w-full max-w-[480px] glass-panel bg-surface/80 p-8 md:p-12 rounded-3xl relative z-10 shadow-2xl border border-border">
+      <GlassPanel premium className="w-full max-w-[480px] p-8 md:p-12 shadow-2xl">
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div
@@ -124,46 +128,39 @@ export default function SignupPage() {
                 <p className="text-text-secondary">Tell us a bit about yourself and your restaurant.</p>
               </div>
 
-              <form className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="fullName" className="text-sm font-medium text-text-primary">Full Name</label>
-                  <input 
-                    type="text" 
-                    id="fullName" 
-                    {...register("fullName")}
-                    placeholder="John Doe" 
-                    className={`w-full bg-base border rounded-xl px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-1 transition-all ${errors.fullName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-border focus:border-accent focus:ring-accent'}`}
-                  />
-                  {errors.fullName && <span className="text-xs text-red-500">{errors.fullName.message}</span>}
-                </div>
+              <form className="flex flex-col gap-6 mt-4">
+                <FloatingInput 
+                  id="fullName" 
+                  type="text"
+                  label="Full Name"
+                  {...register("fullName")}
+                  error={errors.fullName?.message}
+                />
                 
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="restaurantName" className="text-sm font-medium text-text-primary">Restaurant Name</label>
-                  <input 
-                    type="text" 
-                    id="restaurantName" 
-                    {...register("restaurantName")}
-                    placeholder="The Rustic Spoon" 
-                    className={`w-full bg-base border rounded-xl px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-1 transition-all ${errors.restaurantName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-border focus:border-accent focus:ring-accent'}`}
-                  />
-                  {errors.restaurantName && <span className="text-xs text-red-500">{errors.restaurantName.message}</span>}
-                </div>
+                <FloatingInput 
+                  id="restaurantName" 
+                  type="text"
+                  label="Restaurant Name"
+                  {...register("restaurantName")}
+                  error={errors.restaurantName?.message}
+                />
 
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="email" className="text-sm font-medium text-text-primary">Work Email</label>
-                  <input 
-                    type="email" 
-                    id="email" 
-                    {...register("email")}
-                    placeholder="john@therusticspoon.com" 
-                    className={`w-full bg-base border rounded-xl px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-1 transition-all ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-border focus:border-accent focus:ring-accent'}`}
-                  />
-                  {errors.email && <span className="text-xs text-red-500">{errors.email.message}</span>}
-                </div>
+                <FloatingInput 
+                  id="email" 
+                  type="email"
+                  label="Work Email"
+                  {...register("email")}
+                  error={errors.email?.message}
+                />
 
-                <button onClick={handleNext} className="w-full bg-text-primary text-base font-medium rounded-xl py-3 mt-4 hover:bg-text-primary/90 transition-colors active:scale-[0.98]">
+                <MagneticButton 
+                  onClick={handleNext} 
+                  type="button"
+                  className="w-full mt-2"
+                  intensity={5}
+                >
                   Continue
-                </button>
+                </MagneticButton>
               </form>
             </motion.div>
           )}
@@ -193,20 +190,18 @@ export default function SignupPage() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2 relative">
-                  <label htmlFor="password" className="text-sm font-medium text-text-primary">Password</label>
-                  <input 
-                    type="password" 
+              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 mt-4">
+                <div className="flex flex-col gap-1 relative">
+                  <FloatingInput 
                     id="password" 
+                    type="password"
+                    label="Password"
                     {...register("password")}
-                    placeholder="••••••••" 
-                    className={`w-full bg-base border rounded-xl px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-1 transition-all ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-border focus:border-accent focus:ring-accent'}`}
+                    error={errors.password?.message}
                   />
-                  {errors.password && <span className="text-xs text-red-500">{errors.password.message}</span>}
                   
                   {password.length > 0 && !errors.password && (
-                    <div className="mt-2 flex items-center justify-between">
+                    <div className="mt-2 flex items-center justify-between px-1">
                       <div className="flex gap-1 flex-1 mr-4">
                         {[1, 2, 3, 4].map((i) => (
                           <div 
@@ -220,29 +215,26 @@ export default function SignupPage() {
                   )}
                 </div>
                 
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="confirmPassword" className="text-sm font-medium text-text-primary">Confirm Password</label>
-                  <input 
-                    type="password" 
-                    id="confirmPassword" 
-                    {...register("confirmPassword")}
-                    placeholder="••••••••" 
-                    className={`w-full bg-base border rounded-xl px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-1 transition-all ${errors.confirmPassword ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-border focus:border-accent focus:ring-accent'}`}
-                  />
-                  {errors.confirmPassword && <span className="text-xs text-red-500">{errors.confirmPassword.message}</span>}
-                </div>
+                <FloatingInput 
+                  id="confirmPassword" 
+                  type="password"
+                  label="Confirm Password"
+                  {...register("confirmPassword")}
+                  error={errors.confirmPassword?.message}
+                />
 
-                <div className="text-sm text-text-secondary mt-2">
+                <div className="text-sm text-text-secondary mt-2 px-1">
                   By completing registration, you agree to our <Link href="#" className="text-text-primary underline">Terms of Service</Link> and <Link href="#" className="text-text-primary underline">Privacy Policy</Link>.
                 </div>
 
-                <button 
+                <MagneticButton 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="w-full bg-text-primary text-base font-medium rounded-xl py-3 mt-4 hover:bg-text-primary/90 transition-colors active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="w-full mt-2"
+                  intensity={5}
                 >
-                  {isSubmitting ? "Creating Account..." : "Complete Registration"}
-                </button>
+                  {isSubmitting ? <Loader type="spinner" className="w-5 h-5 border-t-base" /> : "Complete Registration"}
+                </MagneticButton>
               </form>
             </motion.div>
           )}
@@ -283,7 +275,7 @@ export default function SignupPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </GlassPanel>
     </main>
   );
 }

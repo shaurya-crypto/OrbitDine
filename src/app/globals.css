@@ -25,6 +25,13 @@
   --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
   --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+
+  /* 3D Depth System */
+  --z-bg: 0;
+  --z-decor: 10;
+  --z-content: 20;
+  --z-floating: 30;
+  --z-overlay: 40;
 }
 
 :root {
@@ -79,7 +86,19 @@
 .glass-panel {
   background-color: var(--glass);
   backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+}
+
+.glass-panel-premium {
+  background: linear-gradient(135deg, var(--glass) 0%, rgba(255,255,255,0.02) 100%);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  border-left: 1px solid rgba(255,255,255,0.05);
 }
 
 /* Reduced Motion & Low End Device overrides */
@@ -95,4 +114,9 @@
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(calc(-50% - 2rem)); /* Adjust based on gap */ }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }

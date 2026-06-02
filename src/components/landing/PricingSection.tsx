@@ -6,23 +6,23 @@ import { Check } from "lucide-react";
 
 const plans = [
   {
-    name: "Starter",
-    price: "$99",
-    desc: "For small cafes and single locations.",
-    features: ["Digital Menu", "QR Ordering", "Basic Analytics", "Email Support"]
+    name: "Month 1",
+    price: "Standard",
+    desc: "Full features from day one.",
+    features: ["Zero commission on orders", "Zero percentage of revenue", "Complete system access", "Founder-led support"]
   },
   {
-    name: "Professional",
-    price: "$249",
-    desc: "For growing restaurants that need more power.",
-    features: ["Everything in Starter", "Live Table Tracking", "Staff Performance", "Priority Support", "Custom Branding"],
+    name: "Month 2",
+    price: "15% Off",
+    desc: "Your subscription cost drops.",
+    features: ["Everything in Month 1", "Keep 100% of your revenue", "Loyalty system active", "Analytics fully populated"],
     highlight: true
   },
   {
-    name: "Enterprise",
-    price: "Custom",
-    desc: "For multi-location groups and franchises.",
-    features: ["Everything in Pro", "Custom Integrations", "Dedicated Account Manager", "API Access", "White Labeling"]
+    name: "Month 3+",
+    price: "30% Off",
+    desc: "Maximum savings, forever.",
+    features: ["Lowest subscription tier", "Price never increases based on performance", "Full multi-location support", "All future updates included"]
   }
 ];
 
@@ -62,12 +62,15 @@ export function PricingSection() {
       )}
 
       <div className="max-w-[1920px] mx-auto px-6 md:px-12 lg:px-24 relative z-10">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-serif text-text-primary tracking-tight mb-4">
-            Simple, Transparent Pricing.
+        <div className="text-center mb-16 max-w-3xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-serif text-text-primary tracking-tight mb-6">
+            Straightforward Pricing. No Hidden Anything.
           </h2>
-          <p className="text-lg text-text-secondary">
-            No hidden fees. Cancel anytime.
+          <p className="text-lg text-text-secondary leading-relaxed mb-4">
+            Flat monthly subscription. Zero commission on orders. Zero percentage of revenue. You pay one number. We deliver the entire system.
+          </p>
+          <p className="text-lg text-text-primary font-medium">
+            And unlike delivery platforms that quietly grow their cut — our price doesn't change based on how well your restaurant does. The longer you stay, the more you save:
           </p>
         </div>
 
@@ -108,7 +111,7 @@ export function PricingSection() {
                   ? 'bg-text-primary text-base' 
                   : 'bg-surface border border-border text-text-primary hover:bg-border/50'
               }`}>
-                {plan.price === "Custom" ? "Contact Sales" : "Start Free Trial"}
+                Become a Partner
               </button>
             </div>
           ))}

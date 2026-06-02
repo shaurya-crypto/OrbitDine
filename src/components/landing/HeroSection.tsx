@@ -2,9 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { useScroll, useTransform, motion } from "framer-motion";
 import { useTheme } from "next-themes";
 import { usePerformance } from "../providers/PerformanceProvider";
-import { ThreeScenePlaceholder } from "./ThreeScenePlaceholder";
+// import { ThreeScenePlaceholder } from "./ThreeScenePlaceholder";
 import { ArrowRight, PlayCircle } from "lucide-react";
 
 export function HeroSection() {
@@ -93,10 +94,17 @@ export function HeroSection() {
     return () => ctx.revert();
   }, [isLowEndMode]);
 
+  // Scroll scrub effects
+  const { scrollY } = useScroll();
+  const heroOpacity = useTransform(scrollY, [0, 600], [1, 0]);
+  const heroY = useTransform(scrollY, [0, 600], [0, 150]);
+  const heroBlur = useTransform(scrollY, [0, 600], ["blur(0px)", "blur(10px)"]);
+
   return (
-    <section
+    <motion.section
       ref={containerRef}
-      className="relative w-full h-[100vh] min-h-[700px] flex items-center overflow-hidden"
+      style={{ opacity: heroOpacity, y: heroY, filter: isLowEndMode ? "none" : heroBlur }}
+      className="relative w-full min-h-screen h-auto flex items-center overflow-hidden py-32 lg:py-0"
     >
       {/* Background Video */}
       <div className="absolute inset-0 z-0">
@@ -118,36 +126,36 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-t from-base via-transparent to-transparent" />
       </div>
 
-      <div className="relative z-10 w-full max-w-[1920px] mx-auto px-6 md:px-12 lg:px-24 h-full flex flex-col lg:flex-row items-center">
+      <div className="relative z-10 w-full max-w-[1920px] mx-auto px-4 md:px-12 lg:px-24 h-auto min-h-screen flex flex-col lg:flex-row items-center justify-between">
 
-        {/* Content Side (55% Desktop, 100% Mobile) */}
-        <div className="w-full lg:w-[55%] flex flex-col justify-center h-full pt-20 lg:pt-0">
+        {/* Content Side */}
+        <div className="w-full lg:w-[45%] flex flex-col justify-center py-20 lg:py-32 z-20">
           <div className="max-w-[760px] mx-auto lg:mx-0 text-center lg:text-left">
             <h1
               ref={headlineRef}
               className="text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.05] tracking-tight font-serif text-text-primary mb-6"
             >
-              Every Restaurant Into A Smart Dining Experience
+              Transform Restaurant Operations Through Technology
             </h1>
 
             <p
               ref={subheadRef}
               className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto lg:mx-0 mb-10 opacity-0"
             >
-              Empower customers to scan, order, track and engage while owners gain complete operational visibility.
+              OrbitDine replaces manual order-taking, guesswork, and missed revenue with a complete restaurant operating system — QR ordering, real-time kitchen integration, customer loyalty, and business intelligence in one platform.
             </p>
 
             <div ref={buttonsRef} className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-16 opacity-0">
               <button className="group relative px-8 py-4 bg-text-primary text-base rounded-full overflow-hidden transition-transform hover:scale-105 active:scale-95">
                 <span className="relative z-10 flex items-center font-medium">
-                  Get Started
-                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                Get Started
+                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </span>
               </button>
               <button className="group px-8 py-4 border border-border bg-glass backdrop-blur-lg rounded-full transition-all hover:bg-border/50 active:scale-95 text-text-primary">
                 <span className="flex items-center font-medium">
-                  <PlayCircle className="mr-2 w-5 h-5 text-text-secondary group-hover:text-text-primary transition-colors" />
-                  Watch Demo
+                <PlayCircle className="mr-2 w-5 h-5 text-text-secondary group-hover:text-text-primary transition-colors" />
+                See How It Works
                 </span>
               </button>
             </div>
@@ -155,10 +163,10 @@ export function HeroSection() {
             {/* Stats */}
             <div ref={statsRef} className="flex flex-wrap justify-center lg:justify-start gap-6 md:gap-12 opacity-0">
               {[
-                { value: "50K+", label: "Orders" },
-                { value: "500+", label: "Restaurants" },
-                { value: "99.9%", label: "Uptime" },
-                { value: "100K+", label: "Customers" },
+                { value: "20–30%", label: "Faster Table Turnover" },
+                { value: "Near-Zero", label: "Order Errors" },
+                { value: "10–15%", label: "Higher Order Value" },
+                { value: "40%", label: "More Repeat Customers" },
               ].map((stat, i) => (
                 <div key={i} className="flex flex-col items-center lg:items-start">
                   <span className="text-2xl md:text-3xl font-mono text-text-primary font-medium tracking-tight mb-1">
@@ -173,14 +181,14 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Visual Side (45% Desktop, Hidden Mobile) */}
+        {/* Visual Side */}
         <div
           ref={visualRef}
-          className="hidden lg:flex w-[45%] h-full items-center justify-center opacity-0"
+          className="w-full lg:w-[55%] h-[500px] lg:h-full flex items-center justify-center opacity-0 scale-75 lg:scale-100 origin-center lg:mt-0"
         >
-          <ThreeScenePlaceholder />
+          {/* <ThreeScenePlaceholder /> */}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

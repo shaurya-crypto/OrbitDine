@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+import { MagneticButton } from "@/components/ui/MagneticButton";
+import { Loader } from "@/components/ui/Loader";
 
 export default function VerifyEmailPage() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -48,11 +51,10 @@ export default function VerifyEmailPage() {
       <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-accent-soft rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[10%] right-[20%] w-[400px] h-[400px] bg-accent-soft/60 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="w-full max-w-[420px] glass-panel bg-surface/80 p-8 md:p-10 rounded-3xl relative z-10 shadow-2xl border border-border text-center">
-        
+      <GlassPanel premium className="w-full max-w-[420px] p-8 md:p-10 shadow-2xl text-center">
         {status === "loading" && (
-          <div className="py-8">
-            <Loader2 className="w-12 h-12 text-accent animate-spin mx-auto mb-6" />
+          <div className="py-8 flex flex-col items-center">
+            <Loader type="spinner" className="mb-6 w-12 h-12" />
             <h1 className="text-2xl font-medium text-text-primary mb-2">Verifying Email</h1>
             <p className="text-text-secondary">Please wait while we verify your account...</p>
           </div>
@@ -67,8 +69,10 @@ export default function VerifyEmailPage() {
             <p className="text-text-secondary mb-8">
               Your account has been successfully verified. You can now access your dashboard.
             </p>
-            <Link href="/login" className="w-full bg-text-primary text-base font-medium rounded-xl py-3 flex items-center justify-center hover:bg-text-primary/90 transition-colors">
-              Continue to Login
+            <Link href="/login" className="block w-full">
+              <MagneticButton className="w-full" intensity={5}>
+                Continue to Login
+              </MagneticButton>
             </Link>
           </div>
         )}
@@ -86,7 +90,7 @@ export default function VerifyEmailPage() {
           </div>
         )}
 
-      </div>
+      </GlassPanel>
     </main>
   );
 }

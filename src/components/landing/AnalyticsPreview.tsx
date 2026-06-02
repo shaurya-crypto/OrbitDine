@@ -12,21 +12,34 @@ export function AnalyticsPreview() {
       <div className="max-w-[1920px] mx-auto px-6 md:px-12 lg:px-24">
         <div className="text-center mb-16 relative z-10">
           <h2 className="text-4xl md:text-6xl font-serif text-text-primary tracking-tight mb-6">
-            Command Center.
+            What This Looks Like on Your Bottom Line
           </h2>
-          <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-            Real-time insights across all your locations.
-          </p>
+          <div className="text-lg text-text-secondary max-w-3xl mx-auto text-left md:text-center space-y-4">
+            <p>A restaurant with 40 tables, ₹1,500 average check, serving 200 covers per day.</p>
+            <p>Before OrbitDine: ₹90,00,000/month revenue. ~5% order error rate = ₹4,50,000 wasted monthly.</p>
+            <div className="bg-base border border-border p-6 rounded-2xl text-left inline-block my-4">
+              <p className="font-medium text-text-primary mb-2">After OrbitDine (conservative):</p>
+              <ul className="space-y-1 text-text-secondary">
+                <li>+20% more covers = ₹18,00,000 additional monthly revenue</li>
+                <li>+Error reduction to &lt;1% = ₹3,60,000 saved</li>
+                <li>+10% higher average check from visual menu upsell = ₹9,00,000</li>
+              </ul>
+              <div className="mt-4 pt-4 border-t border-border font-medium text-accent">
+                Total monthly improvement: ₹30,60,000
+              </div>
+            </div>
+            <p className="font-medium text-text-primary">Most restaurants recover the full subscription cost in the first month.</p>
+          </div>
         </div>
 
         <div className="relative w-full max-w-[1200px] mx-auto bg-base border border-border rounded-3xl p-6 md:p-10 shadow-2xl glass-panel z-10 overflow-hidden">
            {/* Top Stats */}
            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
              {[
-               { label: "Today's Revenue", val: "$4,250", change: "+12%" },
-               { label: "Orders", val: "142", change: "+5%" },
-               { label: "Avg Turn Time", val: "45m", change: "-8%" },
-               { label: "Active Tables", val: "24/30", change: "" },
+               { label: "Faster Table Turnover", val: "20–30%", change: "" },
+               { label: "Order Accuracy", val: "98%+", change: "" },
+               { label: "Avg Order Value", val: "+10–15%", change: "" },
+               { label: "Repeat Customers", val: "+20–30%", change: "" },
              ].map((stat, i) => (
                <div key={i} className="bg-surface p-4 rounded-xl border border-border">
                  <p className="text-sm font-mono text-text-secondary uppercase mb-2">{stat.label}</p>

@@ -5,6 +5,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { usePerformance } from "../providers/PerformanceProvider";
 import { QrCode, TrendingUp, MenuSquare, Wallet, LineChart, MessageSquare } from "lucide-react";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+  
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -51,11 +53,11 @@ export function FeaturesSection() {
 
     const ctx = gsap.context(() => {
       const featureRows = gsap.utils.toArray<HTMLElement>(".feature-row");
-      
+
       featureRows.forEach((row) => {
         const textSide = row.querySelector('.text-side');
         const visualSide = row.querySelector('.visual-side');
-        
+
         gsap.fromTo(textSide,
           { opacity: 0, x: -50 },
           {
@@ -67,11 +69,11 @@ export function FeaturesSection() {
               trigger: row,
               start: "top center+=100",
               end: "center center",
-              toggleActions: "play none none reverse",
+              scrub: true,
             }
           }
         );
-        
+
         gsap.fromTo(visualSide,
           { opacity: 0, scale: 0.9, rotateY: 15 },
           {
@@ -84,7 +86,7 @@ export function FeaturesSection() {
               trigger: row,
               start: "top center+=100",
               end: "center center",
-              toggleActions: "play none none reverse",
+              scrub: true,
             }
           }
         );
@@ -97,10 +99,10 @@ export function FeaturesSection() {
   return (
     <section ref={containerRef} className="relative w-full py-24 md:py-32 bg-base" id="features">
       <div className="max-w-[1920px] mx-auto px-6 md:px-12 lg:px-24">
-        
+
         <div className="text-center mb-24 md:mb-40">
           <h2 className="text-4xl md:text-6xl lg:text-7xl font-serif text-text-primary tracking-tight">
-            Everything You Need.<br/>Nothing You Don't.
+            Everything You Need.<br />Nothing You Don't.
           </h2>
         </div>
 
@@ -124,12 +126,16 @@ export function FeaturesSection() {
                 ))}
               </ul>
             </div>
-            <div className="visual-side w-full lg:w-1/2 aspect-square md:aspect-[4/3] bg-surface rounded-3xl border border-border shadow-xl glass-panel relative overflow-hidden flex items-center justify-center">
-              <div className="w-64 h-64 border border-border rounded-xl flex flex-col items-center justify-center bg-base p-6 rotate-[-5deg]">
-                 <QrCode className="w-32 h-32 text-text-primary mb-4" />
-                 <span className="font-mono text-sm">Scan to Order</span>
+            <GlassPanel premium interactive={false} className="visual-side w-full lg:w-1/2 aspect-square md:aspect-[4/3] relative flex items-center justify-center p-0 overflow-hidden">
+              <div className="absolute inset-0 bg-accent/5 blur-3xl rounded-full" />
+              <div className="w-[50%] max-w-[220px] aspect-[3/4] border border-border rounded-2xl flex flex-col items-center justify-center bg-surface/80 p-6 shadow-2xl backdrop-blur-xl relative z-10 transition-transform hover:scale-105">
+                <div className="w-full bg-base border border-border aspect-square rounded-xl flex items-center justify-center p-4 mb-4 shadow-inner">
+                  <QrCode className="w-full h-full text-text-primary" strokeWidth={1} />
+                </div>
+                <h4 className="text-lg font-medium text-text-primary mb-2">Scan & Order</h4>
+                <div className="w-10 h-1 bg-accent rounded-full" />
               </div>
-            </div>
+            </GlassPanel>
           </div>
 
           {/* Row 2: Right Text, Left Visual */}
@@ -151,19 +157,26 @@ export function FeaturesSection() {
                 ))}
               </ul>
             </div>
-            <div className="visual-side w-full lg:w-1/2 aspect-square md:aspect-[4/3] bg-surface rounded-3xl border border-border shadow-xl glass-panel relative overflow-hidden flex items-center justify-center">
-               <div className="w-3/4 h-3/4 flex flex-col gap-4">
-                 <div className="w-full h-1/2 border border-border rounded-xl bg-base flex items-end p-4 gap-2">
-                   {[40, 70, 45, 90, 65, 80].map((h, i) => (
-                     <div key={i} className="flex-1 bg-accent/40 rounded-t-sm" style={{ height: `${h}%` }} />
-                   ))}
-                 </div>
-                 <div className="w-full h-1/2 flex gap-4">
-                   <div className="flex-1 border border-border rounded-xl bg-base" />
-                   <div className="flex-1 border border-border rounded-xl bg-base" />
-                 </div>
-               </div>
-            </div>
+            <GlassPanel premium interactive={false} className="visual-side w-full lg:w-1/2 aspect-square md:aspect-[4/3] relative flex items-center justify-center p-0 overflow-hidden">
+              <div className="absolute inset-0 bg-accent/5 blur-3xl rounded-full" />
+              <div className="w-[70%] h-[70%] max-w-[380px] flex flex-col gap-3 relative z-10">
+                <div className="w-full flex-1 border border-border rounded-2xl bg-surface/80 backdrop-blur-xl flex items-end p-4 gap-2 shadow-xl">
+                  {[40, 70, 45, 90, 65, 80, 50, 100].map((h, i) => (
+                    <div key={i} className="flex-1 bg-accent/60 rounded-t-md hover:bg-accent transition-colors" style={{ height: `${h}%` }} />
+                  ))}
+                </div>
+                <div className="w-full h-1/3 flex gap-3">
+                  <div className="flex-1 border border-border rounded-2xl bg-surface/80 backdrop-blur-xl shadow-xl flex flex-col justify-center p-4">
+                     <span className="text-[10px] text-text-secondary font-mono mb-1 uppercase tracking-wider">Revenue</span>
+                     <span className="text-lg md:text-xl font-medium text-text-primary">+34%</span>
+                  </div>
+                  <div className="flex-1 border border-border rounded-2xl bg-surface/80 backdrop-blur-xl shadow-xl flex flex-col justify-center p-4">
+                     <span className="text-[10px] text-text-secondary font-mono mb-1 uppercase tracking-wider">Turnover</span>
+                     <span className="text-lg md:text-xl font-medium text-text-primary">-12 min</span>
+                  </div>
+                </div>
+              </div>
+            </GlassPanel>
           </div>
 
         </div>
