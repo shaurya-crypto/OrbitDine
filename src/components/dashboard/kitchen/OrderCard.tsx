@@ -18,7 +18,7 @@ export function OrderCard({ order, onStatusChange }: OrderCardProps) {
       <div className="flex justify-between items-start mb-3 border-b border-neutral-100 pb-3">
         <div>
           <h3 className="font-bold text-neutral-900 leading-none mb-1">#{order.orderNumber.split('-')[1]}</h3>
-          <p className="text-xs text-neutral-500">Table ID: {order.tableId}</p>
+          <p className="text-xs text-neutral-500">Table: {order.tableId?.tableNumber || order.tableId}</p>
         </div>
         <div className={`flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-semibold ${
           isUrgent ? 'bg-red-100 text-red-700' : 'bg-neutral-100 text-neutral-600'

@@ -36,8 +36,8 @@ export function AddTableModal({ restaurantId, onClose }: AddTableModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <GlassPanel premium className="w-full max-w-md p-6 relative bg-white">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md p-4">
+      <GlassPanel premium className="w-full max-w-md p-6 relative bg-white text-neutral-900">
         <button onClick={onClose} className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-900">
           <X size={20} />
         </button>

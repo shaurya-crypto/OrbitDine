@@ -98,8 +98,7 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     await dbConnect();
-    const { searchParams } = new URL(req.url);
-    const tableId = searchParams.get("tableId");
+    const tableId = req.nextUrl.searchParams.get("tableId");
 
     if (!tableId) {
       return NextResponse.json({ error: "tableId is required" }, { status: 400 });

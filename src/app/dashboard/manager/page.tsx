@@ -25,21 +25,21 @@ export default function ManagerPage() {
 
   return (
     <div className="h-full flex flex-col relative">
-      <div className="mb-6 flex justify-between items-start">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-serif text-text-primary">Manager Dashboard</h1>
           <p className="text-text-secondary">Full operations overview</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4 w-full sm:w-auto">
           <button 
             onClick={() => setShowAddTable(true)}
-            className="px-4 py-2 bg-white border border-neutral-200 text-neutral-800 rounded-lg text-sm font-medium hover:bg-neutral-50"
+            className="flex-1 sm:flex-none px-4 py-2 bg-white border border-neutral-200 text-neutral-800 rounded-lg text-sm font-medium hover:bg-neutral-50"
           >
             + Add Table
           </button>
           <button 
             onClick={() => setShowMenuManagement(true)}
-            className="px-4 py-2 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800"
+            className="flex-1 sm:flex-none px-4 py-2 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800"
           >
             Menu Management Console
           </button>
@@ -50,13 +50,13 @@ export default function ManagerPage() {
         <OverviewCards restaurantId={restaurantId} />
       </div>
       
-      <div className="flex gap-8">
+      <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1">
           <h2 className="text-lg font-semibold mb-4">Floor Map</h2>
           <TableGrid restaurantId={restaurantId} />
         </div>
 
-        <div className="w-80 flex-shrink-0">
+        <div className="w-full lg:w-80 flex-shrink-0">
           <MenuControlPanel restaurantId={restaurantId} />
         </div>
       </div>

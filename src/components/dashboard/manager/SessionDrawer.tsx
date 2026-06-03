@@ -29,8 +29,8 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
         queryClient.invalidateQueries({ queryKey: ["realtimeSessions", restaurantId] });
         queryClient.invalidateQueries({ queryKey: ["realtimeTables", restaurantId] });
         setSelectedTable(null);
-      } catch (err) {
-        alert("Failed to close session.");
+      } catch (err: any) {
+        alert(err.response?.data?.message || err.response?.data?.error || "Failed to close session.");
       }
     }
   };
@@ -39,10 +39,10 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
     if (!activeSession) return;
     try {
       await axios.post("/api/bill/generate", { sessionId: activeSession._id, override: true });
-      alert("Bill generated.");
+      alert("Bill generated successfully.");
       queryClient.invalidateQueries({ queryKey: ["realtimeSessions", restaurantId] });
-    } catch (err) {
-      alert("Failed to generate bill.");
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.response?.data?.error || "Failed to generate bill.");
     }
   };
 
@@ -50,9 +50,9 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
     if (confirm("Are you sure you want to regenerate the QR code? Old QR codes will stop working.")) {
       try {
         await axios.post("/api/qr/regenerate", { tableId: selectedTableId });
-        alert("QR Code regenerated.");
-      } catch (err) {
-        alert("Failed to regenerate QR.");
+        alert("QR Code regenerated successfully.");
+      } catch (err: any) {
+        alert(err.response?.data?.message || err.response?.data?.error || "Failed to regenerate QR.");
       }
     }
   };
@@ -63,14 +63,14 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
         await axios.delete(`/api/tables?tableId=${selectedTableId}`);
         queryClient.invalidateQueries({ queryKey: ["realtimeTables", restaurantId] });
         setSelectedTable(null);
-      } catch (err) {
-        alert("Failed to delete table. Make sure no active sessions exist.");
+      } catch (err: any) {
+        alert(err.response?.data?.message || err.response?.data?.error || "Failed to delete table. Make sure no active sessions exist.");
       }
     }
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 w-96 bg-white shadow-2xl border-l border-neutral-200 z-50 flex flex-col transform transition-transform">
+    <div className="fixed inset-y-0 right-0 w-full md:w-96 bg-white text-neutral-900 shadow-2xl border-l border-neutral-200 z-50 flex flex-col transform transition-transform">
       <div className="p-6 border-b border-neutral-100 flex justify-between items-center bg-neutral-50">
         <div>
           <h2 className="text-xl font-bold">Table Management</h2>
@@ -123,7 +123,7 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
         <button 
           onClick={handleGenerateBill}
           disabled={!activeSession}
-          className="w-full bg-neutral-900 text-white py-3 rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50"
+          className="w-full bg-neutral-900 text-white py-3 rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 hover:bg-neutral-800 transition-colors"
         >
           <Receipt size={18} />
           <span>Generate / Update Bill</span>
@@ -131,7 +131,7 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
         <button 
           onClick={handleCloseSession}
           disabled={!activeSession}
-          className="w-full bg-white border border-red-200 text-red-600 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 hover:bg-red-50"
+          className="w-full bg-white border border-red-200 text-red-600 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 hover:bg-red-50 transition-colors"
         >
           <Ban size={18} />
           <span>Force Close Session</span>
@@ -140,7 +140,7 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
         {/* Staff Actions */}
         <button 
           onClick={handleRegenerateQR}
-          className="w-full bg-white border border-neutral-200 text-neutral-700 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 hover:bg-neutral-50"
+          className="w-full bg-white border border-neutral-200 text-neutral-700 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 hover:bg-neutral-50 transition-colors"
         >
           <RefreshCw size={18} />
           <span>Regenerate QR Code</span>
@@ -151,7 +151,7 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
           <button 
             onClick={handleDeleteTable}
             disabled={!!activeSession}
-            className="w-full bg-red-50 border border-red-200 text-red-600 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 hover:bg-red-100 mt-4"
+            className="w-full bg-red-50 border border-red-200 text-red-600 py-3 rounded-xl font-medium flex items-center justify-center space-x-2 disabled:opacity-50 hover:bg-red-100 mt-4 transition-colors"
           >
             <Trash2 size={18} />
             <span>Delete Table</span>

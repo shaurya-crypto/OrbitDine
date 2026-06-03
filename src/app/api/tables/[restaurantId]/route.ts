@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/mongodb/db";
 import TableModel from "@/models/Table";
+import "@/models/QRCode"; // Ensure QRCode is registered for populate
 
 export async function GET(req: Request, { params }: { params: Promise<{ restaurantId: string }> }) {
   try {

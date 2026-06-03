@@ -74,8 +74,8 @@ export function MenuManagementModal({ restaurantId, onClose }: MenuManagementMod
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <GlassPanel premium className="w-full max-w-4xl h-[80vh] flex flex-col relative bg-white overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md p-4">
+      <GlassPanel premium className="w-full max-w-4xl h-[80vh] flex flex-col relative bg-white text-neutral-900 overflow-hidden">
         <button onClick={onClose} className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-900 z-10">
           <X size={24} />
         </button>

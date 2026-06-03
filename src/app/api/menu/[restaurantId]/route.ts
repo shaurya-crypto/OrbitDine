@@ -16,8 +16,8 @@ export async function GET(req: Request, context: any) {
       return NextResponse.json({ success: false, message: "Invalid restaurant ID format" }, { status: 400 });
     }
 
-    // 1. Fetch Restaurant (ensure it exists and is active)
-    const restaurant = await RestaurantModel.findOne({ _id: restaurantId, status: "active" })
+    // 1. Fetch Restaurant (ensure it exists)
+    const restaurant = await RestaurantModel.findOne({ _id: restaurantId })
       .select("name logo description cuisineType settings.currency");
 
     if (!restaurant) {
