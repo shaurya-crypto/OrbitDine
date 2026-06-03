@@ -32,8 +32,11 @@ export function PrintQRCodeModal({ tableId, onClose }: PrintQRCodeModalProps) {
   if (!url) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-        <GlassPanel premium className="p-8 flex items-center justify-center">
-          <p>Loading QR Code...</p>
+        <GlassPanel premium className="w-full max-w-sm p-8 relative flex flex-col items-center justify-center bg-white">
+          <button onClick={onClose} className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-900">
+            <X size={20} />
+          </button>
+          <p className="text-neutral-500 font-medium my-8">Loading QR Code...</p>
         </GlassPanel>
       </div>
     );

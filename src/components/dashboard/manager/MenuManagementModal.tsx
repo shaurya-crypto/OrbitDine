@@ -5,7 +5,7 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { X, Plus, Edit2, Trash2 } from "lucide-react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRealtimeMenu } from "@/hooks/useRealtimeMenu"; // Trigger TS server reload
+import { useRealtimeMenu } from "../../../hooks/useRealtimeMenu"; // Trigger TS server reload
 
 interface MenuManagementModalProps {
   restaurantId: string;
