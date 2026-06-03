@@ -35,7 +35,7 @@ export function MenuControlPanel({ restaurantId }: { restaurantId: string }) {
                 <div key={item.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl border border-neutral-100">
                   <div>
                     <p className="font-medium text-neutral-900 text-sm">{item.name}</p>
-                    <p className="text-xs text-neutral-500">${item.price.toFixed(2)}</p>
+                    <p className="text-xs text-neutral-500">₹{item.price.toFixed(2)}</p>
                   </div>
                   <button
                     onClick={() => handleToggle(item.id, item.isAvailable ?? true)}

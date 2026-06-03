@@ -150,7 +150,7 @@ export function MenuManagementModal({ restaurantId, onClose }: MenuManagementMod
                             <div key={item._id} className="flex justify-between items-center p-4 bg-neutral-50 rounded-lg border border-neutral-100">
                               <div>
                                 <span className="font-medium block">{item.name}</span>
-                                <span className="text-sm text-neutral-500">${item.price.toFixed(2)}</span>
+                                <span className="text-sm text-neutral-500">₹{item.price.toFixed(2)}</span>
                               </div>
                               <button onClick={() => handleDeleteItem(item._id)} className="text-red-500 hover:bg-red-50 p-2 rounded-md"><Trash2 size={18} /></button>
                             </div>

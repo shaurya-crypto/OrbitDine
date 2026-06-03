@@ -78,11 +78,11 @@ export default function CartPage() {
               <div key={item._id} className="bg-white p-4 rounded-2xl shadow-sm border border-neutral-100 flex items-center">
                 <div className="flex-1 pr-4">
                   <h3 className="font-semibold text-neutral-900 leading-tight mb-1">{item.name}</h3>
-                  <p className="text-sm font-medium text-neutral-500 mb-2">${item.price.toFixed(2)}</p>
+                  <p className="text-sm font-medium text-neutral-500 mb-2">₹{item.price.toFixed(2)}</p>
                   {item.addons?.map((addon: any, idx: number) => (
                     <p key={idx} className="text-xs text-neutral-400">+ {addon.name} (${addon.price})</p>
                   ))}
-                  <p className="text-sm font-bold text-neutral-900 mt-2">${item.itemTotal.toFixed(2)}</p>
+                  <p className="text-sm font-bold text-neutral-900 mt-2">₹{item.itemTotal.toFixed(2)}</p>
                 </div>
                 <div className="flex flex-col items-end justify-between self-stretch">
                   <QuantitySelector
@@ -105,16 +105,16 @@ export default function CartPage() {
               <h3 className="font-semibold text-neutral-900 mb-4">Bill Summary</h3>
               <div className="flex justify-between text-sm text-neutral-500">
                 <span>Subtotal</span>
-                <span className="font-medium text-neutral-900">${cartData.subtotal.toFixed(2)}</span>
+                <span className="font-medium text-neutral-900">₹{cartData.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-neutral-500">
                 <span>Tax</span>
-                <span className="font-medium text-neutral-900">${cartData.tax.toFixed(2)}</span>
+                <span className="font-medium text-neutral-900">₹{cartData.tax.toFixed(2)}</span>
               </div>
               {cartData.serviceCharge > 0 && (
                 <div className="flex justify-between text-sm text-neutral-500">
                   <span>Service Charge</span>
-                  <span className="font-medium text-neutral-900">${cartData.serviceCharge.toFixed(2)}</span>
+                  <span className="font-medium text-neutral-900">₹{cartData.serviceCharge.toFixed(2)}</span>
                 </div>
               )}
               {cartData.discount > 0 && (
@@ -125,7 +125,7 @@ export default function CartPage() {
               )}
               <div className="pt-3 border-t border-neutral-100 flex justify-between items-center mt-2">
                 <span className="font-bold text-neutral-900">Grand Total</span>
-                <span className="font-bold text-lg text-neutral-900">${cartData.grandTotal.toFixed(2)}</span>
+                <span className="font-bold text-lg text-neutral-900">₹{cartData.grandTotal.toFixed(2)}</span>
               </div>
             </div>
             
@@ -144,7 +144,7 @@ export default function CartPage() {
                 <span>{isPlacingOrder ? "Sending to Kitchen..." : "Place Order"}</span>
                 {!isPlacingOrder && (
                   <div className="flex items-center space-x-2">
-                    <span className="font-bold">${cartData.grandTotal.toFixed(2)}</span>
+                    <span className="font-bold">₹{cartData.grandTotal.toFixed(2)}</span>
                     <ArrowRight size={20} />
                   </div>
                 )}

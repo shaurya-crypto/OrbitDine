@@ -109,7 +109,7 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
                   {activeSession.cart.map((item: any) => (
                     <div key={item._id} className="flex justify-between text-sm border-b border-neutral-100 pb-2">
                       <span>{item.quantity}x {item.name}</span>
-                      <span>${item.itemTotal.toFixed(2)}</span>
+                      <span>₹{item.itemTotal.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>

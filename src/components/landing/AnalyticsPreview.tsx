@@ -79,9 +79,9 @@ export function AnalyticsPreview() {
                <span className="text-right">Total</span>
              </div>
              {[
-               { t: "12", s: "Preparing", i: "3", v: "$45.00" },
-               { t: "04", s: "Ready", i: "2", v: "$32.50", hl: true },
-               { t: "18", s: "Seated", i: "0", v: "$0.00" },
+               { t: "12", s: "Preparing", i: "3", v: "₹45.00" },
+               { t: "04", s: "Ready", i: "2", v: "₹32.50", hl: true },
+               { t: "18", s: "Seated", i: "0", v: "₹0.00" },
              ].map((row, i) => (
                <div key={i} className="grid grid-cols-4 px-6 py-4 border-b border-border/50 text-text-primary text-sm last:border-0 hover:bg-base transition-colors">
                  <span className="font-medium">T-{row.t}</span>

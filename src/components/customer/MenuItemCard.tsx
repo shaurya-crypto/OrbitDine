@@ -76,7 +76,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
         </div>
 
         <h3 className="font-semibold text-neutral-900 leading-tight mb-1">{item.name}</h3>
-        <p className="text-sm font-medium text-neutral-900 mb-2">${item.price.toFixed(2)}</p>
+        <p className="text-sm font-medium text-neutral-900 mb-2">₹{item.price.toFixed(2)}</p>
         
         {item.description && (
           <p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed">{item.description}</p>

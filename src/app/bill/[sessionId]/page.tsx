@@ -108,7 +108,7 @@ export default function BillPage() {
                     <div key={i} className="text-xs text-neutral-400 pl-4">+ {addon.name}</div>
                   ))}
                 </div>
-                <span className="text-neutral-900">${item.itemTotal.toFixed(2)}</span>
+                <span className="text-neutral-900">₹{item.itemTotal.toFixed(2)}</span>
               </div>
             ))}
           </div>
@@ -116,16 +116,16 @@ export default function BillPage() {
           <div className="border-t border-neutral-100 border-dashed pt-4 space-y-3">
             <div className="flex justify-between text-sm text-neutral-500">
               <span>Subtotal</span>
-              <span className="font-medium text-neutral-900">${bill.subtotal.toFixed(2)}</span>
+              <span className="font-medium text-neutral-900">₹{bill.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-neutral-500">
               <span>Tax</span>
-              <span className="font-medium text-neutral-900">${bill.tax.toFixed(2)}</span>
+              <span className="font-medium text-neutral-900">₹{bill.tax.toFixed(2)}</span>
             </div>
             {bill.serviceCharge > 0 && (
               <div className="flex justify-between text-sm text-neutral-500">
                 <span>Service Charge</span>
-                <span className="font-medium text-neutral-900">${bill.serviceCharge.toFixed(2)}</span>
+                <span className="font-medium text-neutral-900">₹{bill.serviceCharge.toFixed(2)}</span>
               </div>
             )}
             {bill.totalDiscount > 0 && (
@@ -138,7 +138,7 @@ export default function BillPage() {
 
           <div className="border-t border-neutral-900 pt-4 flex justify-between items-end mt-4">
             <span className="font-medium text-neutral-900">Total to Pay</span>
-            <span className="font-serif text-3xl tracking-tight text-neutral-900">${bill.grandTotal.toFixed(2)}</span>
+            <span className="font-serif text-3xl tracking-tight text-neutral-900">₹{bill.grandTotal.toFixed(2)}</span>
           </div>
         </div>
       </div>

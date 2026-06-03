@@ -34,7 +34,7 @@ export function FloatingCartButton() {
                   <span className="font-medium text-sm">View Cart</span>
                 </div>
                 <div className="font-semibold tracking-wide">
-                  ${cartData?.grandTotal?.toFixed(2)}
+                  ₹{cartData?.grandTotal?.toFixed(2)}
                 </div>
               </div>
             </Link>

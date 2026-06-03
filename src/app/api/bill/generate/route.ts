@@ -197,7 +197,7 @@ export async function POST(req: Request) {
 
       eventBus.emitOwnerRevenueUpdated({
         restaurantId: session.restaurantId.toString(),
-        message: `New bill pending payment: $${finalBill.grandTotal}`,
+        message: `New bill pending payment: ₹${finalBill.grandTotal}`,
         timestamp: now,
       });
 

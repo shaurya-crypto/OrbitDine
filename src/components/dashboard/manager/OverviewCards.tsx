@@ -2,7 +2,7 @@
 
 import { useRealtimeOverview } from "@/hooks/useRealtimeOverview";
 import { Loader } from "@/components/ui/Loader";
-import { DollarSign, Receipt, Users, Clock } from "lucide-react";
+import { IndianRupee, Receipt, Users, Clock } from "lucide-react";
 
 export function OverviewCards({ restaurantId }: { restaurantId: string }) {
   const { data: overview, isLoading } = useRealtimeOverview(restaurantId);
@@ -11,7 +11,7 @@ export function OverviewCards({ restaurantId }: { restaurantId: string }) {
   if (!overview) return null;
 
   const cards = [
-    { title: "Revenue Today", value: `$${overview.revenueToday.toFixed(2)}`, icon: <DollarSign size={20} />, color: "text-green-600", bg: "bg-green-100" },
+    { title: "Revenue Today", value: `₹${overview.revenueToday.toFixed(2)}`, icon: <IndianRupee size={20} />, color: "text-green-600", bg: "bg-green-100" },
     { title: "Orders Today", value: overview.ordersToday, icon: <Receipt size={20} />, color: "text-blue-600", bg: "bg-blue-100" },
     { title: "Active Tables", value: overview.activeTables, icon: <Users size={20} />, color: "text-purple-600", bg: "bg-purple-100" },
     { title: "Avg Ticket Time", value: `${overview.avgTicketTime}m`, icon: <Clock size={20} />, color: "text-orange-600", bg: "bg-orange-100" },

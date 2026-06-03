@@ -23,7 +23,7 @@ export default function StaffPage() {
         <p className="text-text-secondary">Live table management and requests</p>
       </div>
       
-      <div className="flex flex-1 gap-8">
+      <div className="flex flex-col lg:flex-row flex-1 gap-8">
         {/* Main Grid */}
         <div className="flex-1">
           <h2 className="text-lg font-semibold mb-4">Active Tables</h2>
@@ -31,7 +31,7 @@ export default function StaffPage() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-96 flex flex-col gap-8 flex-shrink-0">
+        <div className="w-full lg:w-96 flex flex-col gap-8 flex-shrink-0">
           <div>
             <h2 className="text-lg font-semibold mb-4 text-orange-600 flex items-center gap-2">
               <span className="relative flex h-3 w-3">
