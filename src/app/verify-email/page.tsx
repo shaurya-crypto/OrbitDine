@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, XCircle } from "lucide-react";
@@ -8,7 +8,7 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { Loader } from "@/components/ui/Loader";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const searchParams = useSearchParams();
@@ -92,5 +92,13 @@ export default function VerifyEmailPage() {
 
       </GlassPanel>
     </main>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen w-full flex items-center justify-center bg-base text-text-primary">Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
