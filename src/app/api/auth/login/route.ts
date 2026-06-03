@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import User from "@/models/User";
+import Restaurant from "@/models/Restaurant";
 import Session from "@/models/Session";
 import { signAccessToken, signRefreshToken } from "@/lib/auth/jwt";
 import crypto from "crypto";
@@ -30,6 +31,20 @@ export async function POST(req: Request) {
     user.lastLogin = new Date();
     await user.save();
 
+    // Self-healing: if user has no restaurantId, try to find it
+    let restaurantId = user.restaurantId;
+    if (!restaurantId) {
+      // For owners, look up by ownerId
+      if (user.role === "owner") {
+        const restaurant = await Restaurant.findOne({ ownerId: user._id });
+        if (restaurant) {
+          restaurantId = restaurant._id;
+          await User.updateOne({ _id: user._id }, { $set: { restaurantId: restaurant._id } });
+          console.log(`[Login] Self-healed: linked owner ${user._id} to restaurant ${restaurant._id}`);
+        }
+      }
+    }
+
     const payload = {
       userId: user._id.toString(),
       role: user.role,
@@ -48,7 +63,13 @@ export async function POST(req: Request) {
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     });
 
-    const response = NextResponse.json({ message: "Login successful", role: user.role });
+    const response = NextResponse.json({ 
+      message: "Login successful", 
+      role: user.role,
+      userId: user._id.toString(),
+      restaurantId: restaurantId?.toString() || null,
+      fullName: user.fullName
+    });
 
     response.cookies.set("accessToken", accessToken, {
       httpOnly: true,

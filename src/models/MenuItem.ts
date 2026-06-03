@@ -11,7 +11,10 @@ export interface IMenuItem extends Document {
   available: boolean;
   addons?: Array<{ name: string; price: number }>;
   tags?: string[];
+  isBestseller?: boolean;
+  isRecommended?: boolean;
   sortOrder: number;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,9 +62,21 @@ const MenuItemSchema = new Schema<IMenuItem>(
       },
     ],
     tags: [String],
+    isBestseller: {
+      type: Boolean,
+      default: false,
+    },
+    isRecommended: {
+      type: Boolean,
+      default: false,
+    },
     sortOrder: {
       type: Number,
       default: 0,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   {

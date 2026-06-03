@@ -12,10 +12,13 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { FloatingInput } from "@/components/ui/FloatingInput";
 import { Loader } from "@/components/ui/Loader";
+import { useSearchParams } from "next/navigation";
+import { useAuthStore } from "@/stores/authStore";
+import { useEffect, Suspense } from "react";
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
-  restaurantName: z.string().min(2, "Restaurant name is required"),
+  restaurantName: z.string().optional(),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string()
@@ -27,10 +30,28 @@ const signupSchema = z.object({
 type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-base" />}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const restaurantId = searchParams.get("restaurantId");
+  const { role } = useAuthStore();
+
+  useEffect(() => {
+    // Block logged in users
+    if (role) {
+      router.replace(`/dashboard/${role.toLowerCase()}`);
+    }
+  }, [role, router]);
 
   const {
     register,
@@ -60,7 +81,11 @@ export default function SignupPage() {
 
   const handleNext = async (e: React.MouseEvent) => {
     e.preventDefault();
-    const isValid = await trigger(["fullName", "restaurantName", "email"]);
+    const fieldsToValidate: any[] = ["fullName", "email"];
+    if (!restaurantId) {
+      fieldsToValidate.push("restaurantName");
+    }
+    const isValid = await trigger(fieldsToValidate);
     if (isValid) {
       setStep(2);
     }
@@ -78,6 +103,7 @@ export default function SignupPage() {
           email: data.email,
           password: data.password,
           restaurantName: data.restaurantName,
+          restaurantId: restaurantId || undefined,
         }),
       });
 
@@ -137,15 +163,17 @@ export default function SignupPage() {
                   error={errors.fullName?.message}
                 />
                 
-                <FloatingInput 
-                  id="restaurantName" 
-                  type="text"
-                  label="Restaurant Name"
-                  {...register("restaurantName")}
-                  error={errors.restaurantName?.message}
-                />
+                {!restaurantId && (
+                  <FloatingInput 
+                    id="restaurantName" 
+                    type="text"
+                    label="Restaurant Name"
+                    {...register("restaurantName")}
+                    error={errors.restaurantName?.message}
+                  />
+                )}
 
-                <FloatingInput 
+                <FloatingInput  
                   id="email" 
                   type="email"
                   label="Work Email"

@@ -3,9 +3,13 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface ITable extends Document {
   restaurantId: mongoose.Types.ObjectId;
   tableNumber: string;
-  qrCode?: mongoose.Types.ObjectId;
+  qrCodeId?: mongoose.Types.ObjectId;
+  activeSessionId?: mongoose.Types.ObjectId;
   capacity?: number;
-  active: boolean;
+  section?: string;
+  notes?: string;
+  isActive: boolean;
+  status: "available" | "reserved" | "ordering" | "preparing" | "bill_requested" | "closed";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,16 +26,33 @@ const TableSchema = new Schema<ITable>(
       type: String,
       required: true,
     },
-    qrCode: {
+    qrCodeId: {
       type: Schema.Types.ObjectId,
       ref: "QRCode",
+    },
+    activeSessionId: {
+      type: Schema.Types.ObjectId,
+      ref: "OrderSession",
     },
     capacity: {
       type: Number,
     },
-    active: {
+    section: {
+      type: String,
+      trim: true,
+    },
+    notes: {
+      type: String,
+      trim: true,
+    },
+    isActive: {
       type: Boolean,
       default: true,
+    },
+    status: {
+      type: String,
+      enum: ["available", "reserved", "ordering", "preparing", "bill_requested", "closed"],
+      default: "available",
     },
   },
   {

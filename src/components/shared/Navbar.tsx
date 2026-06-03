@@ -6,11 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import gsap from "gsap";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuthStore } from "@/stores/authStore";
 
 const navLinks = [
   { name: "Features", href: "#features" },
   { name: "Solutions", href: "#solutions" },
-  { name: "Pricing", href: "#pricing" },
   { name: "About", href: "#about" },
   { name: "Contact", href: "#contact" },
 ];
@@ -18,11 +18,14 @@ const navLinks = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const { role } = useAuthStore();
   const logoRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLAnchorElement>(null);
 
   // Scroll effect
   useEffect(() => {
+    setIsMounted(true);
     const handleScroll = () => {
       const isScrolled = window.scrollY > 80;
       setScrolled(isScrolled);
@@ -112,17 +115,29 @@ export function Navbar() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/login" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
-              Login
-            </Link>
             <ThemeToggle />
-            <Link 
-              ref={ctaRef}
-              href="/signup" 
-              className="px-6 py-2.5 bg-text-primary text-base text-sm font-medium rounded-full hover:scale-105 active:scale-95 transition-transform"
-            >
-              Get Started
-            </Link>
+            {isMounted && role ? (
+              <Link 
+                ref={ctaRef}
+                href={`/dashboard/${role.toLowerCase()}`}
+                className="px-6 py-2.5 bg-text-primary text-base text-sm font-medium rounded-full hover:scale-105 active:scale-95 transition-transform"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
+                  Login
+                </Link>
+                <Link 
+                  ref={ctaRef}
+                  href="/signup" 
+                  className="px-6 py-2.5 bg-text-primary text-base text-sm font-medium rounded-full hover:scale-105 active:scale-95 transition-transform"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Actions */}
@@ -181,12 +196,20 @@ export function Navbar() {
                 transition={{ delay: 0.8 }}
                 className="mt-8 flex flex-col gap-4"
               >
-                <Link href="/login" className="w-full py-4 text-center border border-border rounded-full text-text-primary font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  Login
-                </Link>
-                <Link href="/signup" className="w-full py-4 text-center bg-text-primary text-base rounded-full font-medium" onClick={() => setMobileMenuOpen(false)}>
-                  Get Started
-                </Link>
+                {isMounted && role ? (
+                  <Link href={`/dashboard/${role.toLowerCase()}`} className="w-full py-4 text-center bg-text-primary text-base rounded-full font-medium" onClick={() => setMobileMenuOpen(false)}>
+                    Go to Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/login" className="w-full py-4 text-center border border-border rounded-full text-text-primary font-medium" onClick={() => setMobileMenuOpen(false)}>
+                      Login
+                    </Link>
+                    <Link href="/signup" className="w-full py-4 text-center bg-text-primary text-base rounded-full font-medium" onClick={() => setMobileMenuOpen(false)}>
+                      Get Started
+                    </Link>
+                  </>
+                )}
               </motion.div>
             </div>
           </motion.div>

@@ -4,7 +4,7 @@ export interface IOrder extends Document {
   orderNumber: string;
   restaurantId: mongoose.Types.ObjectId;
   tableId?: mongoose.Types.ObjectId;
-  customerId?: mongoose.Types.ObjectId;
+  sessionId: mongoose.Types.ObjectId;
   items: Array<{
     menuItemId: mongoose.Types.ObjectId;
     name: string;
@@ -13,10 +13,18 @@ export interface IOrder extends Document {
     addons?: Array<{ name: string; price: number }>;
   }>;
   subtotal: number;
+  discount: number;
   tax: number;
-  total: number;
-  status: "pending" | "accepted" | "preparing" | "ready" | "served" | "completed" | "cancelled";
+  serviceCharge: number;
+  grandTotal: number;
+  status: "received" | "preparing" | "ready" | "served" | "cancelled";
+  statusHistory: Array<{
+    status: string;
+    timestamp: Date;
+  }>;
   notes?: string;
+  servedAt?: Date;
+  servedBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,9 +46,10 @@ const OrderSchema = new Schema<IOrder>(
       type: Schema.Types.ObjectId,
       ref: "Table",
     },
-    customerId: {
+    sessionId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "OrderSession",
+      required: true,
     },
     items: [
       {
@@ -61,14 +70,24 @@ const OrderSchema = new Schema<IOrder>(
       },
     ],
     subtotal: { type: Number, required: true },
+    discount: { type: Number, default: 0 },
     tax: { type: Number, required: true },
-    total: { type: Number, required: true },
+    serviceCharge: { type: Number, default: 0 },
+    grandTotal: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["pending", "accepted", "preparing", "ready", "served", "completed", "cancelled"],
-      default: "pending",
+      enum: ["received", "preparing", "ready", "served", "cancelled"],
+      default: "received",
     },
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
     notes: { type: String },
+    servedAt: { type: Date },
+    servedBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   {
     timestamps: true,

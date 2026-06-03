@@ -7,6 +7,7 @@ export interface IUser extends Document {
   phoneNumber?: string;
   password?: string; // Optional because OAuth might not have a password
   role: "owner" | "manager" | "staff" | "customer";
+  restaurantId?: mongoose.Types.ObjectId;
   isVerified: boolean;
   profileImage?: string;
   lastLogin?: Date;
@@ -40,7 +41,11 @@ const UserSchema = new Schema<IUser>(
     role: {
       type: String,
       enum: ["owner", "manager", "staff", "customer"],
-      default: "owner",
+      default: "customer",
+    },
+    restaurantId: {
+      type: Schema.Types.ObjectId,
+      ref: "Restaurant",
     },
     isVerified: {
       type: Boolean,

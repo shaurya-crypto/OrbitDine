@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { PerformanceProvider } from "@/components/providers/PerformanceProvider";
 import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvider";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import CookieConsent from "@/components/shared/CookieConsent";
 
 const instrumentSerif = Instrument_Serif({
@@ -42,10 +43,12 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <PerformanceProvider>
-            <SmoothScrollProvider>
-              {children}
-              <CookieConsent />
-            </SmoothScrollProvider>
+            <QueryProvider>
+              <SmoothScrollProvider>
+                {children}
+                <CookieConsent />
+              </SmoothScrollProvider>
+            </QueryProvider>
           </PerformanceProvider>
         </ThemeProvider>
       </body>

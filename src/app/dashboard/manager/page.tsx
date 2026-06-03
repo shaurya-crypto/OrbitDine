@@ -1,26 +1,75 @@
-export default function ManagerDashboard() {
-  return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-medium text-text-primary mb-2">Manager Portal</h1>
-        <p className="text-text-secondary">Oversee operations, menu availability, and staff.</p>
-      </div>
+"use client";
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="glass-panel bg-surface/50 p-6 rounded-2xl border border-border">
-          <h2 className="text-lg font-medium text-text-primary mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-4">
-             <button className="p-4 bg-base border border-border rounded-xl text-left hover:border-accent transition-colors">
-               <div className="font-medium text-text-primary mb-1">Update Menu</div>
-               <div className="text-xs text-text-secondary">Toggle items availability</div>
-             </button>
-             <button className="p-4 bg-base border border-border rounded-xl text-left hover:border-accent transition-colors">
-               <div className="font-medium text-text-primary mb-1">Manage Staff</div>
-               <div className="text-xs text-text-secondary">View shifts and roles</div>
-             </button>
-          </div>
+import { useAuthStore } from "@/stores/authStore";
+import { OverviewCards } from "@/components/dashboard/manager/OverviewCards";
+import { TableGrid } from "@/components/dashboard/staff/TableGrid";
+import { SessionDrawer } from "@/components/dashboard/manager/SessionDrawer";
+import { MenuControlPanel } from "@/components/dashboard/manager/MenuControlPanel";
+import { useDashboardStore } from "@/stores/dashboardStore";
+import { AddTableModal } from "@/components/dashboard/manager/AddTableModal";
+import { MenuManagementModal } from "@/components/dashboard/manager/MenuManagementModal";
+
+import { useState, useEffect } from "react";
+
+export default function ManagerPage() {
+  const { restaurantId } = useAuthStore();
+  const { selectedTableId } = useDashboardStore();
+  const [mounted, setMounted] = useState(false);
+  const [showAddTable, setShowAddTable] = useState(false);
+  const [showMenuManagement, setShowMenuManagement] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return <div className="p-8">Loading dashboard...</div>;
+  if (!restaurantId) return <div className="p-8 text-red-500">Error: No Restaurant ID linked to your account. Please relogin.</div>;
+
+  return (
+    <div className="h-full flex flex-col relative">
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-serif text-text-primary">Manager Dashboard</h1>
+          <p className="text-text-secondary">Full operations overview</p>
+        </div>
+        <div className="flex gap-4">
+          <button 
+            onClick={() => setShowAddTable(true)}
+            className="px-4 py-2 bg-white border border-neutral-200 text-neutral-800 rounded-lg text-sm font-medium hover:bg-neutral-50"
+          >
+            + Add Table
+          </button>
+          <button 
+            onClick={() => setShowMenuManagement(true)}
+            className="px-4 py-2 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800"
+          >
+            Menu Management Console
+          </button>
         </div>
       </div>
+
+      <div className="mb-8">
+        <OverviewCards restaurantId={restaurantId} />
+      </div>
+      
+      <div className="flex gap-8">
+        <div className="flex-1">
+          <h2 className="text-lg font-semibold mb-4">Floor Map</h2>
+          <TableGrid restaurantId={restaurantId} />
+        </div>
+
+        <div className="w-80 flex-shrink-0">
+          <MenuControlPanel restaurantId={restaurantId} />
+        </div>
+      </div>
+
+      {selectedTableId && (
+        <>
+          <div className="fixed inset-0 bg-black/20 z-40" onClick={() => useDashboardStore.getState().setSelectedTable(null)} />
+          <SessionDrawer restaurantId={restaurantId} />
+        </>
+      )}
+
+      {showAddTable && <AddTableModal restaurantId={restaurantId} onClose={() => setShowAddTable(false)} />}
+      {showMenuManagement && <MenuManagementModal restaurantId={restaurantId} onClose={() => setShowMenuManagement(false)} />}
     </div>
   );
 }

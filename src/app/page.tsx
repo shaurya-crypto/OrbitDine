@@ -10,7 +10,6 @@ import { LoyaltySection } from "@/components/landing/LoyaltySection";
 import { AnalyticsPreview } from "@/components/landing/AnalyticsPreview";
 import { WhyOrbitDineSection } from "@/components/landing/WhyOrbitDineSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
-import { PricingSection } from "@/components/landing/PricingSection";
 import { PartnerSection } from "@/components/landing/PartnerSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
@@ -31,7 +30,6 @@ export default function Home() {
       <AnalyticsPreview />
       <WhyOrbitDineSection />
       <TestimonialsSection />
-      <PricingSection />
       <PartnerSection />
       <FAQSection />
       <CTASection />

@@ -3,8 +3,8 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IQRCode extends Document {
   restaurantId: mongoose.Types.ObjectId;
   tableId?: mongoose.Types.ObjectId;
-  qrUrl: string;
-  shortCode: string;
+  qrImage: string;
+  code: string;
   active: boolean;
   type: "table" | "pickup" | "takeaway";
   createdAt: Date;
@@ -23,11 +23,11 @@ const QRCodeSchema = new Schema<IQRCode>(
       type: Schema.Types.ObjectId,
       ref: "Table",
     },
-    qrUrl: {
+    qrImage: {
       type: String,
       required: true,
     },
-    shortCode: {
+    code: {
       type: String,
       required: true,
       unique: true,

@@ -11,6 +11,8 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { FloatingInput } from "@/components/ui/FloatingInput";
 import { Loader } from "@/components/ui/Loader";
+import { useAuthStore } from "@/stores/authStore";
+import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -24,6 +26,14 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const router = useRouter();
+  const { role, setAuth } = useAuthStore();
+
+  useEffect(() => {
+    // Block logged in users
+    if (role) {
+      router.replace(`/dashboard/${role.toLowerCase()}`);
+    }
+  }, [role, router]);
 
   const {
     register,
@@ -53,6 +63,9 @@ export default function LoginPage() {
         setIsSubmitting(false);
         return;
       }
+
+      // Save to Zustand store!
+      setAuth(responseData.userId, responseData.role, responseData.restaurantId, responseData.fullName);
 
       // Redirect to the dashboard based on role
       router.push(`/dashboard/${responseData.role}`);

@@ -5,14 +5,6 @@ import { verifyAccessToken } from "./lib/auth/jwt";
 // Paths that don't require authentication
 const publicPaths = ["/", "/login", "/signup", "/forgot-password", "/reset-password", "/verify-email"];
 
-// Paths that require specific roles
-const rolePaths: Record<string, string[]> = {
-  owner: ["/dashboard/owner", "/dashboard/settings"],
-  manager: ["/dashboard/manager"],
-  staff: ["/dashboard/staff"],
-  customer: ["/dashboard/customer"],
-};
-
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -51,15 +43,24 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/verify-email", request.url));
     }
 
-    // Role-based access control for dashboard
+    // Role-based access control for dashboard (cascading hierarchy)
     if (pathname.startsWith("/dashboard")) {
       const role = payload.role;
-      const isAllowed = Object.entries(rolePaths).some(([allowedRole, paths]) => {
-        return role === allowedRole && paths.some((p) => pathname.startsWith(p));
-      });
+      
+      // Define which dashboard areas each role can access (cascading permissions)
+      const roleAccess: Record<string, string[]> = {
+        owner: ["/dashboard/owner", "/dashboard/manager", "/dashboard/staff", "/dashboard/kitchen", "/dashboard/settings"],
+        manager: ["/dashboard/manager", "/dashboard/staff", "/dashboard/kitchen"],
+        staff: ["/dashboard/staff", "/dashboard/kitchen"],
+        kitchen: ["/dashboard/kitchen"],
+        customer: ["/dashboard/customer"],
+      };
+
+      const allowedPaths = roleAccess[role] || [];
+      const isAllowed = allowedPaths.some((p) => pathname.startsWith(p));
 
       if (!isAllowed) {
-        // Redirect to their respective dashboard if they try to access another role's path
+        // Redirect to their home dashboard if they try to access an unauthorized area
         return NextResponse.redirect(new URL(`/dashboard/${role}`, request.url));
       }
     }

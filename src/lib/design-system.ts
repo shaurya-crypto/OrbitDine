@@ -2,9 +2,9 @@ import { Variants, Transition } from "framer-motion";
 
 // --- MOTION DURATIONS & EASINGS ---
 export const EASINGS = {
-  smooth: [0.25, 0.1, 0.25, 1],
-  snappy: [0.175, 0.885, 0.32, 1.275], // slight overshoot
-  premium: [0.22, 1, 0.36, 1], // apple-like smooth ease out
+  smooth: [0.25, 0.1, 0.25, 1] as const,
+  snappy: [0.175, 0.885, 0.32, 1.275] as const, // slight overshoot
+  premium: [0.22, 1, 0.36, 1] as const, // apple-like smooth ease out
 };
 
 export const DURATIONS = {
@@ -25,7 +25,7 @@ export const transitionSnappy: Transition = {
   ease: EASINGS.snappy,
 };
 
-export const transitionSpring = {
+export const transitionSpring: Transition = {
   type: "spring",
   stiffness: 150,
   damping: 20,

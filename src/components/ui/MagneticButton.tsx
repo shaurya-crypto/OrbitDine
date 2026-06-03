@@ -1,11 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, HTMLMotionProps } from "framer-motion";
 import { usePerformance } from "@/components/providers/PerformanceProvider";
 import { transitionSpring } from "@/lib/design-system";
 
-interface MagneticButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface MagneticButtonProps extends HTMLMotionProps<"button"> {
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "glass" | "ghost";
   intensity?: number;
