@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     await connectToDatabase();
 
     const body = await req.json();
-    const { email, password } = body;
+    const { email, password, rememberMe } = body;
 
     if (!email || !password) {
       return NextResponse.json({ error: "Missing email or password" }, { status: 400 });
@@ -71,11 +71,13 @@ export async function POST(req: Request) {
       fullName: user.fullName
     });
 
+    const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 15 * 60; // 30 days or 15 minutes
+
     response.cookies.set("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 15 * 60, // 15 minutes
+      maxAge: maxAge,
       path: "/",
     });
 

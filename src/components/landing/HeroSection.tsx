@@ -96,15 +96,17 @@ export function HeroSection() {
 
   // Scroll scrub effects
   const { scrollY } = useScroll();
-  const heroOpacity = useTransform(scrollY, [0, 600], [1, 0]);
-  const heroY = useTransform(scrollY, [0, 600], [0, 150]);
-  const heroBlur = useTransform(scrollY, [0, 600], ["blur(0px)", "blur(10px)"]);
+  // Start fading and blurring only after scrolling 300px down (leaving the hero)
+  const heroOpacity = useTransform(scrollY, [300, 1000], [1, 0]);
+  const heroY = useTransform(scrollY, [0, 1000], [0, 200]);
+  const heroBlur = useTransform(scrollY, [300, 1000], ["blur(0px)", "blur(20px)"]);
+
 
   return (
     <motion.section
       ref={containerRef}
       style={{ opacity: heroOpacity, y: heroY, filter: isLowEndMode ? "none" : heroBlur }}
-      className="relative w-full min-h-screen h-auto flex items-center overflow-hidden py-32 lg:py-0"
+      className="relative w-full min-h-screen h-auto flex items-center justify-center overflow-hidden py-32 lg:py-0"
     >
       {/* Background Video */}
       <div className="absolute inset-0 z-0">
@@ -119,74 +121,42 @@ export function HeroSection() {
           data-dark-src="/hero-dark.mp4"
           data-light-src="/hero.mp4"
 
-          className="object-cover w-full h-full opacity-55"
+          className="object-cover w-full h-full opacity-70"
         />
-        {/* Gradient overlays to ensure text readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/60 to-transparent lg:w-3/4" />
-        <div className="absolute inset-0 bg-gradient-to-t from-base via-transparent to-transparent" />
+        {/* Gradients for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-base/20 via-base/60 to-base" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.3)_100%)]" />
       </div>
 
-      <div className="relative z-10 w-full max-w-[1920px] mx-auto px-4 md:px-12 lg:px-24 h-auto min-h-screen flex flex-col lg:flex-row items-center justify-between">
+      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 md:px-12 lg:px-24 h-auto min-h-screen flex flex-col items-center justify-center text-center">
 
-        {/* Content Side */}
-        <div className="w-full lg:w-[45%] flex flex-col justify-center py-20 lg:py-32 z-20">
-          <div className="max-w-[760px] mx-auto lg:mx-0 text-center lg:text-left">
-            <h1
-              ref={headlineRef}
-              className="text-5xl md:text-7xl lg:text-[5.5rem] leading-[1.05] tracking-tight font-serif text-text-primary mb-6"
-            >
-              Transform Restaurant Operations Through Technology
-            </h1>
-
-            <p
-              ref={subheadRef}
-              className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto lg:mx-0 mb-10 opacity-0"
-            >
-              OrbitDine replaces manual order-taking, guesswork, and missed revenue with a complete restaurant operating system — QR ordering, real-time kitchen integration, customer loyalty, and business intelligence in one platform.
-            </p>
-
-            <div ref={buttonsRef} className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-16 opacity-0">
-              <button className="group relative px-8 py-4 bg-text-primary text-base rounded-full overflow-hidden transition-transform hover:scale-105 active:scale-95">
-                <span className="relative z-10 flex items-center font-medium">
-                Get Started
-                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </span>
-              </button>
-              <button className="group px-8 py-4 border border-border bg-glass backdrop-blur-lg rounded-full transition-all hover:bg-border/50 active:scale-95 text-text-primary">
-                <span className="flex items-center font-medium">
-                <PlayCircle className="mr-2 w-5 h-5 text-text-secondary group-hover:text-text-primary transition-colors" />
-                See How It Works
-                </span>
-              </button>
-            </div>
-
-            {/* Stats */}
-            <div ref={statsRef} className="flex flex-wrap justify-center lg:justify-start gap-6 md:gap-12 opacity-0">
-              {[
-                { value: "20–30%", label: "Faster Table Turnover" },
-                { value: "Near-Zero", label: "Order Errors" },
-                { value: "10–15%", label: "Higher Order Value" },
-                { value: "40%", label: "More Repeat Customers" },
-              ].map((stat, i) => (
-                <div key={i} className="flex flex-col items-center lg:items-start">
-                  <span className="text-2xl md:text-3xl font-mono text-text-primary font-medium tracking-tight mb-1">
-                    {stat.value}
-                  </span>
-                  <span className="text-sm font-mono text-text-secondary uppercase tracking-wider">
-                    {stat.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Visual Side */}
-        <div
-          ref={visualRef}
-          className="w-full lg:w-[55%] h-[500px] lg:h-full flex items-center justify-center opacity-0 scale-75 lg:scale-100 origin-center lg:mt-0"
+        <h1
+          ref={headlineRef}
+          className="text-5xl md:text-7xl lg:text-[6rem] leading-[1.05] tracking-tight font-serif text-text-primary mb-6 max-w-5xl"
         >
-          {/* <ThreeScenePlaceholder /> */}
+          A Complete Restaurant Operating System
+        </h1>
+
+        <p
+          ref={subheadRef}
+          className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-10 opacity-0 leading-relaxed"
+        >
+          OrbitDine replaces manual order-taking, guesswork, and missed revenue with a fully integrated platform. From the moment a guest sits down to the kitchen line, everything is connected in real time.
+        </p>
+
+        <div ref={buttonsRef} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 opacity-0">
+          <button className="group relative px-8 py-4 bg-text-primary text-base rounded-full overflow-hidden transition-transform hover:scale-105 active:scale-95 shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:shadow-[0_0_60px_rgba(255,255,255,0.2)]">
+            <span className="relative z-10 flex items-center font-medium">
+              Get Started
+              <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </span>
+          </button>
+          <button className="group px-8 py-4 border border-border bg-glass backdrop-blur-lg rounded-full transition-all hover:bg-border/50 active:scale-95 text-text-primary">
+            <span className="flex items-center font-medium">
+              <PlayCircle className="mr-2 w-5 h-5 text-text-secondary group-hover:text-text-primary transition-colors" />
+              See How It Works
+            </span>
+          </button>
         </div>
       </div>
     </motion.section>

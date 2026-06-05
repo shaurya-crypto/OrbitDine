@@ -52,9 +52,9 @@ export default function CookieConsent() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:bottom-8 z-50 md:max-w-md w-full"
+          className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:bottom-8 z-[100] md:max-w-md"
         >
-          <div className="glass-panel bg-surface/95 p-6 rounded-2xl shadow-2xl border border-border">
+          <div className="bg-base/60 backdrop-blur-2xl p-5 md:p-6 rounded-2xl shadow-2xl border border-border/50">
             {!showPreferences ? (
               <>
                 <div className="flex items-start gap-4 mb-4">
@@ -62,30 +62,30 @@ export default function CookieConsent() {
                     <Cookie className="w-5 h-5 text-accent" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-text-primary mb-2">We value your privacy</h3>
-                    <p className="text-sm text-text-secondary">
+                    <h3 className="text-lg font-medium text-text-primary mb-1 md:mb-2">We value your privacy</h3>
+                    <p className="text-xs md:text-sm text-text-secondary leading-relaxed">
                       We use cookies to enhance your browsing experience, serve personalized ads or content, and analyze our traffic. By clicking "Accept All", you consent to our use of cookies.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2.5">
                   <button 
                     onClick={handleAcceptAll}
-                    className="w-full bg-text-primary text-base text-surface font-medium rounded-xl py-3 hover:bg-text-primary/90 transition-colors"
+                    className="w-full bg-text-primary text-base text-surface font-medium rounded-xl py-2.5 md:py-3 hover:bg-text-primary/90 transition-colors"
                   >
                     Accept All
                   </button>
-                  <div className="flex gap-3">
+                  <div className="flex gap-2.5">
                     <button 
                       onClick={handleRejectAll}
-                      className="w-1/2 bg-base border border-border text-text-primary text-sm font-medium rounded-xl py-2.5 hover:bg-border/30 transition-colors"
+                      className="w-1/2 bg-surface/50 border border-border/50 text-text-primary text-sm font-medium rounded-xl py-2 hover:bg-border/30 transition-colors"
                     >
                       Reject All
                     </button>
                     <button 
                       onClick={() => setShowPreferences(true)}
-                      className="w-1/2 bg-base border border-border text-text-primary text-sm font-medium rounded-xl py-2.5 hover:bg-border/30 transition-colors"
+                      className="w-1/2 bg-surface/50 border border-border/50 text-text-primary text-sm font-medium rounded-xl py-2 hover:bg-border/30 transition-colors"
                     >
                       Preferences
                     </button>

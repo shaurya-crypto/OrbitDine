@@ -93,11 +93,11 @@ export function ProblemStorySection() {
         </div>
 
         {/* Right Column - Scrolling List */}
-        <div ref={rightColRef} className="w-full md:w-1/2 flex flex-col gap-6 md:gap-32 pb-10 md:pb-32">
+        <div ref={rightColRef} className="w-full md:w-1/2 flex flex-col gap-12 md:gap-16 pb-10 md:pb-32">
           {problems.map((prob, i) => (
             <div 
               key={i} 
-              className="problem-card flex flex-col justify-center min-h-[25vh] md:min-h-[40vh]"
+              className="problem-card flex flex-col justify-center min-h-[25vh]"
             >
               <span className="text-xs md:text-sm font-mono text-accent mb-3 border border-accent/20 rounded-full px-3 py-1 w-max bg-accent/5">
                 {prob.number}

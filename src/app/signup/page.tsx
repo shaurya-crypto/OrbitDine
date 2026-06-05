@@ -18,13 +18,8 @@ import { useEffect, Suspense } from "react";
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
-  restaurantName: z.string().optional(),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
 });
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -81,11 +76,7 @@ function SignupForm() {
 
   const handleNext = async (e: React.MouseEvent) => {
     e.preventDefault();
-    const fieldsToValidate: any[] = ["fullName", "email"];
-    if (!restaurantId) {
-      fieldsToValidate.push("restaurantName");
-    }
-    const isValid = await trigger(fieldsToValidate);
+    const isValid = await trigger(["fullName", "email"]);
     if (isValid) {
       setStep(2);
     }
@@ -102,7 +93,6 @@ function SignupForm() {
           fullName: data.fullName,
           email: data.email,
           password: data.password,
-          restaurantName: data.restaurantName,
           restaurantId: restaurantId || undefined,
         }),
       });
@@ -162,16 +152,6 @@ function SignupForm() {
                   {...register("fullName")}
                   error={errors.fullName?.message}
                 />
-                
-                {!restaurantId && (
-                  <FloatingInput 
-                    id="restaurantName" 
-                    type="text"
-                    label="Restaurant Name"
-                    {...register("restaurantName")}
-                    error={errors.restaurantName?.message}
-                  />
-                )}
 
                 <FloatingInput  
                   id="email" 
@@ -243,13 +223,7 @@ function SignupForm() {
                   )}
                 </div>
                 
-                <FloatingInput 
-                  id="confirmPassword" 
-                  type="password"
-                  label="Confirm Password"
-                  {...register("confirmPassword")}
-                  error={errors.confirmPassword?.message}
-                />
+
 
                 <div className="text-sm text-text-secondary mt-2 px-1">
                   By completing registration, you agree to our <Link href="#" className="text-text-primary underline">Terms of Service</Link> and <Link href="#" className="text-text-primary underline">Privacy Policy</Link>.

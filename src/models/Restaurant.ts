@@ -16,7 +16,12 @@ export interface IRestaurant extends Document {
   city?: string;
   state?: string;
   country?: string;
+  pinCode?: string;
+  restaurantType?: string;
   totalTables: number;
+  staffCount?: number;
+  openingHours?: string;
+  closingHours?: string;
   settings: {
     taxPercentage: number;
     serviceChargePercentage: number;
@@ -89,9 +94,25 @@ const RestaurantSchema = new Schema<IRestaurant>(
     country: {
       type: String,
     },
+    pinCode: {
+      type: String,
+    },
+    restaurantType: {
+      type: String,
+    },
     totalTables: {
       type: Number,
       default: 0,
+    },
+    staffCount: {
+      type: Number,
+      default: 0,
+    },
+    openingHours: {
+      type: String,
+    },
+    closingHours: {
+      type: String,
     },
     settings: {
       taxPercentage: { type: Number, default: 0 },

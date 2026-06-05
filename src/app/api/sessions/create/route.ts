@@ -47,6 +47,11 @@ export async function POST(req: Request) {
 
       const { restaurantId, tableId } = qrRecord;
 
+      // Update QR metrics
+      qrRecord.scanCount = (qrRecord.scanCount || 0) + 1;
+      qrRecord.lastScanTime = new Date();
+      await qrRecord.save({ session });
+
       // 2. Table Validation & Check for existing active session (Prevent Duplicates)
       const table = await TableModel.findById(tableId).session(session);
       if (!table) {

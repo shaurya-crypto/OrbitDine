@@ -31,7 +31,12 @@ export default function LoginPage() {
   useEffect(() => {
     // Block logged in users
     if (role) {
-      router.replace(`/dashboard/${role.toLowerCase()}`);
+      const authStore = useAuthStore.getState();
+      if (role === "owner" && !authStore.restaurantId) {
+        router.replace("/onboarding");
+      } else {
+        router.replace(`/dashboard/${role.toLowerCase()}`);
+      }
     }
   }, [role, router]);
 
@@ -53,6 +58,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           email: data.email,
           password: data.password,
+          rememberMe: data.rememberMe,
         }),
       });
 
@@ -68,7 +74,11 @@ export default function LoginPage() {
       setAuth(responseData.userId, responseData.role, responseData.restaurantId, responseData.fullName);
 
       // Redirect to the dashboard based on role
-      router.push(`/dashboard/${responseData.role}`);
+      if (responseData.role === "owner" && !responseData.restaurantId) {
+        router.push("/onboarding");
+      } else {
+        router.push(`/dashboard/${responseData.role}`);
+      }
     } catch (error) {
       setServerError("Network error. Please try again.");
       setIsSubmitting(false);

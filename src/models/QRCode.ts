@@ -7,6 +7,8 @@ export interface IQRCode extends Document {
   code: string;
   active: boolean;
   type: "table" | "pickup" | "takeaway";
+  scanCount: number;
+  lastScanTime?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +42,13 @@ const QRCodeSchema = new Schema<IQRCode>(
       type: String,
       enum: ["table", "pickup", "takeaway"],
       default: "table",
+    },
+    scanCount: {
+      type: Number,
+      default: 0,
+    },
+    lastScanTime: {
+      type: Date,
     },
   },
   {

@@ -8,6 +8,7 @@ import { realtimeService, ConnectionState } from "@/services/realtimeService";
 import { useQueryClient } from "@tanstack/react-query";
 import { Wifi, WifiOff, RefreshCw, ShieldAlert, Menu } from "lucide-react";
 import { RequestRoleModal } from "@/components/dashboard/layout/RequestRoleModal";
+import { NotificationCenter } from "@/components/dashboard/layout/NotificationCenter";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { role, restaurantId, setAuth } = useAuthStore();
@@ -41,9 +42,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [mounted, role, restaurantId, queryClient]);
 
-  // Redirect to login if no role is set
+  useEffect(() => {
+    // Redirect to login if no role is set
+    if (mounted && !role) {
+      router.replace("/login");
+    }
+  }, [mounted, role, router]);
+
   if (mounted && !role) {
-    router.replace("/login");
     return <div className="min-h-screen bg-surface" />;
   }
 
@@ -103,8 +109,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />
       
       <div className="flex-1 md:ml-64 p-4 md:p-8 min-h-screen relative w-full overflow-x-hidden">
-        {/* Connection Status Indicator */}
-        <div className="absolute top-4 right-4 md:top-8 md:right-8 z-50">
+        {/* Top Right Controls: Connection & Notifications */}
+        <div className="absolute top-4 right-4 md:top-8 md:right-8 z-50 flex items-center gap-4">
+          <NotificationCenter />
+          
           {connState === "connected" && (
             <div className="flex items-center space-x-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full border border-green-200 text-xs font-semibold shadow-sm">
               <Wifi size={14} />

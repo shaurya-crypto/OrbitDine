@@ -10,16 +10,20 @@ const faqs = [
     a: "Guests scan a custom-branded QR code on their table using their smartphone camera. This instantly opens your digital menu—no app download required. They can browse, customize, and send their order directly to your kitchen."
   },
   {
-    q: "Can it work offline?",
-    a: "Our core system requires an internet connection to sync orders in real-time. However, we have a lightweight offline mode that queues orders locally and automatically pushes them to the kitchen once connection is restored."
+    q: "How do I add multiple restaurant locations?",
+    a: "OrbitDine supports managing multiple restaurant locations from a single account."
   },
   {
-    q: "How many tables are supported?",
-    a: "Unlimited. Whether you run a cozy 5-table cafe or a sprawling 200-table multi-floor establishment, OrbitDine scales effortlessly without performance drops."
+    q: "Do you offer a referral program?",
+    a: "Restaurants can refer other restaurants and earn benefits through the OrbitDine Partner Program."
   },
   {
-    q: "Can menus be customized?",
-    a: "Absolutely. You have full control over colors, typography, imagery, and layout. Update items, prices, and 86 ingredients in real-time across all active sessions."
+    q: "How are QR codes generated?",
+    a: "Each table receives a unique QR code linked directly to that table session."
+  },
+  {
+    q: "Can I manage menus in real-time?",
+    a: "Yes. Managers can instantly update availability, pricing and menu items."
   }
 ];
 

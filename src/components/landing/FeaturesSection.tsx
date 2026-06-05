@@ -3,10 +3,11 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { motion } from "framer-motion";
 import { usePerformance } from "../providers/PerformanceProvider";
 import { QrCode, TrendingUp, MenuSquare, Wallet, LineChart, MessageSquare } from "lucide-react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-  
+
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -126,14 +127,13 @@ export function FeaturesSection() {
                 ))}
               </ul>
             </div>
-            <GlassPanel premium interactive={false} className="visual-side w-full lg:w-1/2 aspect-square md:aspect-[4/3] relative flex items-center justify-center p-0 overflow-hidden">
-              <div className="absolute inset-0 bg-accent/5 blur-3xl rounded-full" />
-              <div className="w-[50%] max-w-[220px] aspect-[3/4] border border-border rounded-2xl flex flex-col items-center justify-center bg-surface/80 p-6 shadow-2xl backdrop-blur-xl relative z-10 transition-transform hover:scale-105">
-                <div className="w-full bg-base border border-border aspect-square rounded-xl flex items-center justify-center p-4 mb-4 shadow-inner">
-                  <QrCode className="w-full h-full text-text-primary" strokeWidth={1} />
+            <GlassPanel interactive={false} className="visual-side w-full lg:w-1/2 h-[400px] relative rounded-3xl overflow-hidden">
+              <div className="absolute inset-0 bg-accent/5 blur-3xl rounded-3xl" />
+              <div className="absolute inset-0 border-2 border-white/10 rounded-3xl backdrop-blur-xl p-8 flex items-center justify-center">
+                <QrCode className="w-40 h-40 text-text-primary animate-float" />
+                <div className="absolute bottom-6 right-6 bg-surface border border-border rounded-xl p-2 px-4 shadow-lg">
+                  <p className="text-sm font-medium text-text-primary">Scan Me</p>
                 </div>
-                <h4 className="text-lg font-medium text-text-primary mb-2">Scan & Order</h4>
-                <div className="w-10 h-1 bg-accent rounded-full" />
               </div>
             </GlassPanel>
           </div>
@@ -159,20 +159,31 @@ export function FeaturesSection() {
             </div>
             <GlassPanel premium interactive={false} className="visual-side w-full lg:w-1/2 aspect-square md:aspect-[4/3] relative flex items-center justify-center p-0 overflow-hidden">
               <div className="absolute inset-0 bg-accent/5 blur-3xl rounded-full" />
-              <div className="w-[70%] h-[70%] max-w-[380px] flex flex-col gap-3 relative z-10">
-                <div className="w-full flex-1 border border-border rounded-2xl bg-surface/80 backdrop-blur-xl flex items-end p-4 gap-2 shadow-xl">
+              <div className="w-[100%] h-[100%] max-w-[100%] flex flex-col gap-3 relative z-10">
+                <div className="w-full flex-1 border border-border rounded-2xl bg-surface/80 backdrop-blur-xl flex items-end p-4 gap-2 shadow-xl relative overflow-hidden">
+                  <div className="absolute inset-x-0 bottom-1/4 border-b border-border/20 w-full z-0" />
+                  <div className="absolute inset-x-0 bottom-2/4 border-b border-border/20 w-full z-0" />
+                  <div className="absolute inset-x-0 bottom-3/4 border-b border-border/20 w-full z-0" />
+
                   {[40, 70, 45, 90, 65, 80, 50, 100].map((h, i) => (
-                    <div key={i} className="flex-1 bg-accent/60 rounded-t-md hover:bg-accent transition-colors" style={{ height: `${h}%` }} />
+                    <motion.div
+                      key={i}
+                      className="flex-1 bg-accent/80 rounded-t-md hover:bg-accent transition-colors relative z-10"
+                      initial={{ height: 0 }}
+                      whileInView={{ height: `${h}%` }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 1, delay: i * 0.1, ease: "easeOut" }}
+                    />
                   ))}
                 </div>
                 <div className="w-full h-1/3 flex gap-3">
                   <div className="flex-1 border border-border rounded-2xl bg-surface/80 backdrop-blur-xl shadow-xl flex flex-col justify-center p-4">
-                     <span className="text-[10px] text-text-secondary font-mono mb-1 uppercase tracking-wider">Revenue</span>
-                     <span className="text-lg md:text-xl font-medium text-text-primary">+34%</span>
+                    <span className="text-[10px] text-text-secondary font-mono mb-1 uppercase tracking-wider">Revenue</span>
+                    <span className="text-lg md:text-xl font-medium text-text-primary">+34%</span>
                   </div>
                   <div className="flex-1 border border-border rounded-2xl bg-surface/80 backdrop-blur-xl shadow-xl flex flex-col justify-center p-4">
-                     <span className="text-[10px] text-text-secondary font-mono mb-1 uppercase tracking-wider">Turnover</span>
-                     <span className="text-lg md:text-xl font-medium text-text-primary">-12 min</span>
+                    <span className="text-[10px] text-text-secondary font-mono mb-1 uppercase tracking-wider">Turnover</span>
+                    <span className="text-lg md:text-xl font-medium text-text-primary">-12 min</span>
                   </div>
                 </div>
               </div>

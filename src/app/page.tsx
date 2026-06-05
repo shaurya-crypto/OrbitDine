@@ -1,15 +1,15 @@
 import { Navbar } from "@/components/shared/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { TrustSection } from "@/components/landing/TrustSection";
+// import { RestaurantOperationsSection } from "@/components/landing/RestaurantOperationsSection";
 import { ProblemStorySection } from "@/components/landing/ProblemStorySection";
 import { JourneySection } from "@/components/landing/JourneySection";
 import { DeviceShowcase } from "@/components/landing/DeviceShowcase";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
-import { GameZoneSection } from "@/components/landing/GameZoneSection";
-import { LoyaltySection } from "@/components/landing/LoyaltySection";
-import { AnalyticsPreview } from "@/components/landing/AnalyticsPreview";
+import { LiveInsightsSection } from "@/components/landing/LiveInsightsSection";
+import { RolesSection } from "@/components/landing/RolesSection";
+import { CommunitySection } from "@/components/landing/CommunitySection";
 import { WhyOrbitDineSection } from "@/components/landing/WhyOrbitDineSection";
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
+import { TrainingSection } from "@/components/landing/TrainingSection";
 import { PartnerSection } from "@/components/landing/PartnerSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
@@ -20,16 +20,16 @@ export default function Home() {
     <main className="min-h-screen bg-base relative selection:bg-accent/30 selection:text-text-primary">
       <Navbar />
       <HeroSection />
-      <TrustSection />
+      {/* <RestaurantOperationsSection /> */}
       <ProblemStorySection />
       <JourneySection />
-      <DeviceShowcase />
+      {/* <DeviceShowcase /> */}
       <FeaturesSection />
-      <GameZoneSection />
-      <LoyaltySection />
-      <AnalyticsPreview />
+      {/* <LiveInsightsSection /> */}
+      {/* <RolesSection /> */}
+      {/* <CommunitySection /> */}
       <WhyOrbitDineSection />
-      <TestimonialsSection />
+      {/* <TrainingSection /> */}
       <PartnerSection />
       <FAQSection />
       <CTASection />

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb/db";
 import MenuItem from "@/models/MenuItem";
 import Category from "@/models/Category";
+import { eventBus } from "@/lib/services/eventBus";
 
 export async function POST(req: NextRequest) {
   try {
@@ -63,6 +64,12 @@ export async function PATCH(req: NextRequest) {
 
     await menuItem.save();
 
+    eventBus.emitMenuItemUpdated({
+      menuItemId: menuItem._id.toString(),
+      restaurantId: menuItem.restaurantId.toString(),
+      timestamp: new Date()
+    });
+
     return NextResponse.json({ message: "Menu item updated", menuItem });
   } catch (error: any) {
     console.error("Update MenuItem Error:", error);
@@ -88,6 +95,12 @@ export async function DELETE(req: NextRequest) {
     // Soft delete
     menuItem.isDeleted = true;
     await menuItem.save();
+
+    eventBus.emitMenuItemUpdated({
+      menuItemId: menuItem._id.toString(),
+      restaurantId: menuItem.restaurantId.toString(),
+      timestamp: new Date()
+    });
 
     return NextResponse.json({ message: "Menu item deleted successfully" });
   } catch (error: any) {

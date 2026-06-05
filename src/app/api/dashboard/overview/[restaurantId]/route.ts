@@ -131,6 +131,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ restaura
         avgOrderValue,
         avgTicketTime,
         billsPending: billsToday.filter(b => b.status === "unpaid").length,
+        ordersInQueue: await OrderModel.countDocuments({ restaurantId: restId, status: { $in: ["received", "preparing"] }, createdAt: { $gte: todayStart, $lte: todayEnd } }),
+        readyOrders: await OrderModel.countDocuments({ restaurantId: restId, status: "ready", createdAt: { $gte: todayStart, $lte: todayEnd } }),
         topSellingItems,
         peakHours
       },

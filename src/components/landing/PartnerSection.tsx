@@ -51,28 +51,29 @@ export function PartnerSection() {
                <Handshake className="w-6 h-6 text-accent" />
              </div>
              <span className="font-mono text-sm text-accent uppercase tracking-widest font-medium">Partnership</span>
+             <span className="ml-2 text-xs font-mono text-text-primary bg-text-primary/10 px-3 py-1 rounded-full border border-text-primary/20">Launching Soon</span>
           </div>
 
           <h2 className="text-4xl md:text-5xl font-serif text-text-primary tracking-tight mb-8 relative z-10">
-            The Sales Partnership Program
+            The OrbitDine Partner Program
           </h2>
           
           <div className="text-lg text-text-secondary leading-relaxed space-y-6 max-w-3xl relative z-10 mb-12">
             <p>
-              For every restaurant you onboard to OrbitDine, you receive a flat monthly payout of <strong className="text-text-primary">₹4,000</strong>.
+              Know a restaurant that could benefit from OrbitDine? We're building a partner program designed to reward you for helping us grow.
             </p>
             <p>
-              Not a one-time bonus. Every single month that the restaurant remains an active subscriber, you get paid. You own the relationship. We handle the software, the servers, and the technical support.
+              When you successfully refer a new restaurant and they become an active subscriber, you'll earn benefits and rewards through our upcoming referral network. We handle the software, the servers, and the technical support—you just make the introduction.
             </p>
             <p className="font-medium text-text-primary bg-accent/5 p-4 rounded-xl border border-accent/10">
-              Build a portfolio of 25 restaurants? That's ₹1,00,000 in purely passive monthly income.
+              Join our waitlist to be among the first to access the partner program when it launches.
             </p>
           </div>
 
           <div className="relative z-10">
             <button className="group relative px-8 py-4 bg-text-primary text-base rounded-full overflow-hidden transition-transform hover:scale-105 active:scale-95">
               <span className="relative z-10 flex items-center font-medium">
-                Become a Partner
+                Join Partner Waitlist
                 <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
               </span>
             </button>

@@ -6,7 +6,10 @@ export interface ITable extends Document {
   qrCodeId?: mongoose.Types.ObjectId;
   activeSessionId?: mongoose.Types.ObjectId;
   capacity?: number;
+  floor?: string;
   section?: string;
+  x?: number;
+  y?: number;
   notes?: string;
   isActive: boolean;
   status: "available" | "reserved" | "ordering" | "preparing" | "bill_requested" | "closed";
@@ -37,9 +40,22 @@ const TableSchema = new Schema<ITable>(
     capacity: {
       type: Number,
     },
+    floor: {
+      type: String,
+      trim: true,
+      default: "Main Floor"
+    },
     section: {
       type: String,
       trim: true,
+    },
+    x: {
+      type: Number,
+      default: 0
+    },
+    y: {
+      type: Number,
+      default: 0
     },
     notes: {
       type: String,

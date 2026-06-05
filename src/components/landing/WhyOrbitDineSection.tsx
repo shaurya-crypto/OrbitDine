@@ -21,8 +21,8 @@ const differentiators = [
   },
   {
     icon: UserCheck,
-    title: "Founder-Led Support",
-    desc: "Bajrang Saran personally responds to every inquiry within 24 hours. No call centers, no ticket queues, no automated replies.",
+    title: "Customer Support",
+    desc: "Dedicated Support Team with email assistance, onboarding guidance, restaurant setup help, and technical troubleshooting.",
   },
   {
     icon: WifiOff,

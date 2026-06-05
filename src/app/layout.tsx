@@ -6,6 +6,7 @@ import { PerformanceProvider } from "@/components/providers/PerformanceProvider"
 import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import CookieConsent from "@/components/shared/CookieConsent";
+import { ConnectionBanner } from "@/components/shared/ConnectionBanner";
 
 const instrumentSerif = Instrument_Serif({
   weight: "400",
@@ -45,6 +46,7 @@ export default function RootLayout({
           <PerformanceProvider>
             <QueryProvider>
               <SmoothScrollProvider>
+                <ConnectionBanner />
                 {children}
                 <CookieConsent />
               </SmoothScrollProvider>

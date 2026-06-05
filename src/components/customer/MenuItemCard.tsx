@@ -26,11 +26,22 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
 
   const handleAdd = async () => {
     if (!sessionId) return;
-    await addToCart({
-      sessionId,
-      menuItemId: item.id,
-      quantity: 1,
-    });
+    try {
+      await addToCart({
+        sessionId,
+        menuItemId: item.id,
+        quantity: 1,
+      });
+    } catch (error: any) {
+      console.error(error);
+      if (error.response?.status === 404) {
+        alert("Your session has ended or is invalid. Please scan the QR code again.");
+        // Optional: clear session
+        useSessionStore.getState().clearSession();
+      } else {
+        alert("Failed to add item to cart.");
+      }
+    }
   };
 
   const handleIncrease = () => {
@@ -44,14 +55,19 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
 
   const handleDecrease = async () => {
     if (!sessionId || !cartItem) return;
-    if (quantity === 1) {
-      await removeFromCart({ sessionId, cartItemId: cartItem._id });
-    } else {
-      updateQuantity({
-        sessionId,
-        cartItemId: cartItem._id,
-        quantity: quantity - 1,
-      });
+    try {
+      if (quantity === 1) {
+        await removeFromCart({ sessionId, cartItemId: cartItem._id });
+      } else {
+        updateQuantity({
+          sessionId,
+          cartItemId: cartItem._id,
+          quantity: quantity - 1,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update cart.");
     }
   };
 
