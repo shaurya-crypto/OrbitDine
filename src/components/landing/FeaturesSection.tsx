@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import React from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { motion } from "framer-motion";
@@ -44,7 +45,11 @@ const features = [
   }
 ];
 
-export function FeaturesSection() {
+export interface FeaturesSectionProps {
+  title?: React.ReactNode;
+}
+
+export function FeaturesSection({ title }: FeaturesSectionProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { isLowEndMode } = usePerformance();
 
@@ -103,7 +108,9 @@ export function FeaturesSection() {
 
         <div className="text-center mb-24 md:mb-40">
           <h2 className="text-4xl md:text-6xl lg:text-7xl font-serif text-text-primary tracking-tight">
-            Everything You Need.<br />Nothing You Don't.
+            {title || (
+              <>Everything You Need.<br />Nothing You Don't.</>
+            )}
           </h2>
         </div>
 

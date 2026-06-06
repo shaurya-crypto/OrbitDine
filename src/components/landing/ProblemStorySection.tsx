@@ -37,11 +37,6 @@ const problems = [
     title: "Multi-Location Complexity",
     description: "Each branch runs differently. Inconsistent experience, no unified data, impossible to compare performance or make smart decisions.",
     number: "06"
-  },
-  {
-    title: "High Commission Fees",
-    description: "Delivery platforms take 20–30% of every order. You're doing all the work. They're keeping the margin.",
-    number: "07"
   }
 ];
 

@@ -21,8 +21,7 @@ export default function Home() {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "OrbitDine",
-    "url": "https://orbitdine.com",
-    "logo": "https://orbitdine.com/logo.png"
+    "url": "https://orbit-dine-zeta.vercel.app",
   };
 
   const softwareSchema = {
