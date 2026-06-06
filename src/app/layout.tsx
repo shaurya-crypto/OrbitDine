@@ -9,6 +9,7 @@ import CookieConsent from "@/components/shared/CookieConsent";
 import { ConnectionBanner } from "@/components/shared/ConnectionBanner";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { ConfirmProvider } from "@/components/ui/ConfirmProvider";
+import Script from "next/script";
 
 const instrumentSerif = Instrument_Serif({
   weight: "400",
@@ -57,7 +58,6 @@ export const metadata: Metadata = {
   }
 };
 
-import Script from "next/script";
 
 export default function RootLayout({
   children,
