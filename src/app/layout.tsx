@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   description: "Upgrade your restaurant with OrbitDine. The all-in-one QR digital menu, kitchen display system (KDS), and restaurant analytics platform.",
   verification: {
-    google: "42zDK7UJTTbpcRRTb9F8RsdROd0rrvOLvJSGuQM3qpw",
+    google: "uqSaN1PAqxIBR2gBTnEA82cVKOVgtQadwekPAs78cbw",
   },
   openGraph: {
     title: "OrbitDine | Restaurant Management Software",
