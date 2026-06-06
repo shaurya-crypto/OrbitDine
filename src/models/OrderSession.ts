@@ -34,7 +34,7 @@ export interface IOrderSession extends Document {
   }>;
   orderIds: mongoose.Types.ObjectId[];
   billRequested: boolean;
-  status: "active" | "completed" | "cancelled";
+  status: "active" | "completed" | "cancelled" | "bill_requested";
   startedAt: Date;
   endedAt?: Date;
   createdAt: Date;

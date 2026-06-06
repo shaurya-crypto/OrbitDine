@@ -15,15 +15,16 @@ interface Notification {
 }
 
 export function NotificationCenter() {
-  const { restaurantId, role } = useAuthStore();
+  const { restaurantId, roles } = useAuthStore();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!restaurantId || !role) return;
+    if (!restaurantId || !roles || roles.length === 0) return;
 
-    const channelName = `private-${role}-${restaurantId}`;
+    const primaryRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r));
+    const channelName = `private-${primaryRole}-${restaurantId}`;
     const pusherClient = getPusherClient();
     
     if (!pusherClient) return;
@@ -32,9 +33,23 @@ export function NotificationCenter() {
 
     const playSound = () => {
       try {
-        const audio = new Audio('/sounds/notification.mp3');
-        audio.play().catch(() => {}); // Ignore if user hasn't interacted with document
-      } catch (e) {}
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+        
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.5);
+      } catch (e) {
+        console.error("Audio play failed", e);
+      }
     };
 
     const addNotification = (title: string, message: string) => {

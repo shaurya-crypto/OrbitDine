@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     }
 
     // Pull the item from the cart
-    session.cart.pull(cartItemId);
+    session.cart = session.cart.filter((item: any) => item._id.toString() !== cartItemId);
 
     const restaurant = await RestaurantModel.findById(session.restaurantId).lean();
     if (!restaurant) throw new Error("Restaurant not found");
