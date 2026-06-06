@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { 
       userId, restaurantName, address, city, cuisineType, totalTables,
-      restaurantType, country, state, pinCode, staffCount, openingHours, closingHours
+      restaurantType, country, state, pinCode, staffCount, openingHours, closingHours,
+      phone, email, latitude, longitude
     } = body;
 
     if (!userId || !restaurantName || !address || !city || !cuisineType || typeof totalTables !== 'number') {
@@ -49,6 +50,10 @@ export async function POST(req: NextRequest) {
         staffCount,
         openingHours,
         closingHours,
+        phone,
+        email,
+        latitude,
+        longitude,
         status: "active",
         settings: {
           currency: "USD",
@@ -57,7 +62,10 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      await User.updateOne({ _id: userId }, { $set: { restaurantId: restaurant._id } });
+      await User.updateOne({ _id: userId }, { 
+        $set: { restaurantId: restaurant._id },
+        $addToSet: { roles: "owner" }
+      });
     } else {
       restaurant.name = restaurantName;
       restaurant.address = address;
@@ -71,6 +79,10 @@ export async function POST(req: NextRequest) {
       restaurant.staffCount = staffCount;
       restaurant.openingHours = openingHours;
       restaurant.closingHours = closingHours;
+      restaurant.phone = phone;
+      restaurant.email = email;
+      restaurant.latitude = latitude;
+      restaurant.longitude = longitude;
       restaurant.status = "active";
       await restaurant.save();
     }

@@ -9,7 +9,7 @@ import { RequestRoleModal } from "./RequestRoleModal";
 
 export function Sidebar({ mobileOpen = false, setMobileOpen = (v: boolean) => {} }: { mobileOpen?: boolean, setMobileOpen?: (v: boolean) => void }) {
   const pathname = usePathname();
-  const { role, logout } = useAuthStore();
+  const { roles, logout } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
 
@@ -41,9 +41,9 @@ export function Sidebar({ mobileOpen = false, setMobileOpen = (v: boolean) => {}
 
       <div className="flex-1 px-4 space-y-2 mt-4">
         {links.map((link) => {
-          // If the user's role is not included in the link's allowed roles, hide it.
-          // Fallback to true if no role (so we can test easily if we haven't set role yet)
-          if (role && !link.roles.includes(role)) return null;
+          // If the user has none of the required roles for this link, hide it.
+          const hasAccess = roles && roles.some(r => link.roles.includes(r));
+          if (!hasAccess && roles && roles.length > 0) return null;
 
           const isActive = pathname === link.href;
 
@@ -65,7 +65,7 @@ export function Sidebar({ mobileOpen = false, setMobileOpen = (v: boolean) => {}
       </div>
 
       <div className="p-4 border-t border-neutral-800 flex flex-col gap-3">
-        {role && role !== "owner" && (
+        {roles && !roles.includes("owner") && (
           <button 
             onClick={() => setShowRoleModal(true)}
             className="flex items-center justify-center space-x-2 w-full py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg text-sm transition-colors"
@@ -76,9 +76,9 @@ export function Sidebar({ mobileOpen = false, setMobileOpen = (v: boolean) => {}
         )}
         <div className="flex items-center justify-between px-4 py-2">
           <div className="text-sm">
-            <p className="text-white font-medium">{role ? role.charAt(0).toUpperCase() + role.slice(1) : "Select Role"}</p>
+            <p className="text-white font-medium">{roles && roles.length > 0 ? roles.join(", ") : "Select Role"}</p>
           </div>
-          {role && (
+          {roles && roles.length > 0 && (
             <button onClick={logout} className="text-neutral-500 hover:text-white transition-colors">
               <LogOut size={18} />
             </button>

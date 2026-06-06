@@ -2,19 +2,18 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore, Role } from "@/stores/authStore";
 
 export default function DashboardRootPage() {
   const router = useRouter();
-  const { role } = useAuthStore();
+  const { roles } = useAuthStore();
 
   useEffect(() => {
-    if (role) {
-      router.replace(`/dashboard/${role.toLowerCase()}`);
-    } else {
-      // It will let layout.tsx handle the "Select Environment" prompt if no role
+    if (roles && roles.length > 0) {
+      const highestRole = (["owner", "manager", "staff", "kitchen", "customer"] as Role[]).find(r => roles.includes(r)) || "customer";
+      router.replace(`/dashboard/${highestRole}`);
     }
-  }, [role, router]);
+  }, [roles, router]);
 
   return (
     <div className="flex items-center justify-center h-[60vh]">

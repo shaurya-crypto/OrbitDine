@@ -9,12 +9,14 @@ import { useDashboardStore } from "@/stores/dashboardStore";
 import { SessionDrawer } from "@/components/dashboard/manager/SessionDrawer";
 
 import { useState, useEffect } from "react";
-import { Utensils } from "lucide-react";
+import { Utensils, Grid } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function StaffPage() {
   const { restaurantId } = useAuthStore();
   const { selectedTableId } = useDashboardStore();
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => setMounted(true), []);
 
@@ -30,6 +32,14 @@ export default function StaffPage() {
           <div>
             <h1 className="text-3xl font-serif tracking-tight mb-1 text-white">Floor Staff Dashboard</h1>
             <p className="text-zinc-400 text-sm">Live table management and service requests</p>
+          </div>
+          <div className="flex flex-wrap gap-4 w-full sm:w-auto">
+            <button 
+              onClick={() => router.push("/dashboard/tables")}
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 text-white rounded-xl text-sm font-medium hover:bg-zinc-800 transition-colors"
+            >
+              <Grid size={16} /> Table Management
+            </button>
           </div>
         </div>
 

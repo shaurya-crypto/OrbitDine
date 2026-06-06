@@ -26,19 +26,18 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const router = useRouter();
-  const { role, setAuth } = useAuthStore();
+  const { roles, setAuth } = useAuthStore();
 
   useEffect(() => {
-    // Block logged in users
-    if (role) {
-      const authStore = useAuthStore.getState();
-      if (role === "owner" && !authStore.restaurantId) {
-        router.replace("/onboarding");
-      } else {
-        router.replace(`/dashboard/${role.toLowerCase()}`);
-      }
+    // If a user lands on the login page, it means proxy.ts didn't redirect them away.
+    // This implies their backend session cookie is missing or expired.
+    // We must clear any stale frontend state on initial load to avoid infinite redirect loops.
+    // We only do this once on mount, so we don't accidentally clear the state RIGHT AFTER the user logs in.
+    const currentRoles = useAuthStore.getState().roles;
+    if (currentRoles && currentRoles.length > 0) {
+      useAuthStore.getState().logout();
     }
-  }, [role, router]);
+  }, []);
 
   const {
     register,
@@ -71,13 +70,17 @@ export default function LoginPage() {
       }
 
       // Save to Zustand store!
-      setAuth(responseData.userId, responseData.role, responseData.restaurantId, responseData.fullName);
+      setAuth(responseData.userId, responseData.roles, responseData.restaurantId, responseData.fullName);
 
-      // Redirect to the dashboard based on role
-      if (responseData.role === "owner" && !responseData.restaurantId) {
-        router.push("/onboarding");
+      router.refresh();
+      
+      // Redirect to the dashboard based on highest role
+      if (responseData.roles.includes("owner") && !responseData.restaurantId) {
+        window.location.href = "/onboarding";
       } else {
-        router.push(`/dashboard/${responseData.role}`);
+        // Find highest role for initial redirect
+        const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => responseData.roles.includes(r));
+        window.location.href = `/dashboard/${highestRole || "customer"}`;
       }
     } catch (error) {
       setServerError("Network error. Please try again.");

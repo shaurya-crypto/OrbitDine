@@ -7,6 +7,8 @@ import { Users, AlertCircle, Save, Edit3, X } from "lucide-react";
 import axios from "axios";
 import { useDashboardStore } from "@/stores/dashboardStore";
 
+import { useToast } from "@/components/ui/ToastProvider";
+
 export function VisualFloorMap({ restaurantId }: { restaurantId: string }) {
   const { data: tables, isLoading, refetch } = useRealtimeTables(restaurantId);
   const { selectedTableId, setSelectedTable } = useDashboardStore();
@@ -15,6 +17,7 @@ export function VisualFloorMap({ restaurantId }: { restaurantId: string }) {
   const [localPositions, setLocalPositions] = useState<Record<string, { x: number, y: number }>>({});
   const [draggingTable, setDraggingTable] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const toast = useToast();
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -64,8 +67,9 @@ export function VisualFloorMap({ restaurantId }: { restaurantId: string }) {
       await axios.patch(`/api/dashboard/manager/tables/positions`, { restaurantId, updates });
       setEditMode(false);
       refetch();
+      toast.success("Layout saved");
     } catch (error) {
-      alert("Failed to save layout");
+      toast.error("Failed to save layout");
     } finally {
       setIsSaving(false);
     }

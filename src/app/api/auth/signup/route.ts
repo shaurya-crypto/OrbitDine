@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     await connectToDatabase();
     
     const body = await req.json();
-    const { fullName, email, password, restaurantId } = body;
+    const { fullName, email, password, restaurantId, role: requestedRole } = body;
 
     if (!fullName || !email || !password) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -23,15 +23,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email is already registered" }, { status: 409 });
     }
 
-    const isNewOwner = !restaurantId;
-    const role = isNewOwner ? "owner" : "staff"; // Changed from 'customer' to 'staff' if invited. Customers don't use this signup.
+    const isCustomer = requestedRole === "customer";
+    const isNewOwner = !restaurantId && !isCustomer;
+    const assignedRole = isCustomer ? "customer" : (isNewOwner ? "owner" : (requestedRole || "staff"));
+    const roles = [assignedRole]; // Store as array
 
     // Step 1: Create the user first
     const newUser = await User.create({
       fullName,
       email,
       password,
-      role,
+      roles,
       restaurantId: isNewOwner ? undefined : restaurantId,
       isVerified: false,
     });

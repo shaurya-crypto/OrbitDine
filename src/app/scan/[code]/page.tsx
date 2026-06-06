@@ -6,36 +6,36 @@ import { scanQRCode } from "@/services/sessionService";
 import { useSessionStore } from "@/stores/sessionStore";
 import { Loader } from "@/components/ui/Loader";
 
+import { useToast } from "@/components/ui/ToastProvider";
+
 export default function ScanPage() {
   const params = useParams();
   const router = useRouter();
   const code = params.code as string;
   const { setSession, sessionId } = useSessionStore();
+  const toast = useToast();
 
   useEffect(() => {
     async function initSession() {
       if (!code) return;
 
       try {
-        const sessionData = await scanQRCode(code);
+        const response = await scanQRCode(code);
         
         // Save to Zustand (persisted to localStorage automatically)
-        setSession(sessionData._id, sessionData.restaurantId, sessionData.tableId);
+        setSession(response.data._id, response.data.restaurantId, response.data.tableId, response.tableNumber);
         
         // Redirect to Menu
-        router.push(`/menu/${sessionData.restaurantId}`);
+        router.push(`/menu/${response.data.restaurantId}`);
       } catch (error) {
         console.error("Failed to initialize session:", error);
-        // Fallback: If it says 'Joined existing session', the backend still returns `data` via a 200 OK.
-        // Wait, the API wrapper might throw if it's a 400/404, but 200 is fine.
-        // For simplicity, let's just alert for now or show error UI
-        alert("Invalid QR Code or Table Unavailable");
+        toast.error("Invalid QR Code or Table Unavailable");
         router.push("/");
       }
     }
 
     initSession();
-  }, [code, router, setSession]);
+  }, [code, router, setSession, toast]);
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-neutral-900 text-white p-6">

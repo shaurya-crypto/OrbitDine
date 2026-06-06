@@ -7,9 +7,12 @@ import axios from "axios";
 import { Loader } from "@/components/ui/Loader";
 import { QrCode, Download, Printer, RefreshCw, XCircle } from "lucide-react";
 
+import { useToast } from "@/components/ui/ToastProvider";
+
 export default function QrCenterPage() {
   const { restaurantId } = useAuthStore();
   const [mounted, setMounted] = useState(false);
+  const toast = useToast();
 
   useEffect(() => setMounted(true), []);
 
@@ -25,7 +28,7 @@ export default function QrCenterPage() {
   if (!mounted) return <div className="p-8 bg-zinc-950 min-h-screen text-white">Loading...</div>;
 
   const handleDownloadZip = () => {
-    alert("Downloading ZIP of all active QRs...");
+    toast.info("Downloading ZIP of all active QRs...");
   };
 
   return (

@@ -7,10 +7,13 @@ import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 
+import { useToast } from "@/components/ui/ToastProvider";
+
 export function ReadyOrdersPanel({ restaurantId }: { restaurantId: string }) {
   const { data: orders, isLoading } = useRealtimeOrders(restaurantId);
   const queryClient = useQueryClient();
   const { userId } = useAuthStore(); 
+  const toast = useToast();
 
   if (isLoading) return <div className="p-6 flex justify-center"><Loader /></div>;
 
@@ -24,8 +27,9 @@ export function ReadyOrdersPanel({ restaurantId }: { restaurantId: string }) {
         servedBy: userId
       });
       queryClient.invalidateQueries({ queryKey: ["realtimeOrders", restaurantId] });
+      toast.success("Order marked as served.");
     } catch (err) {
-      alert("Failed to mark order as served.");
+      toast.error("Failed to mark order as served.");
     }
   };
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import RoleRequest from "@/models/RoleRequest";
 import User from "@/models/User";
+import { pusherServer } from "@/lib/pusher/server";
 
 // PATCH: Approve or Reject a role request
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -27,10 +28,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     await roleRequest.save();
 
     if (action === "approve") {
-      // Update the user's role
+      // Replace the user's roles entirely with the requested roles (removes customer default)
+      // and link them to the restaurant
       await User.findByIdAndUpdate(roleRequest.userId, {
-        role: roleRequest.requestedRole,
+        $set: { roles: roleRequest.requestedRoles, restaurantId: roleRequest.restaurantId },
+        $unset: { role: "" }
       });
+
+      // Tell the client to refresh its session immediately
+      await pusherServer.trigger(`private-user-${roleRequest.userId}`, "role_updated", {});
     }
 
     // TODO: Send email to user notifying them of approval/rejection

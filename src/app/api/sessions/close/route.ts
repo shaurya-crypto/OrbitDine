@@ -5,6 +5,7 @@ import dbConnect from "@/lib/mongodb/db";
 import TableModel from "@/models/Table";
 import OrderSessionModel from "@/models/OrderSession";
 import { eventBus } from "@/lib/services/eventBus";
+import { pusherServer } from "@/lib/pusher/server";
 
 const closeSchema = z.object({
   sessionId: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
@@ -72,12 +73,17 @@ export async function POST(req: Request) {
       await dbSession.commitTransaction();
       dbSession.endSession();
 
-      // 5. Broadcast Real-Time Event
+      // 5. Broadcast Real-Time Event for Restaurant Dashboard
       eventBus.emitTableStatusChanged({
         tableId: orderSession.tableId.toString(),
         restaurantId: orderSession.restaurantId.toString(),
         status: "available",
         timestamp: new Date(),
+      });
+
+      // 6. Broadcast to the specific customer session
+      await pusherServer.trigger(`private-session-${sessionId}`, "session_completed", { 
+        restaurantId: orderSession.restaurantId.toString() 
       });
 
       return NextResponse.json(

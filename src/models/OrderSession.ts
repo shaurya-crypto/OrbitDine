@@ -13,6 +13,7 @@ export interface IOrderSession extends Document {
   restaurantId: mongoose.Types.ObjectId;
   tableId: mongoose.Types.ObjectId;
   qrCodeId: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId;
   customerName?: string;
   customerPhone?: string;
   cart: Array<{
@@ -53,6 +54,10 @@ const OrderSessionSchema = new Schema<IOrderSession>(
       ref: "Table",
       required: true,
       index: true,
+    },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
     qrCodeId: {
       type: Schema.Types.ObjectId,
@@ -126,4 +131,5 @@ const OrderSessionSchema = new Schema<IOrderSession>(
   }
 );
 
-export default mongoose.models.OrderSession || mongoose.model<IOrderSession>("OrderSession", OrderSessionSchema);
+delete mongoose.models.OrderSession;
+export default mongoose.model<IOrderSession>("OrderSession", OrderSessionSchema);

@@ -39,14 +39,17 @@ function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const restaurantId = searchParams.get("restaurantId");
-  const { role } = useAuthStore();
+  const inviteRole = searchParams.get("role");
+  const [roleSelection, setRoleSelection] = useState<string>(inviteRole || "customer");
+  const { roles: storeRoles } = useAuthStore();
 
   useEffect(() => {
     // Block logged in users
-    if (role) {
-      router.replace(`/dashboard/${role.toLowerCase()}`);
+    if (storeRoles && storeRoles.length > 0) {
+      const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => storeRoles.includes(r as any)) || "customer";
+      router.replace(`/dashboard/${highestRole}`);
     }
-  }, [role, router]);
+  }, [storeRoles, router]);
 
   const {
     register,
@@ -94,6 +97,7 @@ function SignupForm() {
           email: data.email,
           password: data.password,
           restaurantId: restaurantId || undefined,
+          role: roleSelection,
         }),
       });
 
@@ -141,8 +145,28 @@ function SignupForm() {
               <div className="mb-8">
                 <span className="text-xs font-mono text-text-secondary uppercase tracking-wider mb-2 block">Step 1 of 2</span>
                 <h1 className="text-3xl font-medium text-text-primary mb-2">Create your account</h1>
-                <p className="text-text-secondary">Tell us a bit about yourself and your restaurant.</p>
+                <p className="text-text-secondary">Join OrbitDine today.</p>
               </div>
+
+              {/* Account Type Selector (only if not invited) */}
+              {!restaurantId && (
+                <div className="flex bg-surface border border-border p-1 rounded-xl mb-6">
+                  <button 
+                    type="button"
+                    onClick={() => setRoleSelection("customer")}
+                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${roleSelection === "customer" ? "bg-accent text-white shadow-sm" : "text-text-secondary hover:text-text-primary"}`}
+                  >
+                    Customer
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setRoleSelection("owner")}
+                    className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${roleSelection === "owner" ? "bg-accent text-white shadow-sm" : "text-text-secondary hover:text-text-primary"}`}
+                  >
+                    Business Owner
+                  </button>
+                </div>
+              )}
 
               <form className="flex flex-col gap-6 mt-4">
                 <FloatingInput 
@@ -156,7 +180,7 @@ function SignupForm() {
                 <FloatingInput  
                   id="email" 
                   type="email"
-                  label="Work Email"
+                  label="Email Address"
                   {...register("email")}
                   error={errors.email?.message}
                 />

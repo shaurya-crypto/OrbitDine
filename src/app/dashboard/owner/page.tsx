@@ -4,14 +4,18 @@ import { useAuthStore } from "@/stores/authStore";
 import { OwnerCards } from "@/components/dashboard/owner/OwnerCards";
 import { RevenueCharts } from "@/components/dashboard/owner/RevenueCharts";
 import { RoleRequestsPanel } from "@/components/dashboard/owner/RoleRequestsPanel";
-import { Copy, CheckCircle2, Users, Settings, Grid, QrCode, LineChart } from "lucide-react";
+import { MenuControlPanel } from "@/components/dashboard/manager/MenuControlPanel";
+import { Users, Settings, Grid, QrCode, LineChart, ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { InviteLinkModal } from "@/components/dashboard/owner/InviteLinkModal";
 
 export default function OwnerPage() {
   const { restaurantId } = useAuthStore();
-  const [copied, setCopied] = useState(false);
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -20,23 +24,21 @@ export default function OwnerPage() {
   if (!mounted) return <div className="p-8 bg-zinc-950 min-h-screen text-white">Loading dashboard...</div>;
   if (!restaurantId) return <div className="p-8 bg-zinc-950 min-h-screen text-red-500">Error: No Restaurant ID linked to your account. Please relogin.</div>;
 
-  const handleCopyInvite = () => {
-    const inviteLink = `${window.location.origin}/signup?restaurantId=${restaurantId}`;
-    navigator.clipboard.writeText(inviteLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const sections = [
-    { title: "Staff Management", icon: <Users size={24} className="text-blue-400" />, href: "/dashboard/owner/staff" },
-    { title: "Restaurant Settings", icon: <Settings size={24} className="text-zinc-400" />, href: "/dashboard/owner/settings" },
-    { title: "Table Management", icon: <Grid size={24} className="text-emerald-400" />, href: "/dashboard/manager/tables" },
+    { title: "Staff Management", icon: <Users size={24} className="text-blue-400" />, href: "/dashboard/manager/staff" },
+    { title: "Restaurant Settings", icon: <Settings size={24} className="text-zinc-400" />, href: "/dashboard/manager/settings" },
+    { title: "Table Management", icon: <Grid size={24} className="text-emerald-400" />, href: "/dashboard/tables" },
     { title: "QR Management", icon: <QrCode size={24} className="text-purple-400" />, href: "/dashboard/manager/qr-center" },
     { title: "Full Analytics", icon: <LineChart size={24} className="text-indigo-400" />, href: "/dashboard/owner/analytics" },
   ];
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-6 md:p-8 overflow-y-auto">
+      <InviteLinkModal 
+        isOpen={showInviteModal} 
+        onClose={() => setShowInviteModal(false)} 
+        restaurantId={restaurantId} 
+      />
       <div className="max-w-[1400px] mx-auto flex flex-col gap-8">
         
         {/* Header */}
@@ -45,13 +47,13 @@ export default function OwnerPage() {
             <h1 className="text-3xl font-serif tracking-tight mb-1 text-white">Owner Dashboard</h1>
             <p className="text-zinc-400 text-sm">Real-time operational overview</p>
           </div>
-          <button 
-            onClick={handleCopyInvite}
-            className="flex items-center gap-2 bg-white text-zinc-900 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-zinc-200 transition-colors"
-          >
-            {copied ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Copy size={16} />}
-            {copied ? "Link Copied!" : "Copy Staff Invite Link"}
-          </button>
+            <button 
+              onClick={() => setShowInviteModal(true)}
+              className="flex-1 px-4 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
+            >
+              <Users size={16} />
+              Generate Staff Invite Link
+            </button>
         </div>
 
         {/* Top KPI Cards */}
@@ -69,6 +71,11 @@ export default function OwnerPage() {
             </div>
             
             <RoleRequestsPanel restaurantId={restaurantId} />
+
+            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden">
+               <h3 className="font-serif text-xl text-white mb-6">Menu Quick Controls</h3>
+               <MenuControlPanel restaurantId={restaurantId} />
+            </div>
           </div>
 
           {/* Right Column: Navigation & Sections */}

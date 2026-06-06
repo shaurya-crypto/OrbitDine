@@ -45,29 +45,36 @@ export async function proxy(request: NextRequest) {
 
     // Role-based access control for dashboard (cascading hierarchy)
     if (pathname.startsWith("/dashboard")) {
-      const role = payload.role;
+      const roles: string[] = payload.roles || (payload.role ? [payload.role] : []);
       
       // Define which dashboard areas each role can access (cascading permissions)
       const roleAccess: Record<string, string[]> = {
-        owner: ["/dashboard/owner", "/dashboard/manager", "/dashboard/staff", "/dashboard/kitchen", "/dashboard/settings"],
-        manager: ["/dashboard/manager", "/dashboard/staff", "/dashboard/kitchen"],
-        staff: ["/dashboard/staff", "/dashboard/kitchen"],
+        owner: ["/dashboard/owner", "/dashboard/manager", "/dashboard/staff", "/dashboard/kitchen", "/dashboard/settings", "/dashboard/tables"],
+        manager: ["/dashboard/manager", "/dashboard/staff", "/dashboard/kitchen", "/dashboard/tables"],
+        staff: ["/dashboard/staff", "/dashboard/tables"],
         kitchen: ["/dashboard/kitchen"],
         customer: ["/dashboard/customer"],
       };
 
-      const allowedPaths = roleAccess[role] || [];
+      let allowedPaths: string[] = [];
+      roles.forEach(r => {
+        if (roleAccess[r]) allowedPaths.push(...roleAccess[r]);
+      });
+      
       const isAllowed = allowedPaths.some((p) => pathname.startsWith(p));
 
       if (!isAllowed) {
-        // Redirect to their home dashboard if they try to access an unauthorized area
-        return NextResponse.redirect(new URL(`/dashboard/${role}`, request.url));
+        // Redirect to their highest role home dashboard if they try to access an unauthorized area
+        const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r)) || "customer";
+        return NextResponse.redirect(new URL(`/dashboard/${highestRole}`, request.url));
       }
     }
 
     // Redirect authenticated users away from auth pages
     if (publicPaths.includes(pathname)) {
-      return NextResponse.redirect(new URL(`/dashboard/${payload.role}`, request.url));
+      const roles: string[] = payload.roles || (payload.role ? [payload.role] : []);
+      const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r)) || "customer";
+      return NextResponse.redirect(new URL(`/dashboard/${highestRole}`, request.url));
     }
   }
 

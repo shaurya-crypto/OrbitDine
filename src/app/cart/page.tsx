@@ -9,11 +9,16 @@ import { createOrder } from "@/services/orderService";
 import { ArrowLeft, Trash2, ArrowRight } from "lucide-react";
 import { Loader } from "@/components/ui/Loader";
 
+import { useToast } from "@/components/ui/ToastProvider";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
+
 export default function CartPage() {
   const router = useRouter();
   const { sessionId, restaurantId } = useSessionStore();
   const { data: cartData, isLoading, updateQuantity, removeFromCart, clearCart } = useCart(sessionId);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const toast = useToast();
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     if (!sessionId) {
@@ -34,7 +39,7 @@ export default function CartPage() {
       router.push(`/order-success/${response._id}`);
     } catch (error) {
       console.error("Failed to place order:", error);
-      alert("Something went wrong while placing your order.");
+      toast.error("Something went wrong while placing your order.");
       setIsPlacingOrder(false);
     }
   };
@@ -48,7 +53,12 @@ export default function CartPage() {
         </button>
         <h1 className="text-lg font-semibold tracking-tight">Your Order</h1>
         <button 
-          onClick={() => { if(!isEmpty) { if(confirm("Clear cart?")) clearCart({ sessionId: sessionId! }) } }}
+          onClick={async () => { 
+            if(!isEmpty) { 
+              const ok = await confirm({ title: "Clear Cart", message: "Are you sure you want to empty your cart?", isDanger: true });
+              if (ok) clearCart({ sessionId: sessionId! });
+            } 
+          }}
           disabled={isEmpty}
           className="w-10 h-10 flex items-center justify-center text-red-500 disabled:opacity-30 active:scale-95 transition-transform"
         >

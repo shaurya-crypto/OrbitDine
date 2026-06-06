@@ -18,7 +18,7 @@ const getRefreshSecret = () => {
 
 export interface TokenPayload {
   userId: string;
-  role: string;
+  roles: string[];
   isVerified: boolean;
   [key: string]: any;
 }
@@ -27,7 +27,7 @@ export async function signAccessToken(payload: TokenPayload): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("15m") // Short lived access token
+    .setExpirationTime("7d") // Long lived access token for development
     .sign(getJwtSecret());
 }
 

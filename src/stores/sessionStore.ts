@@ -5,7 +5,8 @@ interface SessionState {
   sessionId: string | null;
   restaurantId: string | null;
   tableId: string | null;
-  setSession: (sessionId: string, restaurantId: string, tableId: string) => void;
+  tableNumber: string | null;
+  setSession: (sessionId: string, restaurantId: string, tableId: string, tableNumber?: string) => void;
   clearSession: () => void;
 }
 
@@ -15,8 +16,9 @@ export const useSessionStore = create<SessionState>()(
       sessionId: null,
       restaurantId: null,
       tableId: null,
-      setSession: (sessionId, restaurantId, tableId) => set({ sessionId, restaurantId, tableId }),
-      clearSession: () => set({ sessionId: null, restaurantId: null, tableId: null }),
+      tableNumber: null,
+      setSession: (sessionId, restaurantId, tableId, tableNumber) => set({ sessionId, restaurantId, tableId, tableNumber: tableNumber || null }),
+      clearSession: () => set({ sessionId: null, restaurantId: null, tableId: null, tableNumber: null }),
     }),
     {
       name: "orbitdine-session", // unique name for localStorage key

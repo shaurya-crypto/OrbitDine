@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import Session from "@/models/Session";
 import { verifyRefreshToken, signAccessToken, signRefreshToken } from "@/lib/auth/jwt";
+import User from "@/models/User";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,16 +30,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
 
+    // Fetch full user details to ensure role state is perfectly synced
+    const user = await User.findById(session.userId);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    }
+
+    // Backwards compatibility migration
+    if (!user.roles || user.roles.length === 0) {
+      user.roles = (user as any).role ? [(user as any).role] : ["customer"];
+      await user.save();
+    }
+
     // Rotate Refresh Token
     const newAccessToken = await signAccessToken({
-      userId: payload.userId,
-      role: payload.role,
-      isVerified: payload.isVerified,
+      userId: user._id.toString(),
+      roles: Array.from(user.roles),
+      isVerified: user.isVerified,
     });
     const newRefreshToken = await signRefreshToken({
-      userId: payload.userId,
-      role: payload.role,
-      isVerified: payload.isVerified,
+      userId: user._id.toString(),
+      roles: Array.from(user.roles),
+      isVerified: user.isVerified,
     });
 
     // Update Session in DB
@@ -46,13 +59,19 @@ export async function POST(req: NextRequest) {
     session.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     await session.save();
 
-    const response = NextResponse.json({ message: "Token refreshed" });
+    const response = NextResponse.json({ 
+      message: "Token refreshed",
+      roles: user.roles,
+      userId: user._id.toString(),
+      restaurantId: user.restaurantId?.toString() || null,
+      fullName: user.fullName
+    });
 
     response.cookies.set("accessToken", newAccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 15 * 60,
+      maxAge: 24 * 60 * 60,
       path: "/",
     });
 

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import gsap from "gsap";
 import { ThemeToggle } from "./ThemeToggle";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore, Role } from "@/stores/authStore";
 
 const navLinks = [
   { name: "Features", href: "#features" },
@@ -19,7 +19,8 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const { role } = useAuthStore();
+  const { roles } = useAuthStore();
+  const highestRole = roles && roles.length > 0 ? ((["owner", "manager", "staff", "kitchen", "customer"] as Role[]).find(r => roles.includes(r)) || "customer") : null;
   const logoRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLAnchorElement>(null);
 
@@ -116,10 +117,10 @@ export function Navbar() {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-6">
             <ThemeToggle />
-            {isMounted && role ? (
+            {isMounted && highestRole ? (
               <Link 
                 ref={ctaRef}
-                href={`/dashboard/${role.toLowerCase()}`}
+                href={`/dashboard/${highestRole}`}
                 className="px-6 py-2.5 bg-text-primary text-base text-sm font-medium rounded-full hover:scale-105 active:scale-95 transition-transform"
               >
                 Go to Dashboard
@@ -196,8 +197,8 @@ export function Navbar() {
                 transition={{ delay: 0.8 }}
                 className="mt-8 flex flex-col gap-4"
               >
-                {isMounted && role ? (
-                  <Link href={`/dashboard/${role.toLowerCase()}`} className="w-full py-4 text-center bg-text-primary text-base rounded-full font-medium" onClick={() => setMobileMenuOpen(false)}>
+                {isMounted && highestRole ? (
+                  <Link href={`/dashboard/${highestRole}`} className="w-full py-4 text-center bg-text-primary text-base rounded-full font-medium" onClick={() => setMobileMenuOpen(false)}>
                     Go to Dashboard
                   </Link>
                 ) : (

@@ -1,5 +1,12 @@
 export interface IPaymentGateway {
-  initializePayment(amount: number, currency: string, billId: string, onSuccess: () => void, onError: (error: any) => void): void;
+  initializePayment(
+    amount: number, 
+    currency: string, 
+    billId: string, 
+    onSuccess: () => void, 
+    onError: (error: any) => void,
+    confirmDialog?: (msg: string) => Promise<boolean>
+  ): void;
 }
 
 class RazorpayGateway implements IPaymentGateway {
@@ -10,15 +17,20 @@ class RazorpayGateway implements IPaymentGateway {
     this.key = process.env.NEXT_PUBLIC_RAZORPAY_KEY || "dummy_key_for_dev";
   }
 
-  initializePayment(amount: number, currency: string, billId: string, onSuccess: () => void, onError: (error: any) => void): void {
-    // In a real integration, we would load the Razorpay script dynamically,
-    // fetch an order ID from our backend, and open the modal.
-    // For this MVP, we simulate the gateway popup.
+  initializePayment(
+    amount: number, 
+    currency: string, 
+    billId: string, 
+    onSuccess: () => void, 
+    onError: (error: any) => void,
+    confirmDialog?: (msg: string) => Promise<boolean>
+  ): void {
     console.log(`[RazorpayGateway] Initializing payment for Bill: ${billId} | Amount: ${amount} ${currency}`);
     
-    // Simulate network delay for the popup
-    setTimeout(() => {
-      const confirm = window.confirm(`[RAZORPAY SIMULATION]\nPay ${currency} ${amount} for Bill ${billId}?`);
+    setTimeout(async () => {
+      const msg = `[RAZORPAY SIMULATION]\nPay ${currency} ${amount} for Bill ${billId}?`;
+      const confirm = confirmDialog ? await confirmDialog(msg) : window.confirm(msg);
+      
       if (confirm) {
         onSuccess();
       } else {

@@ -29,13 +29,19 @@ export async function POST(req: Request) {
 
     // Update lastLogin
     user.lastLogin = new Date();
+
+    // Backwards compatibility migration
+    if (!user.roles || user.roles.length === 0) {
+      user.roles = (user as any).role ? [(user as any).role] : ["customer"];
+    }
+
     await user.save();
 
     // Self-healing: if user has no restaurantId, try to find it
     let restaurantId = user.restaurantId;
     if (!restaurantId) {
       // For owners, look up by ownerId
-      if (user.role === "owner") {
+      if (user.roles.includes("owner")) {
         const restaurant = await Restaurant.findOne({ ownerId: user._id });
         if (restaurant) {
           restaurantId = restaurant._id;
@@ -47,7 +53,7 @@ export async function POST(req: Request) {
 
     const payload = {
       userId: user._id.toString(),
-      role: user.role,
+      roles: Array.from(user.roles),
       isVerified: user.isVerified,
     };
 
@@ -65,13 +71,13 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({ 
       message: "Login successful", 
-      role: user.role,
+      roles: user.roles,
       userId: user._id.toString(),
       restaurantId: restaurantId?.toString() || null,
       fullName: user.fullName
     });
 
-    const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 15 * 60; // 30 days or 15 minutes
+    const maxAge = rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60; // 30 days or 1 day
 
     response.cookies.set("accessToken", accessToken, {
       httpOnly: true,

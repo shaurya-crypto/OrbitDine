@@ -9,6 +9,9 @@ import { Loader } from "@/components/ui/Loader";
 import { Receipt, CheckCircle2 } from "lucide-react";
 import axios from "axios";
 
+import { useToast } from "@/components/ui/ToastProvider";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
+
 export default function BillPage() {
   const router = useRouter();
   const { sessionId: paramSessionId } = useParams();
@@ -17,6 +20,8 @@ export default function BillPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
+  const toast = useToast();
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     if (!sessionId || sessionId !== paramSessionId) {
@@ -30,14 +35,14 @@ export default function BillPage() {
         setBill(response);
       } catch (error) {
         console.error("Failed to load bill", error);
-        alert("Could not load your bill. Please ask a staff member for assistance.");
+        toast.error("Could not load your bill. Please ask a staff member for assistance.");
       } finally {
         setIsLoading(false);
       }
     }
 
     fetchBill();
-  }, [sessionId, paramSessionId, router]);
+  }, [sessionId, paramSessionId, router, toast]);
 
   const handlePay = () => {
     if (!bill) return;
@@ -63,7 +68,10 @@ export default function BillPage() {
       (error) => {
         // On Error
         setIsPaying(false);
-        alert(error.message || "Payment failed");
+        toast.error(error.message || "Payment failed");
+      },
+      async (msg: string) => {
+        return await confirm({ title: "Confirm Payment", message: msg, confirmText: "Pay Now" });
       }
     );
   };

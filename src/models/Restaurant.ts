@@ -22,6 +22,9 @@ export interface IRestaurant extends Document {
   staffCount?: number;
   openingHours?: string;
   closingHours?: string;
+  rating: number;
+  reviewCount: number;
+  averagePrice: number;
   settings: {
     taxPercentage: number;
     serviceChargePercentage: number;
@@ -114,6 +117,18 @@ const RestaurantSchema = new Schema<IRestaurant>(
     closingHours: {
       type: String,
     },
+    rating: {
+      type: Number,
+      default: 0,
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
+    averagePrice: {
+      type: Number,
+      default: 2, // 1 to 4 ($ to $$$$)
+    },
     settings: {
       taxPercentage: { type: Number, default: 0 },
       serviceChargePercentage: { type: Number, default: 0 },
@@ -137,4 +152,5 @@ const RestaurantSchema = new Schema<IRestaurant>(
   }
 );
 
-export default mongoose.models.Restaurant || mongoose.model<IRestaurant>("Restaurant", RestaurantSchema);
+delete mongoose.models.Restaurant;
+export default mongoose.model<IRestaurant>("Restaurant", RestaurantSchema);

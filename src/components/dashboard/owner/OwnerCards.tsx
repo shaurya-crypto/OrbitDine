@@ -19,14 +19,16 @@ export function OwnerCards({ restaurantId }: { restaurantId: string }) {
   );
 
   if (isLoading) return <Skeletons />;
-  if (!overview) return <div className="text-zinc-500">No data available.</div>;
+  if (!overview) return <div className="text-zinc-500 py-6 text-center">No analytics data available yet. Data will appear once orders start coming in.</div>;
+
+  const fmt = (v: number | undefined | null) => v != null ? `₹${v.toFixed(2)}` : "N/A";
 
   const cards = [
-    { title: "Revenue Today", value: `₹${overview.revenueToday.toFixed(2)}`, icon: <IndianRupee size={20} className="text-emerald-400" />, bg: "bg-emerald-500/10" },
-    { title: "Orders Today", value: overview.ordersToday, icon: <Receipt size={20} className="text-blue-400" />, bg: "bg-blue-500/10" },
-    { title: "Active Tables", value: overview.activeTables, icon: <Users size={20} className="text-purple-400" />, bg: "bg-purple-500/10" },
-    { title: "Kitchen Load", value: `${overview.avgTicketTime}m Avg`, icon: <Clock size={20} className="text-orange-400" />, bg: "bg-orange-500/10" },
-    { title: "Avg Order Value", value: `₹${overview.avgOrderValue.toFixed(2)}`, icon: <TrendingUp size={20} className="text-indigo-400" />, bg: "bg-indigo-500/10" },
+    { title: "Revenue Today", value: fmt(overview.revenueToday), icon: <IndianRupee size={20} className="text-emerald-400" />, bg: "bg-emerald-500/10" },
+    { title: "Orders Today", value: overview.ordersToday ?? "N/A", icon: <Receipt size={20} className="text-blue-400" />, bg: "bg-blue-500/10" },
+    { title: "Active Tables", value: overview.activeTables ?? "N/A", icon: <Users size={20} className="text-purple-400" />, bg: "bg-purple-500/10" },
+    { title: "Kitchen Load", value: overview.avgTicketTime != null ? `${overview.avgTicketTime}m Avg` : "N/A", icon: <Clock size={20} className="text-orange-400" />, bg: "bg-orange-500/10" },
+    { title: "Avg Order Value", value: overview.ordersToday > 0 ? fmt(overview.avgOrderValue) : "N/A", icon: <TrendingUp size={20} className="text-indigo-400" />, bg: "bg-indigo-500/10" },
   ];
 
   return (

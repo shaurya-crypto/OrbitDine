@@ -79,6 +79,17 @@ class RealtimeService {
     }
   }
 
+  bindUserEvents(userId: string, onRoleUpdated: () => void) {
+    if (!this.pusher) return;
+    const userChannel = this.pusher.subscribe(`private-user-${userId}`);
+    userChannel.bind("role_updated", () => onRoleUpdated());
+  }
+
+  unbindUserEvents(userId: string) {
+    if (!this.pusher) return;
+    this.pusher.unsubscribe(`private-user-${userId}`);
+  }
+
   unbindDashboardEvents(restaurantId: string, role: string) {
     if (!this.pusher) return;
     this.pusher.unsubscribe(`private-restaurant-${restaurantId}`);

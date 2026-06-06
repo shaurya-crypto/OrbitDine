@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const roleRequest = await RoleRequest.create({
       userId,
       restaurantId,
-      requestedRole,
+      requestedRoles: [requestedRole], // Array format
     });
 
     // TODO: Phase C.2 - Send email to Owner via Brevo

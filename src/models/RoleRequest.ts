@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IRoleRequest extends Document {
   userId: mongoose.Types.ObjectId;
   restaurantId: mongoose.Types.ObjectId;
-  requestedRole: "manager" | "staff" | "kitchen";
+  requestedRoles: ("manager" | "staff" | "kitchen")[];
   status: "pending" | "approved" | "rejected";
   createdAt: Date;
   updatedAt: Date;
@@ -21,8 +21,8 @@ const RoleRequestSchema = new Schema<IRoleRequest>(
       ref: "Restaurant",
       required: true,
     },
-    requestedRole: {
-      type: String,
+    requestedRoles: {
+      type: [String],
       enum: ["manager", "staff", "kitchen"],
       required: true,
     },
@@ -36,5 +36,9 @@ const RoleRequestSchema = new Schema<IRoleRequest>(
     timestamps: true,
   }
 );
+// Clear the mongoose model cache for this model to ensure the new schema is applied during Next.js HMR
+if (mongoose.models.RoleRequest) {
+  delete mongoose.models.RoleRequest;
+}
 
-export default mongoose.models.RoleRequest || mongoose.model<IRoleRequest>("RoleRequest", RoleRequestSchema);
+export default mongoose.model<IRoleRequest>("RoleRequest", RoleRequestSchema);

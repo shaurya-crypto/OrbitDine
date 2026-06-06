@@ -6,9 +6,12 @@ import { Receipt, Check } from "lucide-react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { useToast } from "@/components/ui/ToastProvider";
+
 export function BillRequestPanel({ restaurantId }: { restaurantId: string }) {
   const { data: sessions, isLoading } = useRealtimeSessions(restaurantId);
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   if (isLoading) return <div className="p-6 flex justify-center"><Loader /></div>;
 
@@ -17,22 +20,22 @@ export function BillRequestPanel({ restaurantId }: { restaurantId: string }) {
   const handleGenerate = async (sessionId: string) => {
     try {
       await axios.post("/api/bill/generate", { sessionId, override: false });
-      alert("Bill Generated! You can now print it.");
+      toast.success("Bill Generated! You can now print it.");
       queryClient.invalidateQueries({ queryKey: ["realtimeSessions", restaurantId] });
       queryClient.invalidateQueries({ queryKey: ["realtimeTables", restaurantId] });
     } catch (err) {
-      alert("Failed to generate bill.");
+      toast.error("Failed to generate bill.");
     }
   };
 
   const handleMarkPaid = async (sessionId: string) => {
     try {
       await axios.post("/api/sessions/close", { sessionId });
-      alert("Session Closed and Table cleared.");
+      toast.success("Session Closed and Table cleared.");
       queryClient.invalidateQueries({ queryKey: ["realtimeSessions", restaurantId] });
       queryClient.invalidateQueries({ queryKey: ["realtimeTables", restaurantId] });
     } catch (err) {
-      alert("Failed to close session.");
+      toast.error("Failed to close session.");
     }
   };
 

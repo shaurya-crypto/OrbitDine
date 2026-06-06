@@ -5,6 +5,8 @@ import { useSessionStore } from "@/stores/sessionStore";
 import { QuantitySelector } from "./QuantitySelector";
 import { Plus } from "lucide-react";
 
+import { useToast } from "@/components/ui/ToastProvider";
+
 interface MenuItemCardProps {
   item: {
     id: string;
@@ -20,6 +22,7 @@ interface MenuItemCardProps {
 export function MenuItemCard({ item }: MenuItemCardProps) {
   const { sessionId } = useSessionStore();
   const { data: cartData, addToCart, updateQuantity, removeFromCart, isAdding } = useCart(sessionId);
+  const toast = useToast();
 
   const cartItem = cartData?.cart?.find((ci: any) => ci.menuItemId === item.id);
   const quantity = cartItem?.quantity || 0;
@@ -35,11 +38,11 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
     } catch (error: any) {
       console.error(error);
       if (error.response?.status === 404) {
-        alert("Your session has ended or is invalid. Please scan the QR code again.");
+        toast.error("Your session has ended or is invalid. Please scan the QR code again.");
         // Optional: clear session
         useSessionStore.getState().clearSession();
       } else {
-        alert("Failed to add item to cart.");
+        toast.error("Failed to add item to cart.");
       }
     }
   };
@@ -67,7 +70,7 @@ export function MenuItemCard({ item }: MenuItemCardProps) {
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to update cart.");
+      toast.error("Failed to update cart.");
     }
   };
 

@@ -70,6 +70,7 @@ export async function POST(req: Request) {
             success: true,
             message: "Joined existing session",
             data: existingSession,
+            tableNumber: table.tableNumber,
           }, { status: 200 });
         }
       }
@@ -111,6 +112,7 @@ export async function POST(req: Request) {
           success: true,
           message: "Session created successfully",
           data: newOrderSession,
+          tableNumber: table.tableNumber,
         },
         { status: 201 }
       );

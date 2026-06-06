@@ -2,22 +2,21 @@
 
 import { useAuthStore } from "@/stores/authStore";
 import { ManagerCards } from "@/components/dashboard/manager/ManagerCards";
-import { VisualFloorMap } from "@/components/dashboard/manager/VisualFloorMap";
+import { ManagerAnalytics } from "@/components/dashboard/manager/ManagerAnalytics";
+
 import { SessionDrawer } from "@/components/dashboard/manager/SessionDrawer";
 import { MenuControlPanel } from "@/components/dashboard/manager/MenuControlPanel";
 import { useDashboardStore } from "@/stores/dashboardStore";
-import { AddTableModal } from "@/components/dashboard/manager/AddTableModal";
 import { MenuManagementModal } from "@/components/dashboard/manager/MenuManagementModal";
 
 import { useState, useEffect } from "react";
-import { Plus, Settings2, Grid, QrCode } from "lucide-react";
+import { Plus, Settings2, Grid, QrCode, Users, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function ManagerPage() {
   const { restaurantId } = useAuthStore();
   const { selectedTableId } = useDashboardStore();
   const [mounted, setMounted] = useState(false);
-  const [showAddTable, setShowAddTable] = useState(false);
   const router = useRouter();
 
   useEffect(() => setMounted(true), []);
@@ -37,10 +36,22 @@ export default function ManagerPage() {
           </div>
           <div className="flex flex-wrap gap-4 w-full sm:w-auto">
             <button 
-              onClick={() => setShowAddTable(true)}
+              onClick={() => router.push("/dashboard/manager/staff")}
               className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 text-white rounded-xl text-sm font-medium hover:bg-zinc-800 transition-colors"
             >
-              <Plus size={16} /> Add Table
+              <Users size={16} /> Staff
+            </button>
+            <button 
+              onClick={() => router.push("/dashboard/manager/settings")}
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 text-white rounded-xl text-sm font-medium hover:bg-zinc-800 transition-colors"
+            >
+              <Settings size={16} /> Settings
+            </button>
+            <button 
+              onClick={() => router.push("/dashboard/tables")}
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 text-white rounded-xl text-sm font-medium hover:bg-zinc-800 transition-colors"
+            >
+              <Grid size={16} /> Table Management
             </button>
             <button 
               onClick={() => router.push("/dashboard/manager/qr-center")}
@@ -60,26 +71,15 @@ export default function ManagerPage() {
         {/* Top KPI Cards */}
         <ManagerCards restaurantId={restaurantId} />
 
-        {/* Main Content Grid */}
-        <div className="flex flex-col lg:flex-row gap-8">
-          
-          {/* Floor Map & Tables */}
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-6">
-              <Grid className="text-emerald-400 w-5 h-5" />
-              <h2 className="text-xl font-serif text-white">Floor Map</h2>
-            </div>
-            {/* Note: We will add Edit/Disable Table and Generate/Print QR actions to the Table components later as specified by the prompt */}
-            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden min-h-[400px]">
-               <VisualFloorMap restaurantId={restaurantId} />
-            </div>
-          </div>
+        <ManagerAnalytics restaurantId={restaurantId} />
 
-          {/* Right Sidebar (Menu Quick Controls) */}
-          <div className="w-full lg:w-80 flex-shrink-0">
+        {/* Main Content Grid */}
+        <div className="flex justify-center">
+          {/* Menu Quick Controls */}
+          <div className="w-full max-w-4xl">
              <div className="flex items-center gap-2 mb-6">
               <Settings2 className="text-indigo-400 w-5 h-5" />
-              <h2 className="text-xl font-serif text-white">Quick Controls</h2>
+              <h2 className="text-xl font-serif text-white">Menu Controls</h2>
             </div>
             <MenuControlPanel restaurantId={restaurantId} />
           </div>
@@ -92,8 +92,6 @@ export default function ManagerPage() {
           <SessionDrawer restaurantId={restaurantId} />
         </>
       )}
-
-      {showAddTable && <AddTableModal restaurantId={restaurantId} onClose={() => setShowAddTable(false)} />}
     </div>
   );
 }

@@ -9,12 +9,15 @@ import { requestBill } from "@/services/orderService";
 import { Receipt, ArrowLeft, Plus } from "lucide-react";
 import { Loader } from "@/components/ui/Loader";
 
+import { useToast } from "@/components/ui/ToastProvider";
+
 export default function OrdersPage() {
   const router = useRouter();
   const { sessionId: paramSessionId } = useParams();
   const { sessionId, restaurantId } = useSessionStore();
   const { data, isLoading } = useOrderTracking(sessionId);
   const [isRequestingBill, setIsRequestingBill] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     // If param doesn't match session, user shouldn't be here
@@ -34,7 +37,7 @@ export default function OrdersPage() {
       if (error?.response?.status === 400 || error?.response?.status === 200) {
         router.push(`/bill/${sessionId}`);
       } else {
-        alert("Failed to request bill");
+        toast.error("Failed to request bill");
         setIsRequestingBill(false);
       }
     }

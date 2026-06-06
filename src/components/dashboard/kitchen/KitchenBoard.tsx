@@ -7,10 +7,13 @@ import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
+import { useToast } from "@/components/ui/ToastProvider";
+
 export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
   const { data: orders, isLoading } = useRealtimeOrders(restaurantId);
   const queryClient = useQueryClient();
   const prevOrderCountRef = useRef(0);
+  const toast = useToast();
 
   useEffect(() => {
     if (orders) {
@@ -31,8 +34,9 @@ export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
     try {
       await axios.patch("/api/orders/status", { orderId, status: newStatus });
       queryClient.invalidateQueries({ queryKey: ["realtimeOrders", restaurantId] });
+      toast.success("Order status updated");
     } catch (error) {
-      alert("Failed to update status");
+      toast.error("Failed to update status");
     }
   };
 

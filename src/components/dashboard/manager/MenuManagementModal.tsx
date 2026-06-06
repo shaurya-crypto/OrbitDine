@@ -7,6 +7,9 @@ import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRealtimeMenu } from "../../../hooks/useRealtimeMenu"; // Trigger TS server reload
 
+import { useToast } from "@/components/ui/ToastProvider";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
+
 interface MenuManagementModalProps {
   restaurantId: string;
   onClose: () => void;
@@ -16,6 +19,8 @@ export function MenuManagementModal({ restaurantId, onClose }: MenuManagementMod
   const { data: menuData, isLoading } = useRealtimeMenu(restaurantId);
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"categories" | "items">("categories");
+  const toast = useToast();
+  const { confirm } = useConfirm();
 
   // Category State
   const [catName, setCatName] = useState("");
@@ -31,18 +36,21 @@ export function MenuManagementModal({ restaurantId, onClose }: MenuManagementMod
       await axios.post("/api/menu/categories", { restaurantId, name: catName });
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
       setCatName("");
+      toast.success("Category added");
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to add category");
+      toast.error(err.response?.data?.error || "Failed to add category");
     }
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (!confirm("Delete this category?")) return;
+    const ok = await confirm({ title: "Delete Category", message: "Delete this category?", isDanger: true });
+    if (!ok) return;
     try {
       await axios.delete(`/api/menu/categories?categoryId=${id}`);
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
+      toast.success("Category deleted");
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to delete category");
+      toast.error(err.response?.data?.error || "Failed to delete category");
     }
   };
 
@@ -58,18 +66,21 @@ export function MenuManagementModal({ restaurantId, onClose }: MenuManagementMod
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
       setItemName("");
       setItemPrice("");
+      toast.success("Item added");
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to add item");
+      toast.error(err.response?.data?.error || "Failed to add item");
     }
   };
 
   const handleDeleteItem = async (id: string) => {
-    if (!confirm("Delete this item?")) return;
+    const ok = await confirm({ title: "Delete Item", message: "Delete this item?", isDanger: true });
+    if (!ok) return;
     try {
       await axios.delete(`/api/menu/items?itemId=${id}`);
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
+      toast.success("Item deleted");
     } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to delete item");
+      toast.error(err.response?.data?.error || "Failed to delete item");
     }
   };
 

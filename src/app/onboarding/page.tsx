@@ -8,11 +8,18 @@ import * as z from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { Store, MapPin, ChefHat, CheckCircle2, Loader2, Settings } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import dynamic from "next/dynamic";
+
+import { useToast } from "@/components/ui/ToastProvider";
+
+const MapPicker = dynamic(() => import("@/components/ui/MapPicker"), { ssr: false, loading: () => <div className="w-full h-64 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse flex items-center justify-center text-zinc-500">Loading Map...</div> });
 
 const onboardingSchema = z.object({
   restaurantName: z.string().min(2, "Restaurant name is required"),
   restaurantType: z.string().min(2, "Type is required"),
   cuisineType: z.string().min(2, "Cuisine type is required"),
+  phone: z.string().min(5, "Phone number is required"),
+  email: z.string().email("Valid email is required"),
   country: z.string().min(2, "Country is required"),
   state: z.string().min(2, "State is required"),
   city: z.string().min(2, "City is required"),
@@ -22,6 +29,8 @@ const onboardingSchema = z.object({
   staffCount: z.number().min(1, "Must have at least 1 staff member"),
   openingHours: z.string().min(2, "Required"),
   closingHours: z.string().min(2, "Required"),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 type OnboardingValues = z.infer<typeof onboardingSchema>;
@@ -31,8 +40,9 @@ export default function OnboardingPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const router = useRouter();
   const { userId } = useAuthStore();
+  const toast = useToast();
 
-  const { register, handleSubmit, trigger, formState: { errors } } = useForm<OnboardingValues>({
+  const { register, handleSubmit, trigger, setValue, formState: { errors } } = useForm<OnboardingValues>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       totalTables: 10,
@@ -64,6 +74,17 @@ export default function OnboardingPage() {
         throw new Error("Failed to generate restaurant");
       }
       
+      const responseData = await res.json();
+      const newRestaurantId = responseData.restaurant._id;
+      
+      // Update local state so user doesn't have to log out and log back in!
+      useAuthStore.getState().setAuth(
+        userId!,
+        useAuthStore.getState().roles,
+        newRestaurantId,
+        useAuthStore.getState().name!
+      );
+      
       setIsGenerating(false);
       setStep(5);
       
@@ -73,7 +94,7 @@ export default function OnboardingPage() {
     } catch (error) {
       console.error(error);
       setIsGenerating(false);
-      alert("Error generating restaurant. Please try again.");
+      toast.error("Error generating restaurant. Please try again.");
       setStep(3);
     }
   };
@@ -136,7 +157,20 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <button onClick={() => nextStep(["restaurantName", "restaurantType", "cuisineType"])} className="w-full bg-white text-zinc-900 font-medium rounded-xl py-4 mt-4 hover:bg-zinc-200 transition-colors">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-zinc-300">Phone Number</label>
+                    <input type="tel" {...register("phone")} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:border-accent outline-none" placeholder="+1 (555) 000-0000" />
+                    {errors.phone && <span className="text-xs text-red-400">{errors.phone.message}</span>}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-zinc-300">Email Address</label>
+                    <input type="email" {...register("email")} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:border-accent outline-none" placeholder="hello@restaurant.com" />
+                    {errors.email && <span className="text-xs text-red-400">{errors.email.message}</span>}
+                  </div>
+                </div>
+
+                <button onClick={() => nextStep(["restaurantName", "restaurantType", "cuisineType", "phone", "email"])} className="w-full bg-white text-zinc-900 font-medium rounded-xl py-4 mt-4 hover:bg-zinc-200 transition-colors">
                   Continue
                 </button>
               </div>
@@ -188,9 +222,30 @@ export default function OnboardingPage() {
                   {errors.address && <span className="text-xs text-red-400">{errors.address.message}</span>}
                 </div>
 
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-zinc-300 flex justify-between">
+                    <span>Pin Exact Location</span>
+                    <span className="text-xs text-zinc-500 font-mono">Drag pin to adjust</span>
+                  </label>
+                  <MapPicker 
+                    onPositionChange={(pos) => {
+                      setValue("latitude", pos.lat);
+                      setValue("longitude", pos.lng);
+                    }} 
+                    onLocationDetailsFetched={(details) => {
+                      if (details.city) setValue("city", details.city, { shouldValidate: true });
+                      if (details.state) setValue("state", details.state, { shouldValidate: true });
+                      if (details.country) setValue("country", details.country, { shouldValidate: true });
+                      if (details.pinCode) setValue("pinCode", details.pinCode, { shouldValidate: true });
+                      if (details.address) setValue("address", details.address, { shouldValidate: true });
+                    }}
+                  />
+                  {errors.latitude && <span className="text-xs text-red-400">Please select a location on the map.</span>}
+                </div>
+
                 <div className="flex gap-4 mt-4">
                   <button onClick={() => setStep(1)} className="w-1/3 bg-zinc-800 text-white font-medium rounded-xl py-4 hover:bg-zinc-700 transition-colors">Back</button>
-                  <button onClick={() => nextStep(["country", "state", "city", "pinCode", "address"])} className="w-2/3 bg-white text-zinc-900 font-medium rounded-xl py-4 hover:bg-zinc-200 transition-colors">Continue</button>
+                  <button onClick={() => nextStep(["country", "state", "city", "pinCode", "address", "latitude", "longitude"])} className="w-2/3 bg-white text-zinc-900 font-medium rounded-xl py-4 hover:bg-zinc-200 transition-colors">Continue</button>
                 </div>
               </div>
             </motion.div>

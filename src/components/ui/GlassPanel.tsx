@@ -25,25 +25,11 @@ export function GlassPanel({
   const [rotateY, setRotateY] = useState(0);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!interactive || isLowEndMode || !ref.current) return;
-    
-    const rect = ref.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    
-    // Calculate mouse position relative to center of element
-    const mouseX = e.clientX - rect.left - width / 2;
-    const mouseY = e.clientY - rect.top - height / 2;
-    
-    // Map to rotation degrees (tilt)
-    setRotateY((mouseX / (width / 2)) * depth);
-    setRotateX(-(mouseY / (height / 2)) * depth);
+    // Disabled tilt animation as per user request
   };
 
   const handleMouseLeave = () => {
-    if (!interactive || isLowEndMode) return;
-    setRotateX(0);
-    setRotateY(0);
+    // Disabled tilt animation as per user request
   };
 
   const glassClass = premium ? "glass-panel-premium" : "glass-panel";

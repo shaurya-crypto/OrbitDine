@@ -9,12 +9,17 @@ import { useState } from "react";
 import { PrintQRCodeModal } from "./PrintQRCodeModal";
 import { useAuthStore } from "@/stores/authStore";
 
+import { useToast } from "@/components/ui/ToastProvider";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
+
 export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
-  const { role } = useAuthStore();
+  const { roles } = useAuthStore();
   const { selectedTableId, setSelectedTable } = useDashboardStore();
   const { data: sessions } = useRealtimeSessions(restaurantId);
   const queryClient = useQueryClient();
   const [showQR, setShowQR] = useState(false);
+  const toast = useToast();
+  const { confirm } = useConfirm();
 
   if (!selectedTableId) return null;
 
@@ -23,14 +28,16 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
 
   const handleCloseSession = async () => {
     if (!activeSession) return;
-    if (confirm("Are you sure you want to forcibly close this session?")) {
+    const ok = await confirm({ title: "Close Session", message: "Are you sure you want to forcibly close this session?", isDanger: true });
+    if (ok) {
       try {
         await axios.post("/api/sessions/close", { sessionId: activeSession._id });
         queryClient.invalidateQueries({ queryKey: ["realtimeSessions", restaurantId] });
         queryClient.invalidateQueries({ queryKey: ["realtimeTables", restaurantId] });
         setSelectedTable(null);
+        toast.success("Session closed successfully.");
       } catch (err: any) {
-        alert(err.response?.data?.message || err.response?.data?.error || "Failed to close session.");
+        toast.error(err.response?.data?.message || err.response?.data?.error || "Failed to close session.");
       }
     }
   };
@@ -39,32 +46,35 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
     if (!activeSession) return;
     try {
       await axios.post("/api/bill/generate", { sessionId: activeSession._id, override: true });
-      alert("Bill generated successfully.");
+      toast.success("Bill generated successfully.");
       queryClient.invalidateQueries({ queryKey: ["realtimeSessions", restaurantId] });
     } catch (err: any) {
-      alert(err.response?.data?.message || err.response?.data?.error || "Failed to generate bill.");
+      toast.error(err.response?.data?.message || err.response?.data?.error || "Failed to generate bill.");
     }
   };
 
   const handleRegenerateQR = async () => {
-    if (confirm("Are you sure you want to regenerate the QR code? Old QR codes will stop working.")) {
+    const ok = await confirm({ title: "Regenerate QR", message: "Are you sure you want to regenerate the QR code? Old QR codes will stop working.", isDanger: true });
+    if (ok) {
       try {
         await axios.post("/api/qr/regenerate", { tableId: selectedTableId });
-        alert("QR Code regenerated successfully.");
+        toast.success("QR Code regenerated successfully.");
       } catch (err: any) {
-        alert(err.response?.data?.message || err.response?.data?.error || "Failed to regenerate QR.");
+        toast.error(err.response?.data?.message || err.response?.data?.error || "Failed to regenerate QR.");
       }
     }
   };
 
   const handleDeleteTable = async () => {
-    if (confirm("Are you sure you want to delete this table?")) {
+    const ok = await confirm({ title: "Delete Table", message: "Are you sure you want to delete this table?", isDanger: true });
+    if (ok) {
       try {
         await axios.delete(`/api/tables?tableId=${selectedTableId}`);
         queryClient.invalidateQueries({ queryKey: ["realtimeTables", restaurantId] });
         setSelectedTable(null);
+        toast.success("Table deleted successfully.");
       } catch (err: any) {
-        alert(err.response?.data?.message || err.response?.data?.error || "Failed to delete table. Make sure no active sessions exist.");
+        toast.error(err.response?.data?.message || err.response?.data?.error || "Failed to delete table. Make sure no active sessions exist.");
       }
     }
   };
@@ -76,7 +86,7 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
           <h2 className="text-xl font-bold">Table Management</h2>
           <p className="text-sm text-neutral-500">ID: {selectedTableId}</p>
         </div>
-        <button onClick={() => setSelectedTable(null)} className="p-2 bg-neutral-200 rounded-full hover:bg-neutral-300">
+        <button onClick={() => useDashboardStore.getState().setSelectedTable(null)} className="absolute top-4 right-4 text-zinc-400 hover:text-white p-2 z-10 bg-zinc-900/80 rounded-full backdrop-blur-sm transition-colors border border-zinc-800">
           <X size={20} />
         </button>
       </div>
@@ -147,7 +157,7 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
         </button>
 
         {/* Manager/Owner Actions */}
-        {(role === "manager" || role === "owner") && (
+        {(roles?.includes("manager") || roles?.includes("owner")) && (
           <button 
             onClick={handleDeleteTable}
             disabled={!!activeSession}

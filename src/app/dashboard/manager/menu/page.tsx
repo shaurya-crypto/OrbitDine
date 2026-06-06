@@ -15,9 +15,15 @@ export default function MenuManagementPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Edit/Add State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+
+  // Category Edit State
+  const [categoryModal, setCategoryModal] = useState<{isOpen: boolean, category: any | null, name: string}>({ isOpen: false, category: null, name: "" });
+
+  // Custom Dialog States
+  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, type: 'item' | 'category' | null, target: any | null, title: string, message: string}>({ isOpen: false, type: null, target: null, title: '', message: '' });
+  const [messageModal, setMessageModal] = useState<{isOpen: boolean, title: string, message: string, type: 'error' | 'success'}>({ isOpen: false, title: '', message: '', type: 'error' });
   
   // Form State
   const [formData, setFormData] = useState({
@@ -116,7 +122,7 @@ export default function MenuManagementPage() {
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
       setIsModalOpen(false);
     } catch (error) {
-      alert("Failed to save item");
+      setMessageModal({ isOpen: true, title: 'Error', message: 'Failed to save item', type: 'error' });
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -128,17 +134,57 @@ export default function MenuManagementPage() {
       await axios.patch("/api/menu/items", { itemId: item._id, available: !item.available });
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
     } catch (error) {
-      alert("Failed to update availability");
+      setMessageModal({ isOpen: true, title: 'Error', message: 'Failed to update availability', type: 'error' });
     }
   };
 
-  const handleDelete = async (itemId: string) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
+  const confirmDeleteAction = async () => {
+    setIsSubmitting(true);
     try {
-      await axios.delete(`/api/menu/items?itemId=${itemId}`);
+      if (deleteModal.type === 'category') {
+        await axios.delete(`/api/menu/categories?categoryId=${deleteModal.target._id}`);
+        if (activeCategory === deleteModal.target._id) setActiveCategory(null);
+      } else if (deleteModal.type === 'item') {
+        await axios.delete(`/api/menu/items?itemId=${deleteModal.target._id}`);
+      }
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
-    } catch (error) {
-      alert("Failed to delete item");
+      setDeleteModal({ ...deleteModal, isOpen: false });
+    } catch (err: any) {
+      setMessageModal({ isOpen: true, title: 'Error', message: err.response?.data?.error || `Failed to delete ${deleteModal.type}`, type: 'error' });
+      setDeleteModal({ ...deleteModal, isOpen: false });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = (item: any) => {
+    setDeleteModal({
+      isOpen: true,
+      type: 'item',
+      target: item,
+      title: 'Delete Menu Item',
+      message: `Are you sure you want to delete "${item.name}"? This action cannot be undone.`
+    });
+  };
+
+  const handleSaveCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryModal.name.trim() || categoryModal.name.trim() === categoryModal.category?.name) {
+      setCategoryModal({ ...categoryModal, isOpen: false });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await axios.patch("/api/menu/categories", { 
+        categoryId: categoryModal.category._id, 
+        name: categoryModal.name.trim() 
+      });
+      queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
+      setCategoryModal({ isOpen: false, category: null, name: "" });
+    } catch (err) {
+      setMessageModal({ isOpen: true, title: 'Error', message: 'Failed to rename category', type: 'error' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -163,21 +209,80 @@ export default function MenuManagementPage() {
           <div className="w-full md:w-64 flex-shrink-0">
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sticky top-8">
               <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-4 px-2">Categories</h3>
-              <div className="space-y-1">
+              <div className="space-y-1 mb-4">
                 {categories.map((cat: any) => (
-                  <button
-                    key={cat._id}
-                    onClick={() => setActiveCategory(cat._id)}
-                    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      displayCategory === cat._id 
-                      ? "bg-accent/10 text-accent border border-accent/20" 
-                      : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-transparent"
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
+                  <div key={cat._id} className="relative group flex items-center">
+                    <button
+                      onClick={() => setActiveCategory(cat._id)}
+                      className={`flex-1 text-left px-4 py-3 rounded-xl text-sm font-medium transition-all pr-16 ${
+                        displayCategory === cat._id 
+                        ? "bg-accent/10 text-accent border border-accent/20" 
+                        : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-transparent"
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                    <div className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setCategoryModal({ isOpen: true, category: cat, name: cat.name });
+                        }}
+                        className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded-lg transition-colors"
+                        title="Rename"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setDeleteModal({
+                            isOpen: true,
+                            type: 'category',
+                            target: cat,
+                            title: 'Delete Category',
+                            message: `Are you sure you want to delete "${cat.name}"?`
+                          });
+                        }}
+                        className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
+              <form 
+                className="pt-4 border-t border-zinc-800 flex gap-2"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  const input = form.elements.namedItem('categoryName') as HTMLInputElement;
+                  if (!input.value.trim()) return;
+                  
+                  try {
+                    const res = await axios.post('/api/menu/categories', {
+                      restaurantId,
+                      name: input.value.trim(),
+                      sortOrder: categories.length
+                    });
+                    if (res.status === 200 || res.status === 201) {
+                      input.value = '';
+                      queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
+                    }
+                  } catch (err) {
+                    setMessageModal({ isOpen: true, title: 'Error', message: 'Failed to add category', type: 'error' });
+                  }
+                }}
+              >
+                <input 
+                  name="categoryName"
+                  type="text" 
+                  placeholder="+ New Category" 
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-accent text-white placeholder:text-zinc-600"
+                />
+              </form>
             </div>
           </div>
 
@@ -208,7 +313,7 @@ export default function MenuManagementPage() {
                     {/* Action Overlay */}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
                       <button onClick={() => openEditModal(item)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-colors"><Edit2 size={18} /></button>
-                      <button onClick={() => handleDelete(item._id)} className="p-2 bg-red-500/20 hover:bg-red-500/40 rounded-full text-red-400 backdrop-blur-md transition-colors"><Trash2 size={18} /></button>
+                      <button onClick={() => handleDelete(item)} className="p-2 bg-red-500/20 hover:bg-red-500/40 rounded-full text-red-400 backdrop-blur-md transition-colors"><Trash2 size={18} /></button>
                     </div>
 
                     {!item.available && (
@@ -333,6 +438,89 @@ export default function MenuManagementPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Rename Modal */}
+      {categoryModal.isOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm shadow-2xl">
+            <div className="p-6">
+              <h2 className="text-xl font-serif text-white mb-4">Rename Category</h2>
+              <form onSubmit={handleSaveCategory}>
+                <div className="mb-6">
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Category Name</label>
+                  <input 
+                    required 
+                    autoFocus
+                    type="text" 
+                    value={categoryModal.name} 
+                    onChange={e => setCategoryModal({...categoryModal, name: e.target.value})} 
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-accent/50 focus:outline-none" 
+                  />
+                </div>
+                <div className="flex justify-end gap-3 border-t border-zinc-800 pt-4">
+                  <button type="button" onClick={() => setCategoryModal({ isOpen: false, category: null, name: "" })} className="px-4 py-2 rounded-xl font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-accent hover:bg-accent/90 text-white rounded-xl font-medium flex items-center gap-2 transition-colors disabled:opacity-50">
+                    {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : 'Save'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm shadow-2xl">
+            <div className="p-6">
+              <h2 className="text-xl font-serif text-white mb-2">{deleteModal.title}</h2>
+              <p className="text-zinc-400 text-sm mb-6">{deleteModal.message}</p>
+              
+              <div className="flex justify-end gap-3 border-t border-zinc-800 pt-4">
+                <button 
+                  onClick={() => setDeleteModal({ isOpen: false, type: null, target: null, title: '', message: '' })} 
+                  className="px-4 py-2 rounded-xl font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDeleteAction} 
+                  disabled={isSubmitting} 
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generic Message Modal */}
+      {messageModal.isOpen && (
+        <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm shadow-2xl">
+            <div className="p-6">
+              <h2 className={`text-xl font-serif mb-2 ${messageModal.type === 'error' ? 'text-red-400' : 'text-white'}`}>
+                {messageModal.title}
+              </h2>
+              <p className="text-zinc-400 text-sm mb-6">{messageModal.message}</p>
+              
+              <div className="flex justify-end gap-3 border-t border-zinc-800 pt-4">
+                <button 
+                  onClick={() => setMessageModal({ ...messageModal, isOpen: false })} 
+                  className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-medium transition-colors"
+                >
+                  Okay
+                </button>
+              </div>
             </div>
           </div>
         </div>

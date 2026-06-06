@@ -6,8 +6,9 @@ export interface IUser extends Document {
   email: string;
   phoneNumber?: string;
   password?: string; // Optional because OAuth might not have a password
-  role: "owner" | "manager" | "staff" | "customer";
+  roles: ("owner" | "manager" | "staff" | "kitchen" | "customer")[];
   restaurantId?: mongoose.Types.ObjectId;
+  savedRestaurants: mongoose.Types.ObjectId[];
   isVerified: boolean;
   profileImage?: string;
   lastLogin?: Date;
@@ -38,15 +39,21 @@ const UserSchema = new Schema<IUser>(
       type: String,
       select: false, // Don't return password by default
     },
-    role: {
-      type: String,
-      enum: ["owner", "manager", "staff", "customer"],
-      default: "customer",
+    roles: {
+      type: [String],
+      enum: ["owner", "manager", "staff", "kitchen", "customer"],
+      default: ["customer"],
     },
     restaurantId: {
       type: Schema.Types.ObjectId,
       ref: "Restaurant",
     },
+    savedRestaurants: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Restaurant",
+      },
+    ],
     isVerified: {
       type: Boolean,
       default: false,
@@ -64,7 +71,7 @@ const UserSchema = new Schema<IUser>(
 );
 
 // Pre-save hook to hash password before saving
-UserSchema.pre("save", async function () {
+UserSchema.pre("save", async function (this: any) {
   if (!this.isModified("password") || !this.password) {
     return;
   }
@@ -78,4 +85,5 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string) 
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+delete mongoose.models.User;
+export default mongoose.model<IUser>("User", UserSchema);
