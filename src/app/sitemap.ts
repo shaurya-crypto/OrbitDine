@@ -5,6 +5,8 @@ const CITIES = [
   "chennai", "kolkata", "ahmedabad", "jaipur", "chandigarh"
 ];
 
+const COMPETITORS = ["petpooja", "dotpe", "toast", "gloriafood"];
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://orbit-dine-zeta.vercel.app';
   
@@ -28,5 +30,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...programmaticRoutes];
+  const comparisonRoutes: MetadataRoute.Sitemap = COMPETITORS.map((competitor) => ({
+    url: `${baseUrl}/compare/orbitdine-vs-${competitor}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly',
+    priority: 0.8,
+  }));
+
+  return [...staticRoutes, ...programmaticRoutes, ...comparisonRoutes];
 }
