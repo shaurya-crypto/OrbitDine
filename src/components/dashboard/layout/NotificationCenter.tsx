@@ -23,7 +23,7 @@ export function NotificationCenter() {
   useEffect(() => {
     if (!restaurantId || !roles || roles.length === 0) return;
 
-    const primaryRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r));
+    const primaryRole = (["owner", "manager", "staff", "kitchen", "customer"] as const).find(r => roles.includes(r as any));
     const channelName = `private-${primaryRole}-${restaurantId}`;
     const pusherClient = getPusherClient();
     
@@ -86,7 +86,7 @@ export function NotificationCenter() {
       const client = getPusherClient();
       if (client) client.unsubscribe(channelName);
     };
-  }, [restaurantId, role]);
+  }, [restaurantId, roles]);
 
   const markAllRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));

@@ -37,8 +37,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Active session not found" }, { status: 404 });
     }
 
-    // Find the item in the cart using Mongoose's subdocument    const cartItem = session.cart.find((item: any) => item._id.toString() === cartItemId);
-    const item = cartItem;
+    // Find the item in the cart
+    const item = session.cart.find((i: any) => i._id.toString() === cartItemId);
     if (!item) {
       await dbSession.abortTransaction();
       dbSession.endSession();
