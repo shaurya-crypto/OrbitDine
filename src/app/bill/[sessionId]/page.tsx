@@ -4,13 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSessionStore } from "@/stores/sessionStore";
 import { generateBill } from "@/services/billService";
-import { paymentService } from "@/services/paymentService";
 import { Loader } from "@/components/ui/Loader";
-import { Receipt, CheckCircle2 } from "lucide-react";
+import { Receipt, CheckCircle2, Star, Send } from "lucide-react";
 import axios from "axios";
 
 import { useToast } from "@/components/ui/ToastProvider";
-import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function BillPage() {
   const router = useRouter();
@@ -18,10 +16,16 @@ export default function BillPage() {
   const { sessionId, clearSession } = useSessionStore();
   const [bill, setBill] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isPaying, setIsPaying] = useState(false);
-  const [isPaid, setIsPaid] = useState(false);
+  const [isRequestingBill, setIsRequestingBill] = useState(false);
+  const [isBillRequested, setIsBillRequested] = useState(false);
+  
+  // Rating State
+  const [showRatingPopup, setShowRatingPopup] = useState(false);
+  const [rating, setRating] = useState<number>(0);
+  const [hoveredStar, setHoveredStar] = useState<number>(0);
+  const [feedback, setFeedback] = useState("");
+
   const toast = useToast();
-  const { confirm } = useConfirm();
 
   useEffect(() => {
     if (!sessionId || sessionId !== paramSessionId) {
@@ -44,36 +48,39 @@ export default function BillPage() {
     fetchBill();
   }, [sessionId, paramSessionId, router, toast]);
 
-  const handlePay = () => {
-    if (!bill) return;
-    setIsPaying(true);
+  const handleRequestBillClick = () => {
+    setShowRatingPopup(true);
+  };
 
-    paymentService.initializePayment(
-      bill.grandTotal,
-      "USD",
-      bill._id,
-      async () => {
-        // On Success
-        setIsPaid(true);
-        setIsPaying(false);
-        // Call backend to close session
-        try {
-          await axios.post("/api/sessions/close", { sessionId });
-          // Clear local storage session
-          clearSession();
-        } catch (error) {
-          console.error("Failed to cleanly close session", error);
-        }
-      },
-      (error) => {
-        // On Error
-        setIsPaying(false);
-        toast.error(error.message || "Payment failed");
-      },
-      async (msg: string) => {
-        return await confirm({ title: "Confirm Payment", message: msg, confirmText: "Pay Now" });
-      }
-    );
+  const submitRatingAndRequestBill = async () => {
+    if (rating === 0) {
+      toast.error("Please provide a star rating.");
+      return;
+    }
+
+    setIsRequestingBill(true);
+    
+    try {
+      // 1. Submit Rating
+      await axios.post("/api/restaurant/rate", {
+        restaurantId: bill.restaurantId,
+        sessionId: bill.sessionId,
+        rating,
+        feedback
+      });
+
+      // 2. Request Bill (notifies staff)
+      await axios.post("/api/orders/request-bill", { sessionId });
+      
+      setShowRatingPopup(false);
+      setIsBillRequested(true);
+      
+    } catch (error: any) {
+      console.error("Failed to process request", error);
+      toast.error(error?.response?.data?.message || "Failed to process your request");
+    } finally {
+      setIsRequestingBill(false);
+    }
   };
 
   const [showSignup, setShowSignup] = useState(false);
@@ -94,14 +101,14 @@ export default function BillPage() {
     }, 1000);
   };
 
-  if (isPaid) {
+  if (isBillRequested) {
     return (
       <main className="min-h-screen w-full flex flex-col items-center justify-center bg-neutral-950 text-white p-6 pt-12 overflow-y-auto">
         <div className="w-full max-w-md mx-auto flex flex-col items-center text-center mb-10">
           <CheckCircle2 size={80} className="text-accent mb-6" />
-          <h1 className="text-3xl font-serif tracking-tight mb-2 text-text-primary">Payment Successful</h1>
+          <h1 className="text-3xl font-serif tracking-tight mb-2 text-text-primary">Bill Requested</h1>
           <p className="text-text-secondary text-center max-w-xs">
-            Thank you for dining with us! Your session is now closed.
+            Staff is bringing your bill to the table. Thank you for dining with us!
           </p>
         </div>
 
@@ -115,12 +122,12 @@ export default function BillPage() {
             <div className="bg-surface/60 border border-border/50 p-8 rounded-[2rem] text-center backdrop-blur-xl shadow-2xl relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-b from-accent/5 to-transparent z-0" />
               <div className="relative z-10">
-                <h3 className="text-xl font-serif text-text-primary mb-4">Save Your Experience</h3>
+                <h3 className="text-xl font-serif text-text-primary mb-4">While you wait, Save Your Experience</h3>
                 <ul className="text-sm text-text-secondary space-y-3 mb-8 text-left max-w-[200px] mx-auto">
                   <li className="flex items-center"><div className="w-1.5 h-1.5 rounded-full bg-accent mr-3"/> Order History</li>
                   <li className="flex items-center"><div className="w-1.5 h-1.5 rounded-full bg-accent mr-3"/> Favorites</li>
-                  <li className="flex items-center"><div className="w-1.5 h-1.5 rounded-full bg-accent mr-3"/> Saved Restaurants</li>
-                  <li className="flex items-center"><div className="w-1.5 h-1.5 rounded-full bg-accent mr-3"/> Loyalty Features</li>
+                  <li className="flex items-center"><div className="w-1.5 h-1.5 rounded-full text-zinc-600 mr-3"/> Saved Restaurants (Soon)</li>
+                  <li className="flex items-center"><div className="w-1.5 h-1.5 rounded-full text-zinc-600 mr-3"/> Loyalty Features (Soon)</li>
                 </ul>
                 <button 
                   onClick={() => setShowSignup(true)}
@@ -216,17 +223,71 @@ export default function BillPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-neutral-50 via-neutral-50 to-transparent pt-12 pb-safe z-50">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-neutral-50 via-neutral-50 to-transparent pt-12 pb-safe z-40">
         <div className="max-w-md mx-auto">
           <button
-            onClick={handlePay}
-            disabled={isPaying}
+            onClick={handleRequestBillClick}
+            disabled={isRequestingBill || bill.status === "paid"}
             className="w-full bg-neutral-900 text-white font-medium text-lg py-4 rounded-2xl flex items-center justify-center space-x-2 active:scale-[0.98] transition-transform disabled:opacity-70 shadow-xl shadow-black/20"
           >
-            <span>{isPaying ? "Processing..." : "Pay Now"}</span>
+            <span>{isRequestingBill ? "Processing..." : "Request Bill"}</span>
           </button>
         </div>
       </div>
+
+      {showRatingPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl relative">
+            <h2 className="text-2xl font-serif text-neutral-900 mb-1 text-center">Rate Your Experience</h2>
+            <p className="text-sm text-neutral-500 mb-6 text-center">How was your food and service today?</p>
+            
+            <div className="flex justify-center gap-2 mb-6">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onMouseEnter={() => setHoveredStar(star)}
+                  onMouseLeave={() => setHoveredStar(0)}
+                  onClick={() => setRating(star)}
+                  className="transition-transform hover:scale-110 focus:outline-none"
+                >
+                  <Star 
+                    size={40} 
+                    className={star <= (hoveredStar || rating) ? "fill-accent text-accent" : "text-neutral-200"} 
+                  />
+                </button>
+              ))}
+            </div>
+
+            <div className="mb-6">
+              <label className="text-xs font-medium text-neutral-500 mb-1 block">Feedback (Optional)</label>
+              <textarea 
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Tell us what you loved or what we can improve..."
+                className="w-full p-3 rounded-xl border border-neutral-200 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent resize-none text-neutral-900 text-sm"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowRatingPopup(false)}
+                className="flex-1 py-3 text-neutral-500 font-medium rounded-xl hover:bg-neutral-100 transition-colors"
+                disabled={isRequestingBill}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitRatingAndRequestBill}
+                disabled={rating === 0 || isRequestingBill}
+                className="flex-1 py-3 bg-neutral-900 text-white font-medium rounded-xl disabled:opacity-50 hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
+              >
+                {isRequestingBill ? <Loader type="spinner" className="w-5 h-5 border-t-white" /> : "Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -1,13 +1,14 @@
 import { NextResponse, NextRequest } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import Restaurant from "@/models/Restaurant";
+import ReviewModel from "@/models/Review";
 
 export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     
     const body = await req.json();
-    const { restaurantId, rating, feedback } = body;
+    const { restaurantId, sessionId, rating, feedback } = body;
     
     if (!restaurantId || typeof rating !== "number") {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -34,8 +35,13 @@ export async function POST(req: NextRequest) {
     
     await restaurant.save();
     
-    // In a real app, you would also save the feedback string to a Reviews collection.
-    // We are just updating the aggregate rating for now.
+    // Save the detailed review text
+    await ReviewModel.create({
+      restaurantId,
+      sessionId,
+      rating,
+      feedback: feedback ? feedback.trim() : "",
+    });
     
     return NextResponse.json({ message: "Rating submitted successfully" }, { status: 200 });
   } catch (error) {
