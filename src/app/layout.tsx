@@ -30,8 +30,31 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OrbitDine | The Future of Dining",
-  description: "A premium restaurant operating system.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://orbitdine.com"),
+  title: {
+    default: "OrbitDine | Restaurant Management Software & QR Ordering",
+    template: "%s | OrbitDine"
+  },
+  description: "Upgrade your restaurant with OrbitDine. The all-in-one QR digital menu, kitchen display system (KDS), and restaurant analytics platform.",
+  verification: {
+    google: "42zDK7UJTTbpcRRTb9F8RsdROd0rrvOLvJSGuQM3qpw",
+  },
+  openGraph: {
+    title: "OrbitDine | Restaurant Management Software",
+    description: "The complete operating system for modern restaurants. QR ordering, KDS, and analytics.",
+    url: "/",
+    siteName: "OrbitDine",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OrbitDine | Restaurant Management Software",
+    description: "The complete operating system for modern restaurants. QR ordering, KDS, and analytics.",
+  },
+  alternates: {
+    canonical: '/',
+  }
 };
 
 export default function RootLayout({

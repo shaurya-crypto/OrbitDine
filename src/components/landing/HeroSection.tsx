@@ -134,14 +134,14 @@ export function HeroSection() {
           ref={headlineRef}
           className="text-5xl md:text-7xl lg:text-[6rem] leading-[1.05] tracking-tight font-serif text-text-primary mb-6 max-w-5xl"
         >
-          A Complete Restaurant Operating System
+          A Complete Restaurant Management Software
         </h1>
 
         <p
           ref={subheadRef}
           className="text-lg md:text-xl text-text-secondary max-w-3xl mx-auto mb-10 opacity-0 leading-relaxed"
         >
-          OrbitDine replaces manual order-taking, guesswork, and missed revenue with a fully integrated platform. From the moment a guest sits down to the kitchen line, everything is connected in real time.
+          OrbitDine is the ultimate restaurant QR ordering system and digital menu software. Replace manual order-taking with a real-time kitchen display system (KDS).
         </p>
 
         <div ref={buttonsRef} className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 opacity-0">

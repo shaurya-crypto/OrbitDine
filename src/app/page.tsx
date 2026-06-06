@@ -14,10 +14,52 @@ import { PartnerSection } from "@/components/landing/PartnerSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
 import { Footer } from "@/components/shared/Footer";
+import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 
 export default function Home() {
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "OrbitDine",
+    "url": "https://orbitdine.com",
+    "logo": "https://orbitdine.com/logo.png"
+  };
+
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "OrbitDine",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "featureList": [
+      "QR Ordering",
+      "Digital Menu",
+      "Kitchen Display System",
+      "Staff Dashboard",
+      "Analytics"
+    ]
+  };
+
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is OrbitDine?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "OrbitDine is a comprehensive restaurant management software featuring a QR ordering system, digital menu, kitchen display system (KDS), and real-time analytics."
+        }
+      }
+    ]
+  };
+
   return (
     <main className="min-h-screen bg-base relative selection:bg-accent/30 selection:text-text-primary">
+      <SchemaMarkup schema={organizationSchema} />
+      <SchemaMarkup schema={softwareSchema} />
+      <SchemaMarkup schema={faqSchema} />
       <Navbar />
       <HeroSection />
       {/* <RestaurantOperationsSection /> */}
