@@ -3,6 +3,7 @@
 import { useAuthStore } from "@/stores/authStore";
 import { ManagerCards } from "@/components/dashboard/manager/ManagerCards";
 import { ManagerAnalytics } from "@/components/dashboard/manager/ManagerAnalytics";
+import { RevenueCharts } from "@/components/dashboard/owner/RevenueCharts";
 
 import { SessionDrawer } from "@/components/dashboard/manager/SessionDrawer";
 import { MenuControlPanel } from "@/components/dashboard/manager/MenuControlPanel";
@@ -10,7 +11,7 @@ import { useDashboardStore } from "@/stores/dashboardStore";
 import { MenuManagementModal } from "@/components/dashboard/manager/MenuManagementModal";
 
 import { useState, useEffect } from "react";
-import { Plus, Settings2, Grid, QrCode, Users, Settings } from "lucide-react";
+import { Plus, Settings2, Grid, QrCode, Users, Settings, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function ManagerPage() {
@@ -71,7 +72,13 @@ export default function ManagerPage() {
         {/* Top KPI Cards */}
         <ManagerCards restaurantId={restaurantId} />
 
-        <ManagerAnalytics restaurantId={restaurantId} />
+        <div className="w-full">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp className="text-emerald-400 w-5 h-5" />
+            <h2 className="text-xl font-serif text-white">Advanced Analytics</h2>
+          </div>
+          <RevenueCharts restaurantId={restaurantId} />
+        </div>
 
         {/* Main Content Grid */}
         <div className="flex justify-center">

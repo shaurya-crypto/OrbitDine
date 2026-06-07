@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import Order from "@/models/Order";
 import { verifyAccessToken } from "@/lib/auth/jwt";
+import mongoose from "mongoose";
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,26 +21,52 @@ export async function GET(req: NextRequest) {
 
     await connectToDatabase();
 
+    let restaurantObjId: mongoose.Types.ObjectId;
+    try {
+      restaurantObjId = new mongoose.Types.ObjectId(restaurantId);
+    } catch {
+      return NextResponse.json({ error: "Invalid restaurantId" }, { status: 400 });
+    }
+
     // Today's date boundary
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    // 1. Total Revenue Today
+    // 1. Today's metrics
     const todayOrders = await Order.find({
-      restaurantId,
-      createdAt: { $gte: startOfDay },
-      status: { $ne: "cancelled" }
+      restaurantId: restaurantObjId,
+      createdAt: { $gte: startOfDay }
     });
 
-    const revenueToday = todayOrders.reduce((sum, order) => sum + order.grandTotal, 0);
-    const totalOrdersToday = todayOrders.length;
+    let revenueToday = 0;
+    let totalOrdersToday = 0;
+    const orderStatusBreakdown = {
+      received: 0,
+      preparing: 0,
+      ready: 0,
+      served: 0,
+      cancelled: 0
+    };
+
+    todayOrders.forEach(order => {
+      const status = order.status as keyof typeof orderStatusBreakdown;
+      if (orderStatusBreakdown[status] !== undefined) {
+        orderStatusBreakdown[status]++;
+      }
+      if (status !== "cancelled") {
+        revenueToday += order.grandTotal;
+        totalOrdersToday++;
+      }
+    });
+
+    const averageOrderValueToday = totalOrdersToday > 0 ? revenueToday / totalOrdersToday : 0;
     
-    // 2. Popular Items (All time or last 30 days)
+    // 2. Popular Items (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const popularItemsAggregation = await Order.aggregate([
-      { $match: { restaurantId: restaurantId, createdAt: { $gte: thirtyDaysAgo }, status: { $ne: "cancelled" } } },
+      { $match: { restaurantId: restaurantObjId, createdAt: { $gte: thirtyDaysAgo }, status: { $ne: "cancelled" } } },
       { $unwind: "$items" },
       { $group: { _id: "$items.name", totalSold: { $sum: "$items.quantity" }, revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } } } },
       { $sort: { totalSold: -1 } },
@@ -48,7 +75,7 @@ export async function GET(req: NextRequest) {
 
     // 3. Hourly Revenue (Today)
     const hourlyAggregation = await Order.aggregate([
-      { $match: { restaurantId: restaurantId, createdAt: { $gte: startOfDay }, status: { $ne: "cancelled" } } },
+      { $match: { restaurantId: restaurantObjId, createdAt: { $gte: startOfDay }, status: { $ne: "cancelled" } } },
       { $group: { 
           _id: { $hour: "$createdAt" }, 
           revenue: { $sum: "$grandTotal" } 
@@ -57,7 +84,6 @@ export async function GET(req: NextRequest) {
       { $sort: { _id: 1 } }
     ]);
 
-    // Format hourly data for charts
     const hourlyData = Array.from({ length: 24 }).map((_, i) => ({
       hour: `${i}:00`,
       revenue: hourlyAggregation.find(h => h._id === i)?.revenue || 0
@@ -69,31 +95,38 @@ export async function GET(req: NextRequest) {
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
     const dailyAggregation = await Order.aggregate([
-      { $match: { restaurantId: restaurantId, createdAt: { $gte: sevenDaysAgo }, status: { $ne: "cancelled" } } },
+      { $match: { restaurantId: restaurantObjId, createdAt: { $gte: sevenDaysAgo }, status: { $ne: "cancelled" } } },
       { $group: { 
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, 
-          revenue: { $sum: "$grandTotal" } 
+          revenue: { $sum: "$grandTotal" },
+          orders: { $sum: 1 }
         } 
       },
       { $sort: { _id: 1 } }
     ]);
 
-    // Format 7 days data
     const last7DaysData = Array.from({ length: 7 }).map((_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       const dateStr = d.toISOString().split('T')[0];
+      const dayData = dailyAggregation.find(h => h._id === dateStr);
       return {
         date: d.toLocaleDateString('en-US', { weekday: 'short' }),
-        revenue: dailyAggregation.find(h => h._id === dateStr)?.revenue || 0
+        revenue: dayData?.revenue || 0,
+        orders: dayData?.orders || 0
       };
     });
 
-    // If manager, we might strip out total historical revenue, but let's give them today's stats for now.
+    const revenueThisWeek = dailyAggregation.reduce((sum, d) => sum + d.revenue, 0);
+    const totalOrdersThisWeek = dailyAggregation.reduce((sum, d) => sum + d.orders, 0);
     
     return NextResponse.json({ 
       revenueToday,
       totalOrdersToday,
+      averageOrderValueToday,
+      revenueThisWeek,
+      totalOrdersThisWeek,
+      orderStatusBreakdown,
       popularItems: popularItemsAggregation,
       hourlyData,
       last7DaysData
