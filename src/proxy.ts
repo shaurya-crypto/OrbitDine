@@ -43,10 +43,16 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/verify-email", request.url));
     }
 
+    const roles: string[] = payload.roles || (payload.role ? [payload.role] : []);
+
+    // Check if owner needs onboarding
+    if (roles.includes("owner") && !payload.restaurantId && !pathname.startsWith("/onboarding")) {
+      // If they are an owner and don't have a restaurantId, force them to /onboarding
+      return NextResponse.redirect(new URL("/onboarding", request.url));
+    }
+
     // Role-based access control for dashboard (cascading hierarchy)
     if (pathname.startsWith("/dashboard")) {
-      const roles: string[] = payload.roles || (payload.role ? [payload.role] : []);
-      
       // Define which dashboard areas each role can access (cascading permissions)
       const roleAccess: Record<string, string[]> = {
         owner: ["/dashboard/owner", "/dashboard/manager", "/dashboard/staff", "/dashboard/kitchen", "/dashboard/settings", "/dashboard/tables"],
@@ -72,7 +78,9 @@ export async function proxy(request: NextRequest) {
 
     // Redirect authenticated users away from auth pages
     if (publicPaths.includes(pathname)) {
-      const roles: string[] = payload.roles || (payload.role ? [payload.role] : []);
+      if (roles.includes("owner") && !payload.restaurantId) {
+        return NextResponse.redirect(new URL("/onboarding", request.url));
+      }
       const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r)) || "customer";
       return NextResponse.redirect(new URL(`/dashboard/${highestRole}`, request.url));
     }
