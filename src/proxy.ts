@@ -8,10 +8,10 @@ const publicPaths = ["/", "/login", "/signup", "/forgot-password", "/reset-passw
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow static files, api auth routes, and public paths
+  // Allow static files, all API routes, and public paths
   if (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api") ||
     pathname.match(/\.(.*)$/) ||
     publicPaths.includes(pathname)
   ) {
