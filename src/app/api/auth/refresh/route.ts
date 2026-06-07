@@ -43,16 +43,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Rotate Refresh Token
-    const newAccessToken = await signAccessToken({
+    const payloadData: any = {
       userId: user._id.toString(),
       roles: Array.from(user.roles),
       isVerified: user.isVerified,
-    });
-    const newRefreshToken = await signRefreshToken({
-      userId: user._id.toString(),
-      roles: Array.from(user.roles),
-      isVerified: user.isVerified,
-    });
+    };
+    if (user.restaurantId) {
+      payloadData.restaurantId = user.restaurantId.toString();
+    }
+
+    const newAccessToken = await signAccessToken(payloadData);
+    const newRefreshToken = await signRefreshToken(payloadData);
 
     // Update Session in DB
     session.refreshToken = newRefreshToken;
