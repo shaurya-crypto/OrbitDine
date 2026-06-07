@@ -1,10 +1,10 @@
 "use client";
 
-import { useRealtimeOverview } from "@/hooks/useRealtimeOverview";
+import { useRealtimeAnalytics } from "@/hooks/useRealtimeAnalytics";
 import { IndianRupee, Receipt, Users, Clock, TrendingUp } from "lucide-react";
 
 export function OwnerCards({ restaurantId }: { restaurantId: string }) {
-  const { data: overview, isLoading } = useRealtimeOverview(restaurantId);
+  const { data: analytics, isLoading } = useRealtimeAnalytics(restaurantId);
 
   const Skeletons = () => (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -19,16 +19,16 @@ export function OwnerCards({ restaurantId }: { restaurantId: string }) {
   );
 
   if (isLoading) return <Skeletons />;
-  if (!overview) return <div className="text-zinc-500 py-6 text-center">No analytics data available yet. Data will appear once orders start coming in.</div>;
+  if (!analytics) return <div className="text-zinc-500 py-6 text-center">No analytics data available yet. Data will appear once orders start coming in.</div>;
 
   const fmt = (v: number | undefined | null) => v != null ? `₹${v.toFixed(2)}` : "N/A";
 
   const cards = [
-    { title: "Revenue Today", value: fmt(overview.revenueToday), icon: <IndianRupee size={20} className="text-emerald-400" />, bg: "bg-emerald-500/10" },
-    { title: "Orders Today", value: overview.ordersToday ?? "N/A", icon: <Receipt size={20} className="text-blue-400" />, bg: "bg-blue-500/10" },
-    { title: "Active Tables", value: overview.activeTables ?? "N/A", icon: <Users size={20} className="text-purple-400" />, bg: "bg-purple-500/10" },
-    { title: "Kitchen Load", value: overview.avgTicketTime != null ? `${overview.avgTicketTime}m Avg` : "N/A", icon: <Clock size={20} className="text-orange-400" />, bg: "bg-orange-500/10" },
-    { title: "Avg Order Value", value: overview.ordersToday > 0 ? fmt(overview.avgOrderValue) : "N/A", icon: <TrendingUp size={20} className="text-indigo-400" />, bg: "bg-indigo-500/10" },
+    { title: "Revenue Today", value: fmt(analytics.revenueToday), icon: <IndianRupee size={20} className="text-emerald-400" />, bg: "bg-emerald-500/10" },
+    { title: "Orders Today", value: analytics.totalOrdersToday ?? "N/A", icon: <Receipt size={20} className="text-blue-400" />, bg: "bg-blue-500/10" },
+    { title: "Active Tables", value: analytics.activeTables ?? "N/A", icon: <Users size={20} className="text-purple-400" />, bg: "bg-purple-500/10" },
+    { title: "Kitchen Load", value: analytics.averagePreparationTime != null ? `${analytics.averagePreparationTime}m Avg` : "N/A", icon: <Clock size={20} className="text-orange-400" />, bg: "bg-orange-500/10" },
+    { title: "Avg Order Value", value: analytics.totalOrdersToday > 0 ? fmt(analytics.averageOrderValueToday) : "N/A", icon: <TrendingUp size={20} className="text-indigo-400" />, bg: "bg-indigo-500/10" },
   ];
 
   return (

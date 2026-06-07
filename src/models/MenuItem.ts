@@ -13,6 +13,12 @@ export interface IMenuItem extends Document {
   tags?: string[];
   isBestseller?: boolean;
   isRecommended?: boolean;
+  chefSpecial?: boolean;
+  mostOrdered?: boolean;
+  isNewArrival?: boolean;
+  limitedTimeOffer?: boolean;
+  ltoStartDate?: Date;
+  ltoEndDate?: Date;
   sortOrder: number;
   isDeleted: boolean;
   createdAt: Date;
@@ -69,6 +75,28 @@ const MenuItemSchema = new Schema<IMenuItem>(
     isRecommended: {
       type: Boolean,
       default: false,
+    },
+    chefSpecial: {
+      type: Boolean,
+      default: false,
+    },
+    mostOrdered: {
+      type: Boolean,
+      default: false,
+    },
+    isNewArrival: {
+      type: Boolean,
+      default: false,
+    },
+    limitedTimeOffer: {
+      type: Boolean,
+      default: false,
+    },
+    ltoStartDate: {
+      type: Date,
+    },
+    ltoEndDate: {
+      type: Date,
     },
     sortOrder: {
       type: Number,

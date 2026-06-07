@@ -8,7 +8,10 @@ export async function POST(req: NextRequest) {
   try {
     await dbConnect();
     const body = await req.json();
-    const { restaurantId, categoryId, name, description, price, image, veg, available, addons, tags, isBestseller, isRecommended, sortOrder } = body;
+    const { 
+      restaurantId, categoryId, name, description, price, image, veg, available, 
+      addons, tags, isBestseller, isRecommended, chefSpecial, isNewArrival, limitedTimeOffer, sortOrder 
+    } = body;
 
     if (!restaurantId || !categoryId || !name || price === undefined) {
       return NextResponse.json({ error: "restaurantId, categoryId, name, and price are required" }, { status: 400 });
@@ -32,6 +35,9 @@ export async function POST(req: NextRequest) {
       tags,
       isBestseller,
       isRecommended,
+      chefSpecial,
+      isNewArrival,
+      limitedTimeOffer,
       sortOrder: sortOrder || 0,
       isDeleted: false,
     });

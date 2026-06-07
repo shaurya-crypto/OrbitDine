@@ -33,6 +33,11 @@ export default function MenuManagementPage() {
     categoryId: "",
     veg: true,
     available: true,
+    isBestseller: false,
+    chefSpecial: false,
+    isNewArrival: false,
+    limitedTimeOffer: false,
+    tags: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -52,7 +57,10 @@ export default function MenuManagementPage() {
 
   const openAddModal = () => {
     setEditingItem(null);
-    setFormData({ name: "", description: "", price: "", categoryId: displayCategory || "", veg: true, available: true });
+    setFormData({ 
+      name: "", description: "", price: "", categoryId: displayCategory || "", veg: true, available: true,
+      isBestseller: false, chefSpecial: false, isNewArrival: false, limitedTimeOffer: false, tags: ""
+    });
     setImageFile(null);
     setImagePreview("");
     setIsModalOpen(true);
@@ -67,6 +75,11 @@ export default function MenuManagementPage() {
       categoryId: item.categoryId,
       veg: item.veg ?? true,
       available: item.available ?? true,
+      isBestseller: item.isBestseller || false,
+      chefSpecial: item.chefSpecial || false,
+      isNewArrival: item.isNewArrival || false,
+      limitedTimeOffer: item.limitedTimeOffer || false,
+      tags: item.tags ? item.tags.join(", ") : "",
     });
     setImageFile(null);
     setImagePreview(item.image || "");
@@ -109,6 +122,7 @@ export default function MenuManagementPage() {
       const payload = {
         ...formData,
         price: parseFloat(formData.price),
+        tags: formData.tags ? formData.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
         image: finalImageUrl,
         restaurantId
       };
@@ -362,8 +376,8 @@ export default function MenuManagementPage() {
 
       {/* Add/Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-none sm:rounded-3xl w-full max-w-2xl min-h-screen sm:min-h-0 shadow-2xl relative">
             <div className="p-6 md:p-8">
               <h2 className="text-2xl font-serif text-white mb-6">{editingItem ? 'Edit Menu Item' : 'Add New Item'}</h2>
               
@@ -416,14 +430,38 @@ export default function MenuManagementPage() {
                       <textarea rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-accent/50 focus:outline-none resize-none" placeholder="Brief description of the item..."></textarea>
                     </div>
 
-                    <div className="flex items-center gap-6 pt-2">
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-400 mb-1.5">Custom Tags (comma separated)</label>
+                      <input type="text" value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="e.g. Spicy, Gluten-Free, Contains Nuts" />
+                    </div>
+
+                    <div className="flex flex-wrap gap-4 pt-2">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" checked={formData.veg} onChange={e => setFormData({...formData, veg: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-green-500 focus:ring-green-500/50" />
                         <span className="text-sm text-zinc-300 flex items-center gap-2">Vegetarian <div className="w-2 h-2 rounded-full bg-green-500"></div></span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" checked={formData.available} onChange={e => setFormData({...formData, available: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-accent focus:ring-accent/50" />
-                        <span className="text-sm text-zinc-300">Available (In Stock)</span>
+                        <span className="text-sm text-zinc-300">Available</span>
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-zinc-800">
+                      <label className="flex flex-col gap-1 cursor-pointer">
+                        <span className="text-xs font-medium text-zinc-400">Best Seller 🏆</span>
+                        <input type="checkbox" checked={formData.isBestseller} onChange={e => setFormData({...formData, isBestseller: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-orange-500 focus:ring-orange-500/50" />
+                      </label>
+                      <label className="flex flex-col gap-1 cursor-pointer">
+                        <span className="text-xs font-medium text-zinc-400">Chef Special 👨‍🍳</span>
+                        <input type="checkbox" checked={formData.chefSpecial} onChange={e => setFormData({...formData, chefSpecial: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-purple-500 focus:ring-purple-500/50" />
+                      </label>
+                      <label className="flex flex-col gap-1 cursor-pointer">
+                        <span className="text-xs font-medium text-zinc-400">Popular 🔥</span>
+                        <input type="checkbox" checked={formData.isNewArrival} onChange={e => setFormData({...formData, isNewArrival: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-blue-500 focus:ring-blue-500/50" />
+                      </label>
+                      <label className="flex flex-col gap-1 cursor-pointer">
+                        <span className="text-xs font-medium text-zinc-400">LTO ⏳</span>
+                        <input type="checkbox" checked={formData.limitedTimeOffer} onChange={e => setFormData({...formData, limitedTimeOffer: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-red-500 focus:ring-red-500/50" />
                       </label>
                     </div>
                   </div>

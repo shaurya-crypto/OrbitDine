@@ -9,6 +9,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { useAuthStore, Role } from "@/stores/authStore";
 
 const navLinks = [
+  { name: "Explore", href: "/explore" },
   { name: "Features", href: "#features" },
   { name: "Solutions", href: "#solutions" },
   { name: "About", href: "#about" },

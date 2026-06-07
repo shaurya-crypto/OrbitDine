@@ -5,13 +5,19 @@ export interface IRestaurant extends Document {
   name: string;
   slug: string;
   logo?: string;
+  bannerImage?: string;
   description?: string;
+  keywords?: string[];
   cuisineType?: string;
   phone?: string;
   email?: string;
   address?: string;
   latitude?: number;
   longitude?: number;
+  location?: {
+    type: string;
+    coordinates: number[]; // [lng, lat]
+  };
   geofenceRadius?: number;
   city?: string;
   state?: string;
@@ -61,9 +67,19 @@ const RestaurantSchema = new Schema<IRestaurant>(
     logo: {
       type: String,
     },
+    bannerImage: {
+      type: String,
+    },
     description: {
       type: String,
     },
+    keywords: [
+      {
+        type: String,
+        trim: true,
+        lowercase: true,
+      }
+    ],
     cuisineType: {
       type: String,
     },
@@ -83,6 +99,15 @@ const RestaurantSchema = new Schema<IRestaurant>(
     },
     longitude: {
       type: Number,
+    },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+      },
     },
     geofenceRadius: {
       type: Number,
@@ -151,6 +176,9 @@ const RestaurantSchema = new Schema<IRestaurant>(
     timestamps: true,
   }
 );
+
+RestaurantSchema.index({ location: "2dsphere" });
+RestaurantSchema.index({ name: "text", keywords: "text", cuisineType: "text" });
 
 delete mongoose.models.Restaurant;
 export default mongoose.model<IRestaurant>("Restaurant", RestaurantSchema);

@@ -18,7 +18,7 @@ export async function GET(req: Request, context: any) {
 
     // 1. Fetch Restaurant (ensure it exists)
     const restaurant = await RestaurantModel.findOne({ _id: restaurantId })
-      .select("name logo description cuisineType settings.currency");
+      .select("name logo bannerImage description cuisineType rating reviewCount keywords settings.currency address phone email openingHours closingHours location");
 
     if (!restaurant) {
       return NextResponse.json({ success: false, message: "Restaurant not found or inactive" }, { status: 404 });
@@ -49,27 +49,36 @@ export async function GET(req: Request, context: any) {
             addons: item.addons || [],
             isBestseller: item.isBestseller,
             isRecommended: item.isRecommended,
+            chefSpecial: item.chefSpecial,
+            mostOrdered: item.mostOrdered,
+            isNewArrival: item.isNewArrival,
+            limitedTimeOffer: item.limitedTimeOffer,
+            ltoStartDate: item.ltoStartDate,
+            ltoEndDate: item.ltoEndDate,
           })),
       };
     });
 
-    // 4. Optionally return recommended/bestsellers as a separate quick-access list
-    const bestsellers = items
-      .filter((item) => item.isBestseller || item.isRecommended)
-      .map((item) => ({
-        id: item._id.toString(),
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        categoryId: item.categoryId.toString(),
-      }));
+    const now = new Date();
+
+    // 4. Return special categorized lists for the new UI
+    const highlights = {
+      bestsellers: items.filter((i) => i.isBestseller || i.mostOrdered).map(i => i._id.toString()),
+      chefSpecials: items.filter((i) => i.chefSpecial).map(i => i._id.toString()),
+      newArrivals: items.filter((i) => i.isNewArrival).map(i => i._id.toString()),
+      limitedTimeOffers: items.filter((i) => 
+        i.limitedTimeOffer && 
+        (!i.ltoStartDate || new Date(i.ltoStartDate) <= now) && 
+        (!i.ltoEndDate || new Date(i.ltoEndDate) >= now)
+      ).map(i => i._id.toString()),
+    };
 
     return NextResponse.json({
       success: true,
       data: {
         restaurant,
         menu: groupedMenu,
-        highlights: bestsellers,
+        highlights,
       },
     });
   } catch (error: any) {

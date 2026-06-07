@@ -6,7 +6,11 @@ import { eventBus } from "@/lib/services/eventBus";
 
 const toggleSchema = z.object({
   menuItemId: z.string(),
-  isAvailable: z.boolean(),
+  available: z.boolean().optional(),
+  isBestseller: z.boolean().optional(),
+  chefSpecial: z.boolean().optional(),
+  isNewArrival: z.boolean().optional(),
+  limitedTimeOffer: z.boolean().optional(),
 });
 
 export async function PATCH(req: Request) {
@@ -19,11 +23,11 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ success: false, errors: result.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { menuItemId, isAvailable } = result.data;
+    const { menuItemId, ...updates } = result.data;
 
     const updatedItem = await MenuItemModel.findByIdAndUpdate(
       menuItemId,
-      { isAvailable },
+      { $set: updates },
       { new: true }
     ).lean();
 

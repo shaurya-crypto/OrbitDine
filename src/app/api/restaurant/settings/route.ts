@@ -68,6 +68,15 @@ export async function PATCH(req: NextRequest) {
     if (closingHours) updateData.closingHours = closingHours;
     if (latitude !== undefined) updateData.latitude = latitude;
     if (longitude !== undefined) updateData.longitude = longitude;
+    
+    // Always keep GeoJSON location in sync if coordinates are provided
+    if (latitude !== undefined && longitude !== undefined) {
+      updateData.location = {
+        type: "Point",
+        coordinates: [longitude, latitude] // GeoJSON format: [lng, lat]
+      };
+    }
+
     if (logo) updateData.logo = logo;
 
     const restaurant = await Restaurant.findByIdAndUpdate(restaurantId, updateData, { returnDocument: 'after' });

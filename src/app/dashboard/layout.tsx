@@ -170,7 +170,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isCustomerDashboard = pathname.startsWith("/dashboard/customer");
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col md:flex-row">
+    <div className="min-h-screen bg-base flex flex-col md:flex-row">
       {/* Mobile Top Bar */}
       {!isCustomerDashboard && (
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface sticky top-0 z-40">
@@ -183,7 +183,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {!isCustomerDashboard && <Sidebar mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />}
       
-      <div className={`flex-1 ${!isCustomerDashboard ? "md:ml-64" : ""} p-4 md:p-8 min-h-screen relative w-full overflow-x-hidden`}>
+      <div className={`flex-1 ${!isCustomerDashboard ? "md:ml-64 p-4 md:p-8" : ""} min-h-screen relative w-full overflow-x-hidden`}>
         {/* Top Right Controls: Connection & Notifications (Hidden on customer dashboard) */}
         {!isCustomerDashboard && (
           <div className="absolute top-4 right-4 md:top-8 md:right-8 z-50 flex items-center gap-4">

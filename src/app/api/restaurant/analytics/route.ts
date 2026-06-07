@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
     });
 
     const averageOrderValueToday = totalOrdersToday > 0 ? revenueToday / totalOrdersToday : 0;
-    
+
     // 2. Popular Items (last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -76,10 +76,11 @@ export async function GET(req: NextRequest) {
     // 3. Hourly Revenue (Today)
     const hourlyAggregation = await Order.aggregate([
       { $match: { restaurantId: restaurantObjId, createdAt: { $gte: startOfDay }, status: { $ne: "cancelled" } } },
-      { $group: { 
-          _id: { $hour: "$createdAt" }, 
-          revenue: { $sum: "$grandTotal" } 
-        } 
+      {
+        $group: {
+          _id: { $hour: "$createdAt" },
+          revenue: { $sum: "$grandTotal" }
+        }
       },
       { $sort: { _id: 1 } }
     ]);
@@ -96,11 +97,12 @@ export async function GET(req: NextRequest) {
 
     const dailyAggregation = await Order.aggregate([
       { $match: { restaurantId: restaurantObjId, createdAt: { $gte: sevenDaysAgo }, status: { $ne: "cancelled" } } },
-      { $group: { 
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, 
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
           revenue: { $sum: "$grandTotal" },
           orders: { $sum: 1 }
-        } 
+        }
       },
       { $sort: { _id: 1 } }
     ]);
@@ -119,8 +121,32 @@ export async function GET(req: NextRequest) {
 
     const revenueThisWeek = dailyAggregation.reduce((sum, d) => sum + d.revenue, 0);
     const totalOrdersThisWeek = dailyAggregation.reduce((sum, d) => sum + d.orders, 0);
-    
-    return NextResponse.json({ 
+
+    // 5. Ratings & Feedback
+    const recentReviews = await mongoose.models.Review.find({ restaurantId: restaurantObjId })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate("customerId", "fullName");
+
+    const reviewStats = await mongoose.models.Review.aggregate([
+      { $match: { restaurantId: restaurantObjId } },
+      {
+        $group: {
+          _id: "$rating",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const ratingDistribution = [1, 2, 3, 4, 5].map(stars => {
+      const stat = reviewStats.find(r => r._id === stars);
+      return { stars, count: stat ? stat.count : 0 };
+    });
+
+    const totalReviews = ratingDistribution.reduce((sum, r) => sum + r.count, 0);
+    const averageRating = totalReviews > 0 ? ratingDistribution.reduce((sum, r) => sum + (r.stars * r.count), 0) / totalReviews : 0;
+
+    return NextResponse.json({
       revenueToday,
       totalOrdersToday,
       averageOrderValueToday,
@@ -129,7 +155,13 @@ export async function GET(req: NextRequest) {
       orderStatusBreakdown,
       popularItems: popularItemsAggregation,
       hourlyData,
-      last7DaysData
+      last7DaysData,
+      feedback: {
+        recentReviews,
+        ratingDistribution,
+        totalReviews,
+        averageRating: averageRating.toFixed(1)
+      }
     }, { status: 200 });
 
   } catch (error) {

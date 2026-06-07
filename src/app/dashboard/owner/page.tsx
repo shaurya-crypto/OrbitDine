@@ -5,6 +5,7 @@ import { OwnerCards } from "@/components/dashboard/owner/OwnerCards";
 import { RevenueCharts } from "@/components/dashboard/owner/RevenueCharts";
 import { RoleRequestsPanel } from "@/components/dashboard/owner/RoleRequestsPanel";
 import { MenuControlPanel } from "@/components/dashboard/manager/MenuControlPanel";
+import { FeedbackAnalyticsPanel } from "@/components/dashboard/owner/FeedbackAnalyticsPanel";
 import { Users, Settings, Grid, QrCode, LineChart, ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -69,8 +70,12 @@ export default function OwnerPage() {
                <h3 className="font-serif text-xl text-white mb-6">Revenue Trend</h3>
                <RevenueCharts restaurantId={restaurantId} />
             </div>
-            
             <RoleRequestsPanel restaurantId={restaurantId} />
+
+            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden">
+               <h3 className="font-serif text-xl text-white mb-6">Ratings & Feedback</h3>
+               <FeedbackAnalyticsPanel restaurantId={restaurantId} />
+            </div>
 
             <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden">
                <h3 className="font-serif text-xl text-white mb-6">Menu Quick Controls</h3>

@@ -5,6 +5,7 @@ export interface IBill extends Document {
   restaurantId: mongoose.Types.ObjectId;
   tableId: mongoose.Types.ObjectId;
   sessionId: mongoose.Types.ObjectId;
+  customerId?: mongoose.Types.ObjectId;
   orderIds: mongoose.Types.ObjectId[];
   itemsSnapshot: Array<{
     name: string;
@@ -52,6 +53,10 @@ const BillSchema = new Schema<IBill>(
       ref: "OrderSession",
       required: true,
       unique: true, // One bill per session
+    },
+    customerId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
     orderIds: [
       {

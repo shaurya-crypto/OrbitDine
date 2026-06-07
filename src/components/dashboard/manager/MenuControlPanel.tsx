@@ -15,13 +15,13 @@ export function MenuControlPanel({ restaurantId }: { restaurantId: string }) {
   if (isLoading) return <div className="p-4"><Loader /></div>;
   if (!data) return null;
 
-  const handleToggle = async (menuItemId: string, currentStatus: boolean) => {
+  const handleToggle = async (menuItemId: string, field: string, currentValue: boolean) => {
     try {
-      await toggleMenuItemAvailability({ menuItemId, isAvailable: !currentStatus });
+      await toggleMenuItemAvailability({ menuItemId, [field]: !currentValue });
       queryClient.invalidateQueries({ queryKey: ["menu", restaurantId] });
-      toast.success(`Item marked as ${!currentStatus ? 'Available' : 'Sold Out'}`);
+      toast.success(`Updated successfully`);
     } catch (err) {
-      toast.error("Failed to toggle menu item");
+      toast.error("Failed to update menu item");
     }
   };
 
@@ -69,27 +69,68 @@ export function MenuControlPanel({ restaurantId }: { restaurantId: string }) {
           </button>
         </form>
       </div>
-      <div className="p-4 max-h-[400px] overflow-y-auto space-y-6">
+      <div className="p-4 max-h-[600px] overflow-y-auto space-y-6">
         {data.menu.map((category: any) => (
           <div key={category.id}>
             <h3 className="text-sm font-bold text-neutral-500 uppercase tracking-widest mb-3">{category.name}</h3>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {category.items.map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-xl border border-neutral-100">
-                  <div>
-                    <p className="font-medium text-neutral-900 text-sm">{item.name}</p>
-                    <p className="text-xs text-neutral-500">₹{item.price.toFixed(2)}</p>
+                <div key={item.id} className="flex flex-col gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium text-neutral-900 text-sm">{item.name}</p>
+                      <p className="text-xs text-neutral-500">₹{item.price.toFixed(2)}</p>
+                    </div>
+                    <button
+                      onClick={() => handleToggle(item.id, "available", item.available ?? true)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                        item.available !== false
+                          ? "bg-green-100 text-green-700 hover:bg-green-200"
+                          : "bg-red-100 text-red-700 hover:bg-red-200"
+                      }`}
+                    >
+                      {item.available !== false ? "Available" : "Sold Out"}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleToggle(item.id, item.isAvailable ?? true)}
-                    className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                      item.isAvailable !== false
-                        ? "bg-green-100 text-green-700 hover:bg-green-200"
-                        : "bg-red-100 text-red-700 hover:bg-red-200"
-                    }`}
-                  >
-                    {item.isAvailable !== false ? "Available" : "Sold Out"}
-                  </button>
+                  
+                  <div className="flex flex-wrap gap-4 pt-2 border-t border-neutral-200">
+                    <label className="flex items-center gap-2 text-xs font-medium text-neutral-600 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={item.isBestseller || false} 
+                        onChange={() => handleToggle(item.id, "isBestseller", item.isBestseller || false)}
+                        className="rounded border-neutral-300 text-orange-500 focus:ring-orange-500"
+                      />
+                      Best Seller 🏆
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-medium text-neutral-600 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={item.chefSpecial || false} 
+                        onChange={() => handleToggle(item.id, "chefSpecial", item.chefSpecial || false)}
+                        className="rounded border-neutral-300 text-purple-500 focus:ring-purple-500"
+                      />
+                      Chef Special 👨‍🍳
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-medium text-neutral-600 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={item.isNewArrival || false} 
+                        onChange={() => handleToggle(item.id, "isNewArrival", item.isNewArrival || false)}
+                        className="rounded border-neutral-300 text-blue-500 focus:ring-blue-500"
+                      />
+                      Popular 🔥
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-medium text-neutral-600 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={item.limitedTimeOffer || false} 
+                        onChange={() => handleToggle(item.id, "limitedTimeOffer", item.limitedTimeOffer || false)}
+                        className="rounded border-neutral-300 text-red-500 focus:ring-red-500"
+                      />
+                      LTO ⏳
+                    </label>
+                  </div>
                 </div>
               ))}
             </div>

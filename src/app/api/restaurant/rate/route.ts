@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
     
     const body = await req.json();
-    const { restaurantId, sessionId, rating, feedback } = body;
+    const { restaurantId, sessionId, customerId, orderId, rating, foodRating, serviceRating, ambienceRating, feedback } = body;
     
     if (!restaurantId || typeof rating !== "number") {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -39,7 +39,12 @@ export async function POST(req: NextRequest) {
     await ReviewModel.create({
       restaurantId,
       sessionId,
+      customerId,
+      orderId,
       rating,
+      foodRating,
+      serviceRating,
+      ambienceRating,
       feedback: feedback ? feedback.trim() : "",
     });
     

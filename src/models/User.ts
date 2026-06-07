@@ -9,6 +9,10 @@ export interface IUser extends Document {
   roles: ("owner" | "manager" | "staff" | "kitchen" | "customer")[];
   restaurantId?: mongoose.Types.ObjectId;
   savedRestaurants: mongoose.Types.ObjectId[];
+  favoriteItems: mongoose.Types.ObjectId[];
+  totalOrders: number;
+  totalSpent: number;
+  achievements: string[];
   isVerified: boolean;
   profileImage?: string;
   lastLogin?: Date;
@@ -52,6 +56,25 @@ const UserSchema = new Schema<IUser>(
       {
         type: Schema.Types.ObjectId,
         ref: "Restaurant",
+      },
+    ],
+    favoriteItems: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "MenuItem",
+      },
+    ],
+    totalOrders: {
+      type: Number,
+      default: 0,
+    },
+    totalSpent: {
+      type: Number,
+      default: 0,
+    },
+    achievements: [
+      {
+        type: String,
       },
     ],
     isVerified: {

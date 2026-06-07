@@ -20,7 +20,7 @@ export const fetchKitchenOrders = async (restaurantId: string) => {
   return data.data;
 };
 
-export const toggleMenuItemAvailability = async (payload: { menuItemId: string; isAvailable: boolean }) => {
+export const toggleMenuItemAvailability = async (payload: { menuItemId: string; available?: boolean; isBestseller?: boolean; chefSpecial?: boolean; isNewArrival?: boolean; limitedTimeOffer?: boolean }) => {
   const { data } = await apiClient.patch(`/menu/toggle`, payload);
   return data.data;
 };
