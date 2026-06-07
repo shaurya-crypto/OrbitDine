@@ -55,6 +55,7 @@ export async function POST(req: Request) {
       userId: user._id.toString(),
       roles: Array.from(user.roles),
       isVerified: user.isVerified,
+      restaurantId: restaurantId?.toString() || null,
     };
 
     const accessToken = await signAccessToken(payload);

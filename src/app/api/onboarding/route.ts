@@ -133,7 +133,27 @@ export async function POST(req: NextRequest) {
       await table.save();
     }
 
-    return NextResponse.json({ message: "Onboarding complete", restaurant });
+    const response = NextResponse.json({ message: "Onboarding complete", restaurant });
+
+    // Issue a new token with the restaurantId so middleware knows they have a restaurant
+    const { signAccessToken } = await import("@/lib/auth/jwt");
+    const payload = {
+      userId: user._id.toString(),
+      roles: Array.from(user.roles || ["owner"]),
+      isVerified: user.isVerified,
+      restaurantId: restaurantId.toString(),
+    };
+    const newAccessToken = await signAccessToken(payload);
+    
+    response.cookies.set("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: "/",
+    });
+
+    return response;
   } catch (error: any) {
     console.error("Onboarding Error:", error);
     return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
