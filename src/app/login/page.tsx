@@ -13,6 +13,7 @@ import { FloatingInput } from "@/components/ui/FloatingInput";
 import { Loader } from "@/components/ui/Loader";
 import { useAuthStore } from "@/stores/authStore";
 import { useEffect } from "react";
+import { GoogleLogin } from "@react-oauth/google";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -189,6 +190,63 @@ export default function LoginPage() {
             >
               {isSubmitting ? <Loader type="spinner" className="w-5 h-5 border-t-base" /> : "Sign In"}
             </MagneticButton>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-surface px-2 text-text-secondary">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="flex justify-center w-full">
+              <GoogleLogin
+                onSuccess={async (credentialResponse) => {
+                  setServerError("");
+                  setIsSubmitting(true);
+                  try {
+                    const res = await fetch("/api/auth/google", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ credential: credentialResponse.credential }),
+                    });
+                    
+                    const responseData = await res.json();
+                    
+                    if (!res.ok) {
+                      if (responseData.status === "requires_role_selection") {
+                        // User needs to sign up, redirect to signup with a flag or just tell them to use signup
+                        setServerError("Account not found. Please sign up first.");
+                      } else {
+                        setServerError(responseData.error || "Google authentication failed");
+                      }
+                      setIsSubmitting(false);
+                      return;
+                    }
+
+                    setAuth(responseData.userId, responseData.roles, responseData.restaurantId, responseData.fullName);
+                    router.refresh();
+                    
+                    if (responseData.roles.includes("owner") && !responseData.restaurantId) {
+                      window.location.href = "/onboarding";
+                    } else {
+                      const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => responseData.roles.includes(r));
+                      window.location.href = `/dashboard/${highestRole || "customer"}`;
+                    }
+                  } catch (error) {
+                    setServerError("Network error. Please try again.");
+                    setIsSubmitting(false);
+                  }
+                }}
+                onError={() => {
+                  setServerError("Google login failed.");
+                }}
+                useOneTap
+                theme="filled_black"
+                shape="pill"
+              />
+            </div>
           </form>
 
           <div className="mt-8 text-center">

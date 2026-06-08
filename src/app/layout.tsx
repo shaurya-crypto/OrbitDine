@@ -10,6 +10,7 @@ import { ConnectionBanner } from "@/components/shared/ConnectionBanner";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { ConfirmProvider } from "@/components/ui/ConfirmProvider";
 import Script from "next/script";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const instrumentSerif = Instrument_Serif({
   weight: "400",
@@ -88,19 +89,21 @@ export default function RootLayout({
         className={`${outfit.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-          <PerformanceProvider>
-            <QueryProvider>
-              <SmoothScrollProvider>
-                <ToastProvider>
-                  <ConfirmProvider>
-                    <ConnectionBanner />
-                    {children}
-                    <CookieConsent />
-                  </ConfirmProvider>
-                </ToastProvider>
-              </SmoothScrollProvider>
-            </QueryProvider>
-          </PerformanceProvider>
+          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "MISSING_CLIENT_ID"}>
+            <PerformanceProvider>
+              <QueryProvider>
+                <SmoothScrollProvider>
+                  <ToastProvider>
+                    <ConfirmProvider>
+                      <ConnectionBanner />
+                      {children}
+                      <CookieConsent />
+                    </ConfirmProvider>
+                  </ToastProvider>
+                </SmoothScrollProvider>
+              </QueryProvider>
+            </PerformanceProvider>
+          </GoogleOAuthProvider>
         </ThemeProvider>
       </body>
     </html>

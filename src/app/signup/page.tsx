@@ -16,6 +16,8 @@ import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import { useEffect, Suspense } from "react";
 
+import { GoogleLogin } from "@react-oauth/google";
+
 const signupSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Invalid email address"),
@@ -33,7 +35,8 @@ export default function SignupPage() {
 }
 
 function SignupForm() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<number | "google_role_selection">(1);
+  const [googlePayload, setGooglePayload] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
   const router = useRouter();
@@ -41,7 +44,7 @@ function SignupForm() {
   const restaurantId = searchParams.get("restaurantId");
   const inviteRole = searchParams.get("role");
   const [roleSelection, setRoleSelection] = useState<string>(inviteRole || "customer");
-  const { roles: storeRoles } = useAuthStore();
+  const { roles: storeRoles, setAuth } = useAuthStore();
 
   useEffect(() => {
     // Block logged in users
@@ -82,6 +85,41 @@ function SignupForm() {
     const isValid = await trigger(["fullName", "email"]);
     if (isValid) {
       setStep(2);
+    }
+  };
+
+  const handleGoogleRegister = async () => {
+    setIsSubmitting(true);
+    setServerError("");
+    try {
+      const res = await fetch("/api/auth/google-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...googlePayload,
+          role: roleSelection,
+          restaurantId: restaurantId || undefined,
+        }),
+      });
+
+      const responseData = await res.json();
+      if (!res.ok) {
+        setServerError(responseData.error || "Failed to create account");
+        setIsSubmitting(false);
+        return;
+      }
+
+      setAuth(responseData.userId, responseData.roles, responseData.restaurantId, responseData.fullName);
+      
+      if (responseData.roles.includes("owner") && !responseData.restaurantId) {
+        window.location.href = "/onboarding";
+      } else {
+        const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => responseData.roles.includes(r));
+        window.location.href = `/dashboard/${highestRole || "customer"}`;
+      }
+    } catch (error) {
+      setServerError("Network error. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
@@ -193,7 +231,118 @@ function SignupForm() {
                 >
                   Continue
                 </MagneticButton>
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border"></span>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-surface px-2 text-text-secondary">Or continue with</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-center w-full">
+                  <GoogleLogin
+                    onSuccess={async (credentialResponse) => {
+                      setServerError("");
+                      setIsSubmitting(true);
+                      try {
+                        const res = await fetch("/api/auth/google", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ credential: credentialResponse.credential }),
+                        });
+                        
+                        const responseData = await res.json();
+                        
+                        if (!res.ok) {
+                          setServerError(responseData.error || "Google sign-in failed");
+                          setIsSubmitting(false);
+                          return;
+                        }
+
+                        if (responseData.status === "requires_role_selection") {
+                          setGooglePayload(responseData);
+                          setStep("google_role_selection");
+                          setIsSubmitting(false);
+                        } else {
+                          // Already a user, log them in
+                          setAuth(responseData.userId, responseData.roles, responseData.restaurantId, responseData.fullName);
+                          
+                          if (responseData.roles.includes("owner") && !responseData.restaurantId) {
+                            window.location.href = "/onboarding";
+                          } else {
+                            const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => responseData.roles.includes(r));
+                            window.location.href = `/dashboard/${highestRole || "customer"}`;
+                          }
+                        }
+                      } catch (error) {
+                        setServerError("Network error. Please try again.");
+                        setIsSubmitting(false);
+                      }
+                    }}
+                    onError={() => {
+                      setServerError("Google sign-in failed.");
+                    }}
+                    useOneTap
+                    theme="filled_black"
+                    shape="pill"
+                  />
+                </div>
               </form>
+            </motion.div>
+          )}
+
+          {step === "google_role_selection" && (
+            <motion.div
+              key="google_role_selection"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+               <div className="mb-8 flex flex-col gap-4">
+                <button onClick={() => setStep(1)} className="self-start text-text-secondary hover:text-text-primary transition-colors">
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div>
+                  <h1 className="text-3xl font-medium text-text-primary mb-2">Almost there!</h1>
+                  <p className="text-text-secondary">How do you want to use OrbitDine?</p>
+                </div>
+              </div>
+
+              {serverError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-500 mb-4">
+                  {serverError}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-4 mb-8">
+                <button 
+                  onClick={() => setRoleSelection("customer")}
+                  className={`p-6 rounded-xl border text-left transition-all ${roleSelection === "customer" ? "border-accent bg-accent/10" : "border-border bg-surface hover:border-text-secondary"}`}
+                >
+                  <h3 className="text-lg font-medium text-text-primary mb-1">I am a Customer</h3>
+                  <p className="text-sm text-text-secondary">I want to order food and discover great restaurants.</p>
+                </button>
+                
+                <button 
+                  onClick={() => setRoleSelection("owner")}
+                  className={`p-6 rounded-xl border text-left transition-all ${roleSelection === "owner" ? "border-accent bg-accent/10" : "border-border bg-surface hover:border-text-secondary"}`}
+                >
+                  <h3 className="text-lg font-medium text-text-primary mb-1">I am a Restaurant Owner</h3>
+                  <p className="text-sm text-text-secondary">I want to manage my restaurant and view analytics.</p>
+                </button>
+              </div>
+
+              <MagneticButton 
+                onClick={handleGoogleRegister} 
+                disabled={isSubmitting}
+                className="w-full"
+                intensity={5}
+              >
+                {isSubmitting ? <Loader type="spinner" className="w-5 h-5 border-t-base" /> : "Complete Registration"}
+              </MagneticButton>
             </motion.div>
           )}
 

@@ -19,6 +19,8 @@ export async function GET(req: Request) {
     
     // Prevent tree-shaking of imported schemas
     if (!MenuItem) console.warn("MenuItem not loaded");
+    if (!Restaurant) console.warn("Restaurant not loaded");
+    if (!Review) console.warn("Review not loaded");
 
     const user = await User.findById(decoded.userId)
       .populate("savedRestaurants", "name bannerImage cuisine type")
