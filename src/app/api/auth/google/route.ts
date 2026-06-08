@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongoose";
+import connectToDatabase from "@/lib/mongodb/db";
 import User from "@/models/User";
 import { SignJWT } from "jose";
 import { OAuth2Client } from "google-auth-library";
@@ -8,18 +8,22 @@ const client = new OAuth2Client(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
 
 export async function POST(request: Request) {
   try {
-    const { credential } = await request.json();
+    const { access_token } = await request.json();
 
-    if (!credential) {
-      return NextResponse.json({ error: "Missing Google credential" }, { status: 400 });
+    if (!access_token) {
+      return NextResponse.json({ error: "Missing Google token" }, { status: 400 });
     }
 
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+    // Verify token with Google and get user info
+    const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${access_token}` }
     });
 
-    const payload = ticket.getPayload();
+    if (!userInfoRes.ok) {
+      return NextResponse.json({ error: "Invalid Google token" }, { status: 400 });
+    }
+
+    const payload = await userInfoRes.json();
     if (!payload || !payload.email) {
       return NextResponse.json({ error: "Invalid Google token" }, { status: 400 });
     }
@@ -33,7 +37,7 @@ export async function POST(request: Request) {
       const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback_secret");
       const token = await new SignJWT({ 
         userId: existingUser._id.toString(),
-        roles: existingUser.roles,
+        roles: Array.from(existingUser.roles),
         restaurantId: existingUser.restaurantId?.toString()
       })
         .setProtectedHeader({ alg: "HS256" })

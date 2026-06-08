@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongoose";
+import connectToDatabase from "@/lib/mongodb/db";
 import User from "@/models/User";
 import { SignJWT } from "jose";
 
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback_secret");
     const token = await new SignJWT({ 
       userId: newUser._id.toString(),
-      roles: newUser.roles,
+      roles: Array.from(newUser.roles),
       restaurantId: newUser.restaurantId?.toString()
     })
       .setProtectedHeader({ alg: "HS256" })
