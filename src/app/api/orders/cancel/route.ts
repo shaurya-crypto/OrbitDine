@@ -8,6 +8,7 @@ import { eventBus } from "@/lib/services/eventBus";
 
 const cancelSchema = z.object({
   orderId: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), { message: "Invalid orderId" }),
+  itemId: z.string().optional().refine((val) => !val || mongoose.Types.ObjectId.isValid(val), { message: "Invalid itemId" }),
   reason: z.string().optional(),
 });
 
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, errors: result.error.flatten().fieldErrors }, { status: 400 });
     }
 
-    const { orderId, reason } = result.data;
+    const { orderId, itemId, reason } = result.data;
 
     dbSession = await mongoose.startSession();
     dbSession.startTransaction();
@@ -41,20 +42,65 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: `Cannot cancel an order that is ${order.status}` }, { status: 400 });
     }
 
-    order.status = "cancelled";
-    order.statusHistory.push({
-      status: "cancelled",
-      timestamp: new Date(),
-    });
+    if (itemId) {
+      const itemIndex = order.items.findIndex((i: any) => i._id.toString() === itemId);
+      if (itemIndex === -1) {
+        await dbSession.abortTransaction();
+        dbSession.endSession();
+        return NextResponse.json({ success: false, message: "Item not found in order" }, { status: 404 });
+      }
 
-    if (reason) {
-      order.notes = order.notes ? `${order.notes} | Cancel Reason: ${reason}` : `Cancel Reason: ${reason}`;
+      const itemToCancel = order.items[itemIndex];
+      const itemCost = itemToCancel.price * itemToCancel.quantity + 
+        (itemToCancel.addons?.reduce((sum: number, a: any) => sum + a.price, 0) || 0) * itemToCancel.quantity;
+
+      // Remove the item
+      order.items.splice(itemIndex, 1);
+
+      if (order.items.length === 0) {
+        // If no items left, cancel the whole order
+        order.status = "cancelled";
+        order.statusHistory.push({ status: "cancelled", timestamp: new Date() });
+        order.subtotal = 0;
+        order.tax = 0;
+        order.serviceCharge = 0;
+        order.grandTotal = 0;
+      } else {
+        // Recalculate totals based on remaining items
+        const newSubtotal = order.items.reduce((total: number, item: any) => {
+          const addonsCost = item.addons?.reduce((sum: number, a: any) => sum + a.price, 0) || 0;
+          return total + (item.price + addonsCost) * item.quantity;
+        }, 0);
+
+        // Calculate implicit percentages from original order or default to 0
+        const taxRate = order.subtotal > 0 ? order.tax / order.subtotal : 0;
+        const serviceRate = order.subtotal > 0 ? order.serviceCharge / order.subtotal : 0;
+
+        order.subtotal = newSubtotal;
+        order.tax = newSubtotal * taxRate;
+        order.serviceCharge = newSubtotal * serviceRate;
+        order.grandTotal = order.subtotal + order.tax + order.serviceCharge - order.discount;
+      }
+
+      if (reason) {
+        order.notes = order.notes ? `${order.notes} | Item Cancelled: ${reason}` : `Item Cancelled: ${reason}`;
+      }
+
+      await order.save({ session: dbSession });
+    } else {
+      // Cancel the whole order
+      order.status = "cancelled";
+      order.statusHistory.push({
+        status: "cancelled",
+        timestamp: new Date(),
+      });
+
+      if (reason) {
+        order.notes = order.notes ? `${order.notes} | Cancel Reason: ${reason}` : `Cancel Reason: ${reason}`;
+      }
+
+      await order.save({ session: dbSession });
     }
-
-    await order.save({ session: dbSession });
-
-    // Optional: Remove orderId from OrderSession if we want to completely omit it from the bill
-    // However, it's safer to keep the reference and let the bill generator ignore 'cancelled' orders.
 
     await dbSession.commitTransaction();
     dbSession.endSession();

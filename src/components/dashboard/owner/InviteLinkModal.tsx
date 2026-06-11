@@ -14,7 +14,7 @@ export function InviteLinkModal({ isOpen, restaurantId, onClose }: InviteLinkMod
   const [selectedRole, setSelectedRole] = useState<"manager" | "staff" | "kitchen">("staff");
   const [copied, setCopied] = useState(false);
 
-  const inviteLink = `${window.location.origin}/signup?restaurantId=${restaurantId}&role=${selectedRole}`;
+  const inviteLink = `${window.location.origin}/invite?restaurantId=${restaurantId}&role=${selectedRole}`;
 
   const handleCopy = () => {
     if (navigator.clipboard && navigator.clipboard.writeText) {

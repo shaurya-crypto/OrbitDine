@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { usePerformance } from "../providers/PerformanceProvider";
 import { Handshake, TrendingUp, Wallet, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -71,12 +72,14 @@ export function PartnerSection() {
           </div>
 
           <div className="relative z-10">
-            <button className="group relative px-8 py-4 bg-text-primary text-base rounded-full overflow-hidden transition-transform hover:scale-105 active:scale-95">
-              <span className="relative z-10 flex items-center font-medium">
-                Join Partner Waitlist
-                <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </span>
-            </button>
+            <Link href="/coming-soon">
+              <button className="group relative px-8 py-4 bg-text-primary text-base rounded-full overflow-hidden transition-transform hover:scale-105 active:scale-95">
+                <span className="relative z-10 flex items-center font-medium">
+                  Join Partner Waitlist
+                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </span>
+              </button>
+            </Link>
           </div>
 
         </div>

@@ -10,7 +10,53 @@ export interface CategoryEventPayload { categoryId: string; restaurantId: string
 export interface CartEventPayload { sessionId: string; restaurantId: string; tableId: string; timestamp: Date; }
 export interface OperationalEventPayload { restaurantId: string; message: string; timestamp: Date; }
 
+import OwnerSetting from "@/models/OwnerSetting";
+import connectToDatabase from "@/lib/mongodb/db";
+
 class EventBus {
+  private settingsCache = new Map<string, { data: any; timestamp: number }>();
+  private CACHE_TTL = 60 * 1000; // 1 minute
+
+  private async getSettings(restaurantId: string) {
+    const now = Date.now();
+    const cached = this.settingsCache.get(restaurantId);
+    if (cached && now - cached.timestamp < this.CACHE_TTL) {
+      return cached.data;
+    }
+
+    try {
+      await connectToDatabase();
+      const settings = await OwnerSetting.findOne({ restaurantId }).lean();
+      this.settingsCache.set(restaurantId, { data: settings, timestamp: now });
+      return settings;
+    } catch (error) {
+      console.error("Failed to fetch OwnerSettings:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Helper to broadcast dynamically based on owner settings.
+   */
+  private async broadcastDynamically(
+    restaurantId: string, 
+    routingKey: "orderCreated" | "orderStatusChanged" | "billRequested" | "emergency", 
+    eventName: RealtimeEventType, 
+    payload: any,
+    fallbackRoles: string[]
+  ) {
+    const settings = await this.getSettings(restaurantId);
+    
+    if (settings && settings.globalNotificationsEnabled === false) {
+      return; // Globally muted
+    }
+
+    const roles = settings?.routing?.[routingKey] || fallbackRoles;
+    for (const role of roles) {
+      await this.broadcast(`private-${role}-${restaurantId}`, eventName, payload);
+    }
+  }
+
   /**
    * Broadcasts an event to a specific Pusher private channel.
    * Includes audit logging.
@@ -30,8 +76,13 @@ class EventBus {
   }
 
   async emitOrderCreated(payload: OrderEventPayload) {
-    await this.broadcast(`private-kitchen-${payload.restaurantId}`, REALTIME_EVENTS.ORDER_CREATED, payload);
-    await this.broadcast(`private-restaurant-${payload.restaurantId}`, REALTIME_EVENTS.ORDER_CREATED, payload);
+    await this.broadcastDynamically(
+      payload.restaurantId,
+      "orderCreated",
+      REALTIME_EVENTS.ORDER_CREATED,
+      payload,
+      ["kitchen", "staff", "manager", "owner"]
+    );
   }
 
   async emitOrderUpdated(payload: OrderEventPayload) {
@@ -39,7 +90,13 @@ class EventBus {
   }
 
   async emitOrderStatusChanged(payload: OrderEventPayload) {
-    await this.broadcast(`private-restaurant-${payload.restaurantId}`, REALTIME_EVENTS.ORDER_STATUS_CHANGED, payload);
+    await this.broadcastDynamically(
+      payload.restaurantId,
+      "orderStatusChanged",
+      REALTIME_EVENTS.ORDER_STATUS_CHANGED,
+      payload,
+      ["kitchen", "staff", "manager", "owner", "customer"]
+    );
   }
 
   async emitTableStatusChanged(payload: TableStatusPayload) {
@@ -47,8 +104,13 @@ class EventBus {
   }
 
   async emitBillRequested(payload: BillRequestedPayload) {
-    await this.broadcast(`private-staff-${payload.restaurantId}`, REALTIME_EVENTS.BILL_REQUESTED, payload);
-    await this.broadcast(`private-restaurant-${payload.restaurantId}`, REALTIME_EVENTS.BILL_REQUESTED, payload);
+    await this.broadcastDynamically(
+      payload.restaurantId,
+      "billRequested",
+      REALTIME_EVENTS.BILL_REQUESTED,
+      payload,
+      ["staff", "manager", "owner"]
+    );
   }
 
   async emitBillGenerated(payload: BillRequestedPayload) {
@@ -123,6 +185,25 @@ class EventBus {
 
   async emitOwnerNotification(payload: OperationalEventPayload) {
     await this.broadcast(`private-owner-${payload.restaurantId}`, REALTIME_EVENTS.OWNER_NOTIFICATION, payload);
+  }
+
+  async emitEmergency(payload: any) {
+    await this.broadcastDynamically(
+      payload.restaurantId,
+      "emergency",
+      "TABLE_EMERGENCY" as any,
+      payload,
+      ["owner", "manager", "staff", "kitchen"]
+    );
+  }
+
+  async emitStopSounds(restaurantId: string, message: string) {
+    const channels = ["owner", "manager", "staff", "kitchen"].map(role => `private-${role}-${restaurantId}`);
+    try {
+      await pusherServer.trigger(channels, "STOP_SOUNDS", { message });
+    } catch (error) {
+      console.error("[EventBus] Failed to broadcast STOP_SOUNDS", error);
+    }
   }
 }
 

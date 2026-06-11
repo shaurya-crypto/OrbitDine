@@ -5,7 +5,7 @@ import { OrderCard } from "./OrderCard";
 import { Loader2 } from "lucide-react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -14,6 +14,21 @@ export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
   const queryClient = useQueryClient();
   const prevOrderCountRef = useRef(0);
   const toast = useToast();
+  const [kitchenCanCancel, setKitchenCanCancel] = useState(false);
+
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const res = await axios.get(`/api/owner/settings/notifications?restaurantId=${restaurantId}`);
+        if (res.data?.kitchenCanCancelOrder) {
+          setKitchenCanCancel(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch owner settings", err);
+      }
+    }
+    fetchSettings();
+  }, [restaurantId]);
 
   useEffect(() => {
     if (orders) {
@@ -40,6 +55,17 @@ export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
     }
   };
 
+  const handleItemCancel = async (orderId: string, itemId: string) => {
+    if (!window.confirm("Are you sure you want to cancel this item?")) return;
+    try {
+      await axios.post("/api/orders/cancel", { orderId, itemId, reason: "Item cancelled by kitchen" });
+      queryClient.invalidateQueries({ queryKey: ["realtimeOrders", restaurantId] });
+      toast.success("Item cancelled");
+    } catch (error) {
+      toast.error("Failed to cancel item");
+    }
+  };
+
   return (
     <div className="flex space-x-6 h-full overflow-x-auto pb-4 snap-x">
       {/* Column 1: Received */}
@@ -53,7 +79,7 @@ export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {received.map((order: any) => (
-            <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} />
+            <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} canCancel={kitchenCanCancel} onItemCancel={handleItemCancel} />
           ))}
         </div>
       </div>
@@ -69,7 +95,7 @@ export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {preparing.map((order: any) => (
-            <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} />
+            <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} canCancel={kitchenCanCancel} onItemCancel={handleItemCancel} />
           ))}
         </div>
       </div>

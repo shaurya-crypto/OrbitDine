@@ -113,13 +113,14 @@ function SignupForm() {
           return;
         }
 
-        setAuth(responseData.userId, responseData.roles, responseData.restaurantId, responseData.fullName);
+        const roles = (responseData.roles && responseData.roles.length > 0) ? responseData.roles : ["customer"];
+        setAuth(responseData.userId, roles, responseData.restaurantId, responseData.fullName);
           
-          if (responseData.roles.includes("owner") && !responseData.restaurantId) {
+          if (roles.includes("owner") && !responseData.restaurantId) {
             window.location.href = "/onboarding";
           } else {
-            const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => responseData.roles.includes(r));
-            window.location.href = `/dashboard/${highestRole || "customer"}`;
+            const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r)) || "customer";
+            window.location.href = `/dashboard/${highestRole}`;
           }
       } catch (error) {
         setServerError("Network error. Please try again.");
@@ -152,13 +153,14 @@ function SignupForm() {
         return;
       }
 
-      setAuth(responseData.userId, responseData.roles, responseData.restaurantId, responseData.fullName);
+      const roles = (responseData.roles && responseData.roles.length > 0) ? responseData.roles : ["customer"];
+      setAuth(responseData.userId, roles, responseData.restaurantId, responseData.fullName);
       
-      if (responseData.roles.includes("owner") && !responseData.restaurantId) {
+      if (roles.includes("owner") && !responseData.restaurantId) {
         window.location.href = "/onboarding";
       } else {
-        const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => responseData.roles.includes(r));
-        window.location.href = `/dashboard/${highestRole || "customer"}`;
+        const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r)) || "customer";
+        window.location.href = `/dashboard/${highestRole}`;
       }
     } catch (error) {
       setServerError("Network error. Please try again.");
@@ -244,7 +246,7 @@ function SignupForm() {
                     onClick={() => setRoleSelection("owner")}
                     className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${roleSelection === "owner" ? "bg-accent text-white shadow-sm" : "text-text-secondary hover:text-text-primary"}`}
                   >
-                    Business Owner
+                    Restaurant Account
                   </button>
                 </div>
               )}

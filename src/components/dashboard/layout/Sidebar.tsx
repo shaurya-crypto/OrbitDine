@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
-import { ChefHat, LayoutDashboard, Utensils, LineChart, LogOut, ShieldAlert } from "lucide-react";
+import { ChefHat, LayoutDashboard, Utensils, LineChart, LogOut, ShieldAlert, Moon, Sun, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import { RequestRoleModal } from "./RequestRoleModal";
 
 export function Sidebar({ mobileOpen = false, setMobileOpen = (v: boolean) => {} }: { mobileOpen?: boolean, setMobileOpen?: (v: boolean) => void }) {
   const pathname = usePathname();
   const { roles, logout } = useAuthStore();
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
 
@@ -21,7 +23,9 @@ export function Sidebar({ mobileOpen = false, setMobileOpen = (v: boolean) => {}
     { name: "Kitchen", href: "/dashboard/kitchen", icon: <ChefHat size={20} />, roles: ["kitchen", "staff", "manager", "owner"] },
     { name: "Floor Staff", href: "/dashboard/staff", icon: <Utensils size={20} />, roles: ["staff", "manager", "owner"] },
     { name: "Manager", href: "/dashboard/manager", icon: <LayoutDashboard size={20} />, roles: ["manager", "owner"] },
+    { name: "Manager Settings", href: "/dashboard/manager/settings", icon: <Settings size={20} />, roles: ["manager"] },
     { name: "Owner", href: "/dashboard/owner", icon: <LineChart size={20} />, roles: ["owner"] },
+    { name: "Owner Settings", href: "/dashboard/owner/settings/notifications", icon: <Settings size={20} />, roles: ["owner"] },
   ];
 
   return (
@@ -79,10 +83,20 @@ export function Sidebar({ mobileOpen = false, setMobileOpen = (v: boolean) => {}
             <p className="text-white font-medium">{roles && roles.length > 0 ? roles.join(", ") : "Select Role"}</p>
           </div>
           {roles && roles.length > 0 && (
-            <button onClick={logout} className="text-neutral-500 hover:text-white transition-colors">
+            <button onClick={logout} className="text-neutral-500 hover:text-white transition-colors" title="Logout">
               <LogOut size={18} />
             </button>
           )}
+        </div>
+        <div className="flex items-center justify-between px-4 py-2 border-t border-neutral-800 mt-2">
+          <span className="text-xs text-neutral-400">Theme</span>
+          <button 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="p-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg transition-colors flex items-center justify-center"
+            title="Toggle Theme"
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
         </div>
       </div>
       {showRoleModal && <RequestRoleModal onClose={() => setShowRoleModal(false)} />}

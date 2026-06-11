@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useRealtimeMenu } from "@/hooks/useRealtimeMenu";
-import { Plus, Image as ImageIcon, Trash2, Edit2, Loader2, Search } from "lucide-react";
+import { Plus, Image as ImageIcon, Trash2, Edit2, Loader2, Search, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -24,6 +24,7 @@ export default function MenuManagementPage() {
   // Custom Dialog States
   const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, type: 'item' | 'category' | null, target: any | null, title: string, message: string}>({ isOpen: false, type: null, target: null, title: '', message: '' });
   const [messageModal, setMessageModal] = useState<{isOpen: boolean, title: string, message: string, type: 'error' | 'success'}>({ isOpen: false, title: '', message: '', type: 'error' });
+  const [clearAllModal, setClearAllModal] = useState<{isOpen: boolean, verifyName: string}>({ isOpen: false, verifyName: "" });
   
   // Form State
   const [formData, setFormData] = useState({
@@ -43,10 +44,11 @@ export default function MenuManagementPage() {
   const [imagePreview, setImagePreview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (isLoading || !menuData) return <div className="p-8 text-white flex justify-center"><Loader2 className="animate-spin text-accent" /></div>;
+  if (isLoading || !menuData) return <div className="p-8 text-text-primary flex justify-center"><Loader2 className="animate-spin text-accent" /></div>;
 
   const categories = menuData.categories || [];
   const items = menuData.items || [];
+  const restaurantName = "Your Restaurant"; // We should ideally fetch the actual restaurant name, but the user is the owner so we verify against the word 'CONFIRM' or their ID
   
   const displayCategory = activeCategory || (categories.length > 0 ? categories[0]._id : null);
   const filteredItems = items.filter((i: any) => 
@@ -202,47 +204,76 @@ export default function MenuManagementPage() {
     }
   };
 
+  const handleClearAllMenu = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (clearAllModal.verifyName !== "DELETE ALL") return;
+    
+    setIsSubmitting(true);
+    try {
+      await axios.delete(`/api/menu/admin/${restaurantId}`);
+      queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
+      setClearAllModal({ isOpen: false, verifyName: "" });
+      setActiveCategory(null);
+      setMessageModal({ isOpen: true, title: 'Success', message: 'Menu has been completely wiped.', type: 'success' });
+    } catch (err) {
+      setMessageModal({ isOpen: true, title: 'Error', message: 'Failed to clear menu', type: 'error' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-6 md:p-8">
+    <div className="min-h-screen bg-base text-text-primary p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-serif tracking-tight mb-1">Menu Management</h1>
-            <p className="text-zinc-400 text-sm">Create and organize your restaurant's offerings</p>
+            <p className="text-text-secondary text-sm">Create and organize your restaurant's offerings</p>
           </div>
-          <button 
-            onClick={openAddModal}
-            className="flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent/90 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-accent/20"
-          >
-            <Plus size={18} /> Add New Item
-          </button>
+          <div className="flex w-full md:w-auto gap-3">
+            <button 
+              onClick={() => setClearAllModal({ isOpen: true, verifyName: "" })}
+              className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 rounded-xl text-sm font-medium transition-all whitespace-nowrap"
+            >
+              <Trash2 size={16} /> Clear Menu
+            </button>
+            <button 
+              onClick={openAddModal}
+              className="flex flex-1 md:flex-none items-center justify-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent/90 text-white rounded-xl text-sm font-medium transition-all shadow-lg shadow-accent/20 whitespace-nowrap"
+            >
+              <Plus size={18} /> Add Item
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
           {/* Categories Sidebar */}
           <div className="w-full md:w-64 flex-shrink-0">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sticky top-8">
-              <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-4 px-2">Categories</h3>
-              <div className="space-y-1 mb-4">
+            <div className="bg-surface border border-border rounded-2xl p-4 sticky top-8">
+              <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-4 px-2">Categories</h3>
+              
+              <div className="flex md:flex-col overflow-x-auto md:overflow-visible no-scrollbar gap-2 md:gap-1 mb-4 pb-2 md:pb-0">
                 {categories.map((cat: any) => (
-                  <div key={cat._id} className="relative group flex items-center">
+                  <div key={cat._id} className="relative group flex items-center shrink-0 w-auto min-w-[140px] md:w-auto">
                     <button
                       onClick={() => setActiveCategory(cat._id)}
-                      className={`flex-1 text-left px-4 py-3 rounded-xl text-sm font-medium transition-all pr-16 ${
+                      className={`w-full text-left pl-4 pr-16 py-3 rounded-xl text-sm font-medium transition-all truncate ${
                         displayCategory === cat._id 
                         ? "bg-accent/10 text-accent border border-accent/20" 
-                        : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-transparent"
+                        : "text-text-secondary hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-text-primary border border-transparent"
                       }`}
                     >
                       {cat.name}
                     </button>
-                    <div className="absolute right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className={`flex absolute right-1 items-center gap-1 transition-opacity ${
+                      displayCategory === cat._id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100 pointer-events-none md:pointer-events-auto"
+                    }`}>
                       <button 
                         onClick={async (e) => {
                           e.stopPropagation();
                           setCategoryModal({ isOpen: true, category: cat, name: cat.name });
                         }}
-                        className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-700 rounded-lg transition-colors"
+                        className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors bg-surface md:bg-transparent shadow-sm md:shadow-none"
                         title="Rename"
                       >
                         <Edit2 size={14} />
@@ -258,7 +289,7 @@ export default function MenuManagementPage() {
                             message: `Are you sure you want to delete "${cat.name}"?`
                           });
                         }}
-                        className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                        className="p-1.5 text-text-secondary hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors bg-surface md:bg-transparent shadow-sm md:shadow-none"
                         title="Delete"
                       >
                         <Trash2 size={14} />
@@ -268,7 +299,7 @@ export default function MenuManagementPage() {
                 ))}
               </div>
               <form 
-                className="pt-4 border-t border-zinc-800 flex gap-2"
+                className="pt-4 border-t border-border flex gap-2"
                 onSubmit={async (e) => {
                   e.preventDefault();
                   const form = e.target as HTMLFormElement;
@@ -294,7 +325,7 @@ export default function MenuManagementPage() {
                   name="categoryName"
                   type="text" 
                   placeholder="+ New Category" 
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-accent text-white placeholder:text-zinc-600"
+                  className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-accent text-text-primary placeholder:text-text-secondary"
                 />
               </form>
             </div>
@@ -303,31 +334,31 @@ export default function MenuManagementPage() {
           {/* Items Grid */}
           <div className="flex-1">
             <div className="mb-6 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input 
                 type="text" 
                 placeholder="Search items..." 
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 text-white placeholder:text-zinc-600"
+                className="w-full bg-surface border border-border rounded-xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 text-text-primary placeholder:text-text-secondary"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {filteredItems.map((item: any) => (
-                <div key={item._id} className={`bg-zinc-900 border ${item.available ? 'border-zinc-800' : 'border-red-500/30'} rounded-2xl overflow-hidden flex flex-col transition-all hover:border-zinc-700`}>
+                <div key={item._id} className={`bg-surface border ${item.available ? 'border-border' : 'border-red-500/30'} rounded-2xl overflow-hidden flex flex-col transition-all hover:border-zinc-300 dark:hover:border-zinc-700`}>
                   {/* Image */}
-                  <div className="h-40 w-full bg-zinc-800 relative group">
+                  <div className="h-40 w-full bg-zinc-100 dark:bg-zinc-800 relative group">
                     {item.image ? (
                       <img src={item.image} alt={item.name} className={`w-full h-full object-cover ${!item.available && 'grayscale opacity-50'}`} />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-zinc-600"><ImageIcon size={32} /></div>
+                      <div className="w-full h-full flex items-center justify-center text-zinc-400"><ImageIcon size={32} /></div>
                     )}
                     
-                    {/* Action Overlay */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-sm">
-                      <button onClick={() => openEditModal(item)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white backdrop-blur-md transition-colors"><Edit2 size={18} /></button>
-                      <button onClick={() => handleDelete(item)} className="p-2 bg-red-500/20 hover:bg-red-500/40 rounded-full text-red-400 backdrop-blur-md transition-colors"><Trash2 size={18} /></button>
+                    {/* Action Buttons */}
+                    <div className="absolute bottom-2 right-2 flex items-center gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => openEditModal(item)} className="p-2 bg-black/60 hover:bg-black/80 backdrop-blur-md rounded-lg text-white transition-colors shadow-lg"><Edit2 size={16} /></button>
+                      <button onClick={() => handleDelete(item)} className="p-2 bg-red-500/90 hover:bg-red-600 backdrop-blur-md rounded-lg text-white transition-colors shadow-lg"><Trash2 size={16} /></button>
                     </div>
 
                     {!item.available && (
@@ -338,12 +369,12 @@ export default function MenuManagementPage() {
                   </div>
                   
                   {/* Details */}
-                  <div className="p-5 flex flex-col flex-1">
+                  <div className="p-4 md:p-5 flex flex-col flex-1">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium text-lg text-white leading-tight">{item.name}</h3>
+                      <h3 className="font-medium text-lg text-text-primary leading-tight">{item.name}</h3>
                       <div className={`w-3 h-3 rounded-full shrink-0 ${item.veg ? 'bg-green-500' : 'bg-red-500'}`} />
                     </div>
-                    <p className="text-zinc-400 text-sm line-clamp-2 mb-4">{item.description}</p>
+                    <p className="text-text-secondary text-sm line-clamp-2 mb-4">{item.description}</p>
                     
                     <div className="mt-auto flex items-center justify-between">
                       <span className="font-serif text-xl text-accent">₹{item.price.toFixed(2)}</span>
@@ -353,8 +384,8 @@ export default function MenuManagementPage() {
                         onClick={() => handleToggleAvailable(item)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                           item.available 
-                          ? 'bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-zinc-700' 
-                          : 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
+                          ? 'bg-zinc-100 dark:bg-zinc-800 border-border text-text-secondary hover:bg-zinc-200 dark:hover:bg-zinc-700' 
+                          : 'bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500/20'
                         }`}
                       >
                         {item.available ? 'Mark Sold Out' : 'Mark Available'}
@@ -365,7 +396,7 @@ export default function MenuManagementPage() {
               ))}
               
               {filteredItems.length === 0 && (
-                <div className="col-span-full py-12 text-center text-zinc-500 border-2 border-dashed border-zinc-800 rounded-2xl">
+                <div className="col-span-full py-12 text-center text-text-secondary border-2 border-dashed border-border rounded-2xl">
                   No items found in this category.
                 </div>
               )}
@@ -374,22 +405,62 @@ export default function MenuManagementPage() {
         </div>
       </div>
 
+      {/* Clear All Menu Modal */}
+      {clearAllModal.isOpen && (
+        <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface border border-red-500/30 rounded-3xl w-full max-w-md shadow-2xl">
+            <div className="p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-4 text-red-500">
+                <AlertTriangle size={28} />
+                <h2 className="text-2xl font-serif">Clear Entire Menu</h2>
+              </div>
+              <p className="text-text-secondary text-sm mb-6">
+                This action is <strong>irreversible</strong>. It will delete ALL categories and ALL menu items for your restaurant immediately.
+              </p>
+              
+              <form onSubmit={handleClearAllMenu}>
+                <div className="mb-6">
+                  <label className="block text-xs font-medium text-text-primary mb-1.5">Type <strong>DELETE ALL</strong> to confirm</label>
+                  <input 
+                    required 
+                    autoFocus
+                    type="text" 
+                    value={clearAllModal.verifyName} 
+                    onChange={e => setClearAllModal({...clearAllModal, verifyName: e.target.value})} 
+                    className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-red-500 focus:outline-none" 
+                    placeholder="DELETE ALL"
+                  />
+                </div>
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <button type="button" onClick={() => setClearAllModal({ isOpen: false, verifyName: "" })} className="px-4 py-2 rounded-xl font-medium text-text-secondary hover:text-text-primary transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={isSubmitting || clearAllModal.verifyName !== "DELETE ALL"} className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium flex items-center gap-2 transition-colors disabled:opacity-50">
+                    {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : 'Wipe Menu'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-none sm:rounded-3xl w-full max-w-2xl min-h-screen sm:min-h-0 shadow-2xl relative">
+          <div className="bg-surface border border-border rounded-none sm:rounded-3xl w-full max-w-2xl min-h-screen sm:min-h-0 shadow-2xl relative">
             <div className="p-6 md:p-8">
-              <h2 className="text-2xl font-serif text-white mb-6">{editingItem ? 'Edit Menu Item' : 'Add New Item'}</h2>
+              <h2 className="text-2xl font-serif text-text-primary mb-6">{editingItem ? 'Edit Menu Item' : 'Add New Item'}</h2>
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Image Upload Area */}
                   <div className="w-full md:w-1/3 space-y-4">
-                    <div className="aspect-square w-full bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden relative group">
+                    <div className="aspect-square w-full bg-base border border-border rounded-2xl overflow-hidden relative group">
                       {imagePreview ? (
                         <img src={imagePreview} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600 gap-2">
+                        <div className="w-full h-full flex flex-col items-center justify-center text-text-secondary gap-2">
                           <ImageIcon size={32} />
                           <span className="text-xs font-medium">Upload Image</span>
                         </div>
@@ -401,24 +472,24 @@ export default function MenuManagementPage() {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
                     </div>
-                    <p className="text-[10px] text-zinc-500 text-center">Supported: JPG, PNG, WEBP (Max 5MB)</p>
+                    <p className="text-[10px] text-text-secondary text-center">Supported: JPG, PNG, WEBP (Max 5MB)</p>
                   </div>
 
                   {/* Form Fields */}
                   <div className="w-full md:w-2/3 space-y-4">
                     <div>
-                      <label className="block text-xs font-medium text-zinc-400 mb-1.5">Item Name</label>
-                      <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="e.g. Truffle Fries" />
+                      <label className="block text-xs font-medium text-text-secondary mb-1.5">Item Name</label>
+                      <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="e.g. Truffle Fries" />
                     </div>
                     
                     <div className="flex gap-4">
                       <div className="w-1/2">
-                        <label className="block text-xs font-medium text-zinc-400 mb-1.5">Price (₹)</label>
-                        <input required type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="299.00" />
+                        <label className="block text-xs font-medium text-text-secondary mb-1.5">Price (₹)</label>
+                        <input required type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="299.00" />
                       </div>
                       <div className="w-1/2">
-                        <label className="block text-xs font-medium text-zinc-400 mb-1.5">Category</label>
-                        <select required value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-accent/50 focus:outline-none appearance-none">
+                        <label className="block text-xs font-medium text-text-secondary mb-1.5">Category</label>
+                        <select required value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none appearance-none">
                           <option value="">Select...</option>
                           {categories.map((c: any) => <option key={c._id} value={c._id}>{c.name}</option>)}
                         </select>
@@ -426,49 +497,49 @@ export default function MenuManagementPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-zinc-400 mb-1.5">Description</label>
-                      <textarea rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-accent/50 focus:outline-none resize-none" placeholder="Brief description of the item..."></textarea>
+                      <label className="block text-xs font-medium text-text-secondary mb-1.5">Description</label>
+                      <textarea rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none resize-none" placeholder="Brief description of the item..."></textarea>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-zinc-400 mb-1.5">Custom Tags (comma separated)</label>
-                      <input type="text" value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="e.g. Spicy, Gluten-Free, Contains Nuts" />
+                      <label className="block text-xs font-medium text-text-secondary mb-1.5">Custom Tags (comma separated)</label>
+                      <input type="text" value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="e.g. Spicy, Gluten-Free, Contains Nuts" />
                     </div>
 
                     <div className="flex flex-wrap gap-4 pt-2">
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={formData.veg} onChange={e => setFormData({...formData, veg: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-green-500 focus:ring-green-500/50" />
-                        <span className="text-sm text-zinc-300 flex items-center gap-2">Vegetarian <div className="w-2 h-2 rounded-full bg-green-500"></div></span>
+                        <input type="checkbox" checked={formData.veg} onChange={e => setFormData({...formData, veg: e.target.checked})} className="w-4 h-4 rounded border-border bg-base text-green-500 focus:ring-green-500/50" />
+                        <span className="text-sm text-text-secondary flex items-center gap-2">Vegetarian <div className="w-2 h-2 rounded-full bg-green-500"></div></span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={formData.available} onChange={e => setFormData({...formData, available: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-accent focus:ring-accent/50" />
-                        <span className="text-sm text-zinc-300">Available</span>
+                        <input type="checkbox" checked={formData.available} onChange={e => setFormData({...formData, available: e.target.checked})} className="w-4 h-4 rounded border-border bg-base text-accent focus:ring-accent/50" />
+                        <span className="text-sm text-text-secondary">Available</span>
                       </label>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-zinc-800">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-border">
                       <label className="flex flex-col gap-1 cursor-pointer">
-                        <span className="text-xs font-medium text-zinc-400">Best Seller 🏆</span>
-                        <input type="checkbox" checked={formData.isBestseller} onChange={e => setFormData({...formData, isBestseller: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-orange-500 focus:ring-orange-500/50" />
+                        <span className="text-xs font-medium text-text-secondary">Best Seller 🏆</span>
+                        <input type="checkbox" checked={formData.isBestseller} onChange={e => setFormData({...formData, isBestseller: e.target.checked})} className="w-4 h-4 rounded border-border bg-base text-orange-500 focus:ring-orange-500/50" />
                       </label>
                       <label className="flex flex-col gap-1 cursor-pointer">
-                        <span className="text-xs font-medium text-zinc-400">Chef Special 👨‍🍳</span>
-                        <input type="checkbox" checked={formData.chefSpecial} onChange={e => setFormData({...formData, chefSpecial: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-purple-500 focus:ring-purple-500/50" />
+                        <span className="text-xs font-medium text-text-secondary">Chef Special 👨‍🍳</span>
+                        <input type="checkbox" checked={formData.chefSpecial} onChange={e => setFormData({...formData, chefSpecial: e.target.checked})} className="w-4 h-4 rounded border-border bg-base text-purple-500 focus:ring-purple-500/50" />
                       </label>
                       <label className="flex flex-col gap-1 cursor-pointer">
-                        <span className="text-xs font-medium text-zinc-400">Popular 🔥</span>
-                        <input type="checkbox" checked={formData.isNewArrival} onChange={e => setFormData({...formData, isNewArrival: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-blue-500 focus:ring-blue-500/50" />
+                        <span className="text-xs font-medium text-text-secondary">Popular 🔥</span>
+                        <input type="checkbox" checked={formData.isNewArrival} onChange={e => setFormData({...formData, isNewArrival: e.target.checked})} className="w-4 h-4 rounded border-border bg-base text-blue-500 focus:ring-blue-500/50" />
                       </label>
                       <label className="flex flex-col gap-1 cursor-pointer">
-                        <span className="text-xs font-medium text-zinc-400">LTO ⏳</span>
-                        <input type="checkbox" checked={formData.limitedTimeOffer} onChange={e => setFormData({...formData, limitedTimeOffer: e.target.checked})} className="w-4 h-4 rounded border-zinc-700 bg-zinc-950 text-red-500 focus:ring-red-500/50" />
+                        <span className="text-xs font-medium text-text-secondary">LTO ⏳</span>
+                        <input type="checkbox" checked={formData.limitedTimeOffer} onChange={e => setFormData({...formData, limitedTimeOffer: e.target.checked})} className="w-4 h-4 rounded border-border bg-base text-red-500 focus:ring-red-500/50" />
                       </label>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-6 border-t border-zinc-800">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+                <div className="flex justify-end gap-3 pt-6 border-t border-border">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl font-medium text-text-secondary hover:text-text-primary transition-colors">
                     Cancel
                   </button>
                   <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 bg-accent hover:bg-accent/90 text-white rounded-xl font-medium flex items-center gap-2 transition-colors disabled:opacity-50">
@@ -484,23 +555,23 @@ export default function MenuManagementPage() {
       {/* Category Rename Modal */}
       {categoryModal.isOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm shadow-2xl">
+          <div className="bg-surface border border-border rounded-3xl w-full max-w-sm shadow-2xl">
             <div className="p-6">
-              <h2 className="text-xl font-serif text-white mb-4">Rename Category</h2>
+              <h2 className="text-xl font-serif text-text-primary mb-4">Rename Category</h2>
               <form onSubmit={handleSaveCategory}>
                 <div className="mb-6">
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Category Name</label>
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5">Category Name</label>
                   <input 
                     required 
                     autoFocus
                     type="text" 
                     value={categoryModal.name} 
                     onChange={e => setCategoryModal({...categoryModal, name: e.target.value})} 
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-accent/50 focus:outline-none" 
+                    className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" 
                   />
                 </div>
-                <div className="flex justify-end gap-3 border-t border-zinc-800 pt-4">
-                  <button type="button" onClick={() => setCategoryModal({ isOpen: false, category: null, name: "" })} className="px-4 py-2 rounded-xl font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <button type="button" onClick={() => setCategoryModal({ isOpen: false, category: null, name: "" })} className="px-4 py-2 rounded-xl font-medium text-text-secondary hover:text-text-primary transition-colors">
                     Cancel
                   </button>
                   <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-accent hover:bg-accent/90 text-white rounded-xl font-medium flex items-center gap-2 transition-colors disabled:opacity-50">
@@ -516,15 +587,15 @@ export default function MenuManagementPage() {
       {/* Delete Confirmation Modal */}
       {deleteModal.isOpen && (
         <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm shadow-2xl">
+          <div className="bg-surface border border-border rounded-3xl w-full max-w-sm shadow-2xl">
             <div className="p-6">
-              <h2 className="text-xl font-serif text-white mb-2">{deleteModal.title}</h2>
-              <p className="text-zinc-400 text-sm mb-6">{deleteModal.message}</p>
+              <h2 className="text-xl font-serif text-text-primary mb-2">{deleteModal.title}</h2>
+              <p className="text-text-secondary text-sm mb-6">{deleteModal.message}</p>
               
-              <div className="flex justify-end gap-3 border-t border-zinc-800 pt-4">
+              <div className="flex justify-end gap-3 border-t border-border pt-4">
                 <button 
                   onClick={() => setDeleteModal({ isOpen: false, type: null, target: null, title: '', message: '' })} 
-                  className="px-4 py-2 rounded-xl font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                  className="px-4 py-2 rounded-xl font-medium text-text-secondary hover:text-text-primary transition-colors"
                 >
                   Cancel
                 </button>
@@ -544,17 +615,17 @@ export default function MenuManagementPage() {
       {/* Generic Message Modal */}
       {messageModal.isOpen && (
         <div className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm shadow-2xl">
+          <div className="bg-surface border border-border rounded-3xl w-full max-w-sm shadow-2xl">
             <div className="p-6">
-              <h2 className={`text-xl font-serif mb-2 ${messageModal.type === 'error' ? 'text-red-400' : 'text-white'}`}>
+              <h2 className={`text-xl font-serif mb-2 ${messageModal.type === 'error' ? 'text-red-500' : 'text-text-primary'}`}>
                 {messageModal.title}
               </h2>
-              <p className="text-zinc-400 text-sm mb-6">{messageModal.message}</p>
+              <p className="text-text-secondary text-sm mb-6">{messageModal.message}</p>
               
-              <div className="flex justify-end gap-3 border-t border-zinc-800 pt-4">
+              <div className="flex justify-end gap-3 border-t border-border pt-4">
                 <button 
                   onClick={() => setMessageModal({ ...messageModal, isOpen: false })} 
-                  className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-medium transition-colors"
+                  className="px-6 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-text-primary rounded-xl font-medium transition-colors"
                 >
                   Okay
                 </button>

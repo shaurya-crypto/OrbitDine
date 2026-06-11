@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { GlassPanel } from "@/components/ui/GlassPanel";
 import { X, Plus } from "lucide-react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
@@ -40,43 +39,43 @@ export function AddTableModal({ restaurantId, onClose }: AddTableModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md p-4">
-      <GlassPanel premium className="w-full max-w-md p-6 relative bg-zinc-900 text-white border border-zinc-800">
-        <button onClick={onClose} className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md p-6 relative bg-white text-neutral-900 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200">
+        <button onClick={onClose} className="absolute top-6 right-6 text-neutral-400 hover:text-neutral-900 transition-colors">
           <X size={20} />
         </button>
-        <h2 className="text-xl font-bold mb-6">Add New Table</h2>
+        <h2 className="text-2xl font-bold mb-6 text-neutral-900 font-serif">Add New Table</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">Table Number/Name</label>
+            <label className="block text-sm font-medium text-neutral-600 mb-1">Table Number/Name</label>
             <input 
               required 
               type="text" 
               value={tableNumber} 
               onChange={e => setTableNumber(e.target.value)} 
-              className="w-full bg-zinc-950 border border-zinc-800 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50" 
+              className="w-full bg-neutral-50 border border-neutral-200 text-neutral-900 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all" 
               placeholder="e.g. 12 or Patio-1"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-400 mb-1">Capacity (Optional)</label>
+            <label className="block text-sm font-medium text-neutral-600 mb-1">Capacity (Optional)</label>
             <input 
               type="number" 
               value={capacity} 
               onChange={e => setCapacity(e.target.value)} 
-              className="w-full bg-zinc-950 border border-zinc-800 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/50" 
+              className="w-full bg-neutral-50 border border-neutral-200 text-neutral-900 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all" 
               placeholder="e.g. 4"
             />
           </div>
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full py-3 bg-accent text-white rounded-xl font-medium hover:bg-accent/90 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+            className="w-full py-3.5 mt-2 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-600/20"
           >
             {loading ? "Adding..." : <><Plus size={18} /> Add Table</>}
           </button>
         </form>
-      </GlassPanel>
+      </div>
     </div>
   );
 }

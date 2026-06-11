@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useSessionStore } from "@/stores/sessionStore";
 import { generateBill } from "@/services/billService";
 import { Loader } from "@/components/ui/Loader";
-import { Receipt, CheckCircle2, Star, Send } from "lucide-react";
+import { Receipt, CheckCircle2, Star, Send, BellRing } from "lucide-react";
 import axios from "axios";
 
 import { useToast } from "@/components/ui/ToastProvider";
@@ -19,6 +19,7 @@ export default function BillPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRequestingBill, setIsRequestingBill] = useState(false);
   const [isBillRequested, setIsBillRequested] = useState(false);
+  const [isReminding, setIsReminding] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -59,6 +60,18 @@ export default function BillPage() {
       }
     } finally {
       setIsRequestingBill(false);
+    }
+  };
+
+  const handleRemindBill = async () => {
+    setIsReminding(true);
+    try {
+      await axios.post("/api/sessions/remind", { sessionId, type: "bill" });
+      toast.success("Staff notified!");
+    } catch (error) {
+      toast.error("Failed to send reminder");
+    } finally {
+      setIsReminding(false);
     }
   };
 
@@ -116,9 +129,17 @@ export default function BillPage() {
         <div className="w-full max-w-md mx-auto flex flex-col items-center text-center mb-8">
           <CheckCircle2 size={80} className="text-accent mb-6" />
           <h1 className="text-3xl font-serif tracking-tight mb-2">Bill Requested</h1>
-          <p className="text-text-secondary text-center max-w-xs">
+          <p className="text-text-secondary text-center max-w-xs mb-6">
             Staff is bringing your bill to the table. Thank you for dining with us!
           </p>
+          <button
+            onClick={handleRemindBill}
+            disabled={isReminding}
+            className="flex items-center gap-2 text-sm font-medium bg-accent-soft text-accent px-5 py-2.5 rounded-full hover:bg-accent hover:text-white transition-colors disabled:opacity-50 shadow-sm"
+          >
+            <BellRing size={16} />
+            {isReminding ? "Sending..." : "Remind Staff"}
+          </button>
         </div>
 
         <div className="w-full max-w-md mx-auto space-y-6">

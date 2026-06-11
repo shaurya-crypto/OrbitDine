@@ -9,13 +9,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Wifi, WifiOff, RefreshCw, ShieldAlert, Menu } from "lucide-react";
 import { RequestRoleModal } from "@/components/dashboard/layout/RequestRoleModal";
 import { NotificationCenter } from "@/components/dashboard/layout/NotificationCenter";
+import { CustomNotificationModal } from "@/components/dashboard/CustomNotificationModal";
 import { useToast } from "@/components/ui/ToastProvider";
+import { Megaphone } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const toast = useToast();
   const { roles, restaurantId, setAuth } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [connState, setConnState] = useState<ConnectionState>("offline");
   const router = useRouter();
@@ -175,25 +178,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {!isCustomerDashboard && (
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface sticky top-0 z-40">
           <h1 className="text-xl font-serif text-text-primary">OrbitDine</h1>
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-text-secondary hover:bg-border/30 rounded-lg">
-            <Menu size={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowBroadcastModal(true)}
+              className="p-2 text-text-secondary hover:text-text-primary hover:bg-border/30 rounded-lg transition-colors"
+              title="Broadcast Message"
+            >
+              <Megaphone size={20} />
+            </button>
+            <NotificationCenter />
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 ml-2 text-text-secondary hover:bg-border/30 rounded-lg">
+              <Menu size={24} />
+            </button>
+          </div>
         </div>
       )}
 
       {!isCustomerDashboard && <Sidebar mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />}
       
       <div className={`flex-1 ${!isCustomerDashboard ? "md:ml-64 p-4 md:p-8" : ""} min-h-screen relative w-full overflow-x-hidden`}>
-        {/* Top Right Controls: Connection & Notifications (Hidden on customer dashboard) */}
+        {/* Top Right Controls: Connection & Notifications (Desktop Only, mobile moved to header) */}
         {!isCustomerDashboard && (
-          <div className="absolute top-4 right-4 md:top-8 md:right-8 z-50 flex items-center gap-4">
-            <NotificationCenter />
-            
-
+          <div className="hidden md:flex absolute top-8 right-8 z-50 items-center gap-4">
+            <button
+              onClick={() => setShowBroadcastModal(true)}
+              className="p-2 text-text-secondary hover:text-text-primary hover:bg-base rounded-xl transition-colors bg-surface border border-border shadow-sm"
+              title="Broadcast Message"
+            >
+              <Megaphone size={20} />
+            </button>
+            <div className="bg-surface border border-border shadow-sm rounded-xl">
+              <NotificationCenter />
+            </div>
           </div>
         )}
 
         {children}
+        {showBroadcastModal && <CustomNotificationModal onClose={() => setShowBroadcastModal(false)} />}
       </div>
     </div>
   );

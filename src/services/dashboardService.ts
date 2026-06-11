@@ -11,7 +11,7 @@ export const fetchActiveSessions = async (restaurantId: string) => {
 };
 
 export const fetchDashboardOverview = async (restaurantId: string) => {
-  const { data } = await apiClient.get(`/dashboard/overview/${restaurantId}`);
+  const { data } = await apiClient.get(`/dashboard/overview`, { params: { restaurantId } });
   return data.data;
 };
 

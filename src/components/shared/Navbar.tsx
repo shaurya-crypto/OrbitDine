@@ -128,7 +128,7 @@ export function Navbar() {
               </Link>
             ) : (
               <>
-                <Link href="/login" className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
+                <Link href="/login" className="text-sm font-bold text-neutral-900 dark:text-neutral-300 hover:text-black dark:hover:text-white transition-colors">
                   Login
                 </Link>
                 <Link 
@@ -204,7 +204,7 @@ export function Navbar() {
                   </Link>
                 ) : (
                   <>
-                    <Link href="/login" className="w-full py-4 text-center border border-border rounded-full text-text-primary font-medium" onClick={() => setMobileMenuOpen(false)}>
+                    <Link href="/login" className="w-full py-4 text-center border border-border rounded-full text-neutral-900 dark:text-white font-bold" onClick={() => setMobileMenuOpen(false)}>
                       Login
                     </Link>
                     <Link href="/signup" className="w-full py-4 text-center bg-text-primary text-base rounded-full font-medium" onClick={() => setMobileMenuOpen(false)}>

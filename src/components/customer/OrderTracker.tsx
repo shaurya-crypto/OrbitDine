@@ -1,7 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, ChefHat, PackageCheck, Utensils } from "lucide-react";
+import { Check, ChefHat, PackageCheck, Utensils, BellRing } from "lucide-react";
+import { useState } from "react";
+import { useSessionStore } from "@/stores/sessionStore";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface OrderTrackerProps {
   status: "received" | "preparing" | "ready" | "served" | "cancelled";
@@ -15,6 +18,26 @@ export function OrderTracker({ status, orderNumber }: OrderTrackerProps) {
     { id: "ready", label: "Ready to Serve", icon: <PackageCheck size={20} /> },
     { id: "served", label: "Served", icon: <Utensils size={20} /> },
   ];
+
+  const { sessionId } = useSessionStore();
+  const [isReminding, setIsReminding] = useState(false);
+  const toast = useToast();
+
+  const handleRemind = async (type: 'food' | 'serve') => {
+    setIsReminding(true);
+    try {
+      await fetch("/api/sessions/remind", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, type })
+      });
+      toast.success(type === 'food' ? "Kitchen notified!" : "Staff notified!");
+    } catch (e) {
+      toast.error("Failed to send reminder");
+    } finally {
+      setIsReminding(false);
+    }
+  };
 
   const currentIndex = steps.findIndex((s) => s.id === status);
 
@@ -82,6 +105,20 @@ export function OrderTracker({ status, orderNumber }: OrderTrackerProps) {
           })}
         </div>
       </div>
+
+      {/* Reminder Buttons */}
+      {(status === "preparing" || status === "ready") && (
+        <div className="mt-6 pt-4 border-t border-neutral-100 flex justify-end">
+          <button
+            onClick={() => handleRemind(status === "preparing" ? 'food' : 'serve')}
+            disabled={isReminding}
+            className="flex items-center gap-2 text-sm font-medium bg-accent-soft text-accent px-4 py-2 rounded-full hover:bg-accent hover:text-white transition-colors disabled:opacity-50"
+          >
+            <BellRing size={16} />
+            {isReminding ? "Sending..." : (status === "preparing" ? "Remind about Food" : "Remind to Serve")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

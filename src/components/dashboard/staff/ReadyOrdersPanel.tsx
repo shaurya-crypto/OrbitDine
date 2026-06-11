@@ -35,28 +35,36 @@ export function ReadyOrdersPanel({ restaurantId }: { restaurantId: string }) {
 
   if (readyOrders.length === 0) {
     return (
-      <div className="bg-neutral-50 rounded-2xl p-8 text-center border border-neutral-100">
-        <Utensils className="mx-auto text-neutral-300 mb-3" size={32} />
-        <h3 className="text-neutral-500 font-medium">No orders ready to serve</h3>
+      <div className="bg-surface rounded-2xl p-8 text-center border border-border">
+        <Utensils className="mx-auto text-text-secondary opacity-50 mb-3" size={32} />
+        <h3 className="text-text-secondary font-medium">No orders ready to serve</h3>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {readyOrders.map((order: any) => (
-        <div key={order._id} className="bg-white rounded-xl shadow-sm border border-orange-200 p-4 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
-          <div className="flex justify-between items-center mb-3">
-            <div>
-              <span className="text-xs font-bold bg-orange-100 text-orange-800 px-2 py-1 rounded-md uppercase tracking-wider">
-                Table {order.tableId?.tableNumber || order.tableId}
-              </span>
+      {readyOrders.map((order: any) => {
+        const formattedTime = new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timeElapsed = Math.floor((new Date().getTime() - new Date(order.createdAt).getTime()) / 60000);
+        return (
+          <div key={order._id} className="bg-surface rounded-xl shadow-sm border border-border p-4 relative overflow-hidden transition-colors hover:border-accent/50">
+            <div className="absolute top-0 left-0 w-1 h-full bg-accent"></div>
+            <div className="flex justify-between items-center mb-3">
+              <div>
+                <span className="text-xs font-bold bg-accent/10 text-accent px-2 py-1 rounded-md uppercase tracking-wider">
+                  Table {order.tableId?.tableNumber || order.tableId}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-text-secondary">
+                  {order.orderNumber}
+                </span>
+                <span className="text-[10px] bg-base px-2 py-0.5 rounded text-text-secondary border border-border">
+                  {formattedTime} ({timeElapsed}m)
+                </span>
+              </div>
             </div>
-            <span className="text-xs font-medium text-neutral-500">
-              {order.orderNumber}
-            </span>
-          </div>
 
           <div className="mb-4 space-y-1">
             {order.items.map((item: any, idx: number) => (
@@ -66,15 +74,16 @@ export function ReadyOrdersPanel({ restaurantId }: { restaurantId: string }) {
             ))}
           </div>
 
-          <button 
-            onClick={() => handleMarkServed(order._id)}
-            className="w-full bg-orange-500 text-white font-medium py-2 rounded-lg text-sm hover:bg-orange-600 transition-colors flex items-center justify-center space-x-2"
-          >
-            <CheckCircle2 size={16} />
-            <span>Mark Served</span>
-          </button>
-        </div>
-      ))}
+            <button 
+              onClick={() => handleMarkServed(order._id)}
+              className="w-full bg-accent text-white font-medium py-2 rounded-lg text-sm hover:opacity-90 transition-opacity flex items-center justify-center space-x-2"
+            >
+              <CheckCircle2 size={16} />
+              <span>Mark Served</span>
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

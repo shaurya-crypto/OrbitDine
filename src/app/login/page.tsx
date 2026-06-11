@@ -32,7 +32,8 @@ export default function LoginPage() {
   useEffect(() => {
     const currentRoles = useAuthStore.getState().roles;
     if (currentRoles && currentRoles.length > 0) {
-      useAuthStore.getState().logout();
+      const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => currentRoles.includes(r as any)) || "customer";
+      router.replace(`/dashboard/${highestRole}`);
     }
   }, []);
 
@@ -58,8 +59,7 @@ export default function LoginPage() {
         const responseData = await res.json();
         
         if (responseData.status === "requires_role_selection") {
-          setServerError("Account not found. Please sign up first.");
-          setIsSubmitting(false);
+          window.location.href = "/signup";
           return;
         }
 
@@ -69,16 +69,18 @@ export default function LoginPage() {
           return;
         }
 
-        setAuth(responseData.userId, responseData.roles, responseData.restaurantId, responseData.fullName);
+        const roles = (responseData.roles && responseData.roles.length > 0) ? responseData.roles : ["customer"];
+        setAuth(responseData.userId, roles, responseData.restaurantId, responseData.fullName);
         router.refresh();
         
-        if (responseData.roles.includes("owner") && !responseData.restaurantId) {
+        if (roles.includes("owner") && !responseData.restaurantId) {
           window.location.href = "/onboarding";
         } else {
-          const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => responseData.roles.includes(r));
-          window.location.href = `/dashboard/${highestRole || "customer"}`;
+          const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r)) || "customer";
+          window.location.href = `/dashboard/${highestRole}`;
         }
       } catch (error) {
+        console.error("Login error:", error);
         setServerError("Network error. Please try again.");
         setIsSubmitting(false);
       }

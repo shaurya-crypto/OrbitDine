@@ -121,3 +121,26 @@ export async function sendManagerInvitationEmail(email: string, inviterName: str
 
   return sendBrevoEmail([{ email }], `Invitation to join ${restaurantName} on OrbitDine`, htmlContent);
 }
+
+export async function sendStaffTransferNotificationEmail(ownerEmail: string, ownerName: string, staffName: string, newRestaurantName: string) {
+  const htmlContent = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+      <h2 style="color: #1f2937; margin-bottom: 20px;">Staff Transfer Notice</h2>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
+        Hello ${ownerName},
+      </p>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
+        This is an automated notification to inform you that <strong>${staffName}</strong> has accepted an invitation to join <strong>${newRestaurantName}</strong>.
+      </p>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
+        As a result, they have been automatically removed from your active staff list and their access to your restaurant's dashboard has been revoked.
+      </p>
+      <hr style="border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+      <p style="color: #9ca3af; font-size: 14px; margin-top: 24px;">
+        If you have any questions or believe this was done in error, please contact support.
+      </p>
+    </div>
+  `;
+
+  return sendBrevoEmail([{ email: ownerEmail, name: ownerName }], `Staff Update: ${staffName} has left your team`, htmlContent);
+}

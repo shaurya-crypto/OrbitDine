@@ -6,6 +6,7 @@ import OrderModel from "@/models/Order";
 import TableModel from "@/models/Table";
 
 export async function GET(req: Request, { params }: { params: Promise<{ restaurantId: string }> }) {
+  console.log("OVERVIEW API HIT!");
   try {
     await dbConnect();
     const { restaurantId } = await params;
