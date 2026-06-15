@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useCart } from "@/hooks/useCart";
 import { useSessionStore } from "@/stores/sessionStore";
 import { QuantitySelector } from "./QuantitySelector";
-import { Plus } from "lucide-react";
+import { Plus, Info } from "lucide-react";
 
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -20,6 +21,15 @@ interface MenuItemCardProps {
     mostOrdered?: boolean;
     isNewArrival?: boolean;
     limitedTimeOffer?: boolean;
+    ingredients?: string[];
+    allergens?: string[];
+    dietaryTags?: string[];
+    nutritionInfo?: {
+      calories?: number;
+      protein?: number;
+      carbs?: number;
+      fat?: number;
+    };
   };
   restaurantId?: string;
 }
@@ -27,6 +37,7 @@ interface MenuItemCardProps {
 export function MenuItemCard({ item, restaurantId }: MenuItemCardProps) {
   const { sessionId } = useSessionStore();
   const { data: cartData, addToCart, updateQuantity, removeFromCart, isAdding } = useCart(sessionId);
+  const [showInfo, setShowInfo] = useState(false);
   const toast = useToast();
 
   const cartItem = cartData?.cart?.find((ci: any) => ci.menuItemId === item.id);
@@ -137,6 +148,55 @@ export function MenuItemCard({ item, restaurantId }: MenuItemCardProps) {
         {item.description && (
           <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">{item.description}</p>
         )}
+
+        {/* Info Toggle */}
+        {(item.ingredients?.length || item.nutritionInfo || item.allergens?.length || item.dietaryTags?.length) ? (
+          <div className="mt-2">
+            <button onClick={() => setShowInfo(!showInfo)} className="text-[10px] font-bold uppercase tracking-wider text-accent flex items-center gap-1 hover:opacity-80 transition-opacity">
+              <Info size={12} />
+              {showInfo ? "Hide Info" : "Dietary & Info"}
+            </button>
+
+            {showInfo && (
+              <div className="mt-3 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800 space-y-2">
+                {item.allergens && item.allergens.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-red-500 mr-1 tracking-wider">Allergens:</span>
+                    <span className="text-xs text-zinc-700 dark:text-zinc-300">{item.allergens.join(", ")}</span>
+                  </div>
+                )}
+                {item.dietaryTags && item.dietaryTags.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-green-600 dark:text-green-500 mr-1 tracking-wider">Dietary:</span>
+                    <span className="text-xs text-zinc-700 dark:text-zinc-300">{item.dietaryTags.join(", ")}</span>
+                  </div>
+                )}
+                {item.ingredients && item.ingredients.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-zinc-500 mr-1 tracking-wider">Ingredients:</span>
+                    <span className="text-xs text-zinc-700 dark:text-zinc-300">{item.ingredients.join(", ")}</span>
+                  </div>
+                )}
+                {item.nutritionInfo && (Object.keys(item.nutritionInfo).length > 0) && (
+                  <div className="pt-2 mt-2 border-t border-zinc-200 dark:border-zinc-700/50 flex flex-wrap gap-4">
+                    {item.nutritionInfo.calories !== undefined && (
+                      <div className="flex flex-col"><span className="text-[9px] uppercase text-zinc-400 tracking-wider">Calories</span><span className="text-xs font-medium dark:text-white">{item.nutritionInfo.calories} kcal</span></div>
+                    )}
+                    {item.nutritionInfo.protein !== undefined && (
+                      <div className="flex flex-col"><span className="text-[9px] uppercase text-zinc-400 tracking-wider">Protein</span><span className="text-xs font-medium dark:text-white">{item.nutritionInfo.protein}g</span></div>
+                    )}
+                    {item.nutritionInfo.carbs !== undefined && (
+                      <div className="flex flex-col"><span className="text-[9px] uppercase text-zinc-400 tracking-wider">Carbs</span><span className="text-xs font-medium dark:text-white">{item.nutritionInfo.carbs}g</span></div>
+                    )}
+                    {item.nutritionInfo.fat !== undefined && (
+                      <div className="flex flex-col"><span className="text-[9px] uppercase text-zinc-400 tracking-wider">Fat</span><span className="text-xs font-medium dark:text-white">{item.nutritionInfo.fat}g</span></div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {/* Image & Controls */}

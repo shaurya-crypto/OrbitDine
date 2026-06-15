@@ -7,7 +7,6 @@ import { DeviceShowcase } from "@/components/landing/DeviceShowcase";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { LiveInsightsSection } from "@/components/landing/LiveInsightsSection";
 import { RolesSection } from "@/components/landing/RolesSection";
-import { CommunitySection } from "@/components/landing/CommunitySection";
 import { WhyOrbitDineSection } from "@/components/landing/WhyOrbitDineSection";
 import { TrainingSection } from "@/components/landing/TrainingSection";
 import { PartnerSection } from "@/components/landing/PartnerSection";
@@ -68,12 +67,11 @@ export default function Home() {
       <FeaturesSection />
       {/* <LiveInsightsSection /> */}
       {/* <RolesSection /> */}
-      {/* <CommunitySection /> */}
       <WhyOrbitDineSection />
       {/* <TrainingSection /> */}
       <PartnerSection />
       <FAQSection />
-      <CTASection />
+      {/* <CTASection /> */}
       <Footer />
     </main>
   );

@@ -50,6 +50,7 @@ export default function StaffManagementPage() {
       }
     } catch (e) {
       console.error(e);
+      toast.error("Failed to load staff members.");
     } finally {
       setLoading(false);
     }

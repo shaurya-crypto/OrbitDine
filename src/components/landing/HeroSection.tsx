@@ -8,6 +8,7 @@ import { usePerformance } from "../providers/PerformanceProvider";
 // import { ThreeScenePlaceholder } from "./ThreeScenePlaceholder";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import React from "react";
+import Link from "next/link";
 
 export interface HeroSectionProps {
   title?: React.ReactNode;
@@ -74,27 +75,39 @@ export function HeroSection({ title, subtitle }: HeroSectionProps = {}) {
         duration: 1.4,
         stagger: 0.08,
         delay: 0.8 // Wait for Navbar (0.4s)
-      })
-        .fromTo(subheadRef.current,
+      });
+      
+      if (subheadRef.current) {
+        tl.fromTo(subheadRef.current,
           { opacity: 0, y: 20, filter: "blur(10px)" },
           { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2 },
           "1.4"
-        )
-        .fromTo(buttonsRef.current,
+        );
+      }
+      
+      if (buttonsRef.current) {
+        tl.fromTo(buttonsRef.current,
           { opacity: 0, y: 20 },
           { opacity: 1, y: 0, duration: 1.0 },
           "1.8"
-        )
-        .fromTo(statsRef.current,
+        );
+      }
+      
+      if (statsRef.current) {
+        tl.fromTo(statsRef.current,
           { opacity: 0, y: 20 },
           { opacity: 1, y: 0, duration: 1.0 },
           "2.0"
-        )
-        .fromTo(visualRef.current,
+        );
+      }
+      
+      if (visualRef.current) {
+        tl.fromTo(visualRef.current,
           { opacity: 0, scale: 0.95 },
           { opacity: 1, scale: 1, duration: 1.5, ease: "power4.out" },
           "2.2"
         );
+      }
     }, containerRef);
 
     return () => ctx.revert();
@@ -157,12 +170,12 @@ export function HeroSection({ title, subtitle }: HeroSectionProps = {}) {
               <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
             </span>
           </button>
-          <button className="group px-8 py-4 border border-border bg-glass backdrop-blur-lg rounded-full transition-all hover:bg-border/50 active:scale-95 text-text-primary">
+          <Link href="/coming-soon" className="group px-8 py-4 border border-border bg-glass backdrop-blur-lg rounded-full transition-all hover:bg-border/50 active:scale-95 text-text-primary">
             <span className="flex items-center font-medium">
               <PlayCircle className="mr-2 w-5 h-5 text-text-secondary group-hover:text-text-primary transition-colors" />
               See How It Works
             </span>
-          </button>
+          </Link>
         </div>
       </div>
     </motion.section>

@@ -5,7 +5,9 @@ import dbConnect from "@/lib/mongodb/db";
 import QRCodeModel from "@/models/QRCode";
 import TableModel from "@/models/Table";
 import OrderSessionModel from "@/models/OrderSession";
+import UserModel from "@/models/User";
 import { eventBus } from "@/lib/services/eventBus";
+import { verifyAccessToken } from "@/lib/auth/jwt";
 
 const createSchema = z.object({
   code: z.string().min(1, "QR code is required"),
@@ -36,6 +38,17 @@ export async function POST(req: Request) {
       await dbConnect();
       session = await mongoose.startSession();
       session.startTransaction();
+
+      // 0. Check for authenticated user via cookies
+      let userId = null;
+      const tokenCookie = req.headers.get("cookie")?.split("; ").find(r => r.startsWith("accessToken="));
+      if (tokenCookie) {
+        const token = tokenCookie.split("=")[1];
+        const decoded = await verifyAccessToken(token);
+        if (decoded && decoded.userId) {
+          userId = decoded.userId;
+        }
+      }
 
       // 1. QR Validation
       const qrRecord = await QRCodeModel.findOne({ code, active: true }).session(session);
@@ -76,19 +89,30 @@ export async function POST(req: Request) {
       }
 
       // 3. Create new OrderSession
+      const sessionData: any = {
+        restaurantId,
+        tableId,
+        qrCodeId: qrRecord._id,
+        status: "active",
+        cart: [],
+        orderIds: [],
+      };
+      if (userId) sessionData.userId = userId;
+
       const [newOrderSession] = await OrderSessionModel.create(
-        [
-          {
-            restaurantId,
-            tableId,
-            qrCodeId: qrRecord._id,
-            status: "active",
-            cart: [],
-            orderIds: [],
-          },
-        ],
+        [sessionData],
         { session }
       );
+
+      // 3.5. Update user savedRestaurants if logged in
+      if (userId) {
+        const user = await UserModel.findById(userId).session(session);
+        if (user && !user.savedRestaurants?.includes(restaurantId)) {
+          if (!user.savedRestaurants) user.savedRestaurants = [];
+          user.savedRestaurants.push(restaurantId);
+          await user.save({ session });
+        }
+      }
 
       // 4. Update Table Status
       table.activeSessionId = newOrderSession._id;

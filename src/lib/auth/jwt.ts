@@ -27,7 +27,7 @@ export async function signAccessToken(payload: TokenPayload): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("7d") // Long lived access token for development
+    .setExpirationTime("15m") // Short lived access token for security
     .sign(getJwtSecret());
 }
 

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import VerificationToken from "@/models/VerificationToken";
 import User from "@/models/User";
+import Session from "@/models/Session";
+import { signAccessToken, signRefreshToken } from "@/lib/auth/jwt";
 
 export async function POST(req: Request) {
   try {
@@ -31,7 +33,50 @@ export async function POST(req: Request) {
 
     await VerificationToken.deleteOne({ _id: verificationToken._id });
 
-    return NextResponse.json({ message: "Email verified successfully" });
+    // Generate tokens for auto-login
+    const payload = {
+      userId: user._id.toString(),
+      roles: Array.from(user.roles || ["customer"]),
+      isVerified: true,
+      restaurantId: user.restaurantId?.toString() || null,
+    };
+
+    const accessToken = await signAccessToken(payload);
+    const refreshToken = await signRefreshToken(payload);
+
+    await Session.create({
+      userId: user._id,
+      refreshToken,
+      userAgent: req.headers.get("user-agent"),
+      ipAddress: req.headers.get("x-forwarded-for") || "unknown",
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    });
+
+    const response = NextResponse.json({ 
+      message: "Email verified successfully",
+      userId: user._id.toString(),
+      roles: payload.roles,
+      restaurantId: payload.restaurantId,
+      fullName: user.fullName
+    });
+
+    response.cookies.set("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: "/",
+    });
+
+    response.cookies.set("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Verify email error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
-import { ChefHat, LayoutDashboard, Utensils, LineChart, LogOut, ShieldAlert, Moon, Sun, Settings } from "lucide-react";
+import { ChefHat, LayoutDashboard, Utensils, LineChart, LogOut, ShieldAlert, Moon, Sun, Settings, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { RequestRoleModal } from "./RequestRoleModal";

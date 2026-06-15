@@ -120,13 +120,13 @@ export function FeaturesSection({ title }: FeaturesSectionProps = {}) {
             <div className="text-side w-full lg:w-1/2">
               <QrCode className="w-12 h-12 text-accent mb-8" />
               <h3 className="text-4xl md:text-5xl font-serif text-text-primary mb-6">
-                Frictionless Ordering.
+                One Unified Ecosystem.
               </h3>
               <p className="text-lg text-text-secondary max-w-lg mb-8">
-                Eliminate wait times. Guests scan, browse a beautifully branded menu, and send orders straight to the kitchen without waiting for a server.
+                One platform for owners, managers, staff, and customers. Eliminate wait times and app fatigue. Everything unified in a single ecosystem so you never have to switch between multiple apps again.
               </p>
               <ul className="space-y-4">
-                {["No app required", "Custom branding", "Allergen tagging"].map((item, i) => (
+                {["No Thousand Apps Required", "Custom branding", "Showing clear warnings for vegetarian, non-vegetarian and allergens"].map((item, i) => (
                   <li key={i} className="flex items-center text-text-primary font-medium">
                     <div className="w-1.5 h-1.5 rounded-full bg-accent mr-3" />
                     {item}

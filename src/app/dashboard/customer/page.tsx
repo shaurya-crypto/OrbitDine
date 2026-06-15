@@ -6,18 +6,22 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { 
   Search, MapPin, Star, Clock, Utensils, Heart, ChevronRight, 
   Home, User, MoreHorizontal, Settings, LogOut, Receipt, Award, 
-  TrendingUp, MessageSquare
+  TrendingUp, MessageSquare, Users
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { useToast } from "@/components/ui/ToastProvider";
+import { FloatingInput } from "@/components/ui/FloatingInput";
 
 export default function CustomerDashboardPage() {
   const { name, logout } = useAuthStore();
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "history" | "favorites" | "reviews">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "history" | "favorites" | "reviews" | "settings">("overview");
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, verifyText: "", isDeleting: false });
+  const toast = useToast();
 
   const [dashboardData, setDashboardData] = useState<any>(null);
 
@@ -35,6 +39,7 @@ export default function CustomerDashboardPage() {
       }
     } catch (e) {
       console.error("Failed to load customer dashboard", e);
+      toast.error("Failed to load customer dashboard.");
     } finally {
       setLoading(false);
     }
@@ -53,6 +58,27 @@ export default function CustomerDashboardPage() {
   }
 
   const { profile, recentOrders, savedRestaurants, favoriteItems, recentReviews } = dashboardData;
+
+  const handleDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (deleteModal.verifyText !== "DELETE") return;
+    
+    setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+    try {
+      const res = await fetch("/api/customer/settings", { method: "DELETE" });
+      if (res.ok) {
+        logout();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete account.");
+        setDeleteModal(prev => ({ ...prev, isDeleting: false }));
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to delete account.");
+      setDeleteModal(prev => ({ ...prev, isDeleting: false }));
+    }
+  };
 
   return (
     <div className="pb-24 md:pb-8 max-w-7xl mx-auto space-y-8 animate-fade-in relative min-h-screen p-4 md:p-8 bg-base">
@@ -80,7 +106,8 @@ export default function CustomerDashboardPage() {
           { id: "overview", label: "Overview", icon: Home },
           { id: "history", label: "Order History", icon: Receipt },
           { id: "favorites", label: "Favorites", icon: Heart },
-          { id: "reviews", label: "My Ratings", icon: Star }
+          { id: "reviews", label: "My Ratings", icon: Star },
+          { id: "settings", label: "Settings", icon: Settings }
         ].map(tab => (
           <button 
             key={tab.id}
@@ -318,6 +345,152 @@ export default function CustomerDashboardPage() {
         </div>
       )}
 
+      {activeTab === "settings" && (
+        <div className="space-y-6">
+          <h2 className="text-2xl font-serif text-text-primary mb-6">Account Settings</h2>
+          
+          <div className="max-w-2xl space-y-6">
+            <GlassPanel className="p-6 space-y-6">
+              <h3 className="font-semibold text-text-primary text-lg border-b border-border pb-4">Personal Information</h3>
+              <div className="space-y-4">
+                <div>
+                  <FloatingInput 
+                    type="text" 
+                    defaultValue={profile.fullName} 
+                    id="settings-name"
+                    label="Full Name"
+                  />
+                </div>
+                <div>
+                  <FloatingInput 
+                    type="email" 
+                    defaultValue={profile.email} 
+                    id="settings-email"
+                    label="Email Address"
+                    disabled
+                    className="opacity-70 cursor-not-allowed"
+                  />
+                  <p className="text-xs text-text-secondary mt-1">Email cannot be changed.</p>
+                </div>
+                <div>
+                  <FloatingInput 
+                    type="tel" 
+                    defaultValue={profile.phoneNumber} 
+                    id="settings-phone"
+                    label="Phone Number"
+                  />
+                </div>
+              </div>
+            </GlassPanel>
+
+            <GlassPanel className="p-6 space-y-6">
+              <h3 className="font-semibold text-text-primary text-lg border-b border-border pb-4">Location Preferences</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-text-primary">Enable Location Tracking</h4>
+                    <p className="text-sm text-text-secondary">Allow OrbitDine to use your location for better restaurant discovery.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="settings-location-enabled" defaultChecked={profile.locationEnabled} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-surface peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-text-secondary after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent peer-checked:after:bg-white border border-border"></div>
+                  </label>
+                </div>
+                <div>
+                  <FloatingInput 
+                    type="text" 
+                    defaultValue={profile.defaultCity} 
+                    id="settings-city"
+                    label="Default City / Area"
+                  />
+                </div>
+              </div>
+            </GlassPanel>
+
+            <div className="flex justify-end gap-4 pt-4 border-t border-border">
+              <button 
+                onClick={async () => {
+                  try {
+                    const fullName = (document.getElementById("settings-name") as HTMLInputElement).value;
+                    const phoneNumber = (document.getElementById("settings-phone") as HTMLInputElement).value;
+                    const defaultCity = (document.getElementById("settings-city") as HTMLInputElement).value;
+                    const locationEnabled = (document.getElementById("settings-location-enabled") as HTMLInputElement).checked;
+
+                    const res = await fetch("/api/customer/settings", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ fullName, phoneNumber, defaultCity, locationEnabled })
+                    });
+                    if (res.ok) {
+                      toast.success("Settings updated successfully!");
+                      fetchDashboardData();
+                    } else {
+                      toast.error("Failed to update settings.");
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    toast.error("An error occurred while saving changes.");
+                  }
+                }}
+                className="px-6 py-2 bg-text-primary text-base font-medium rounded-full hover:scale-105 transition-transform"
+              >
+                Save Changes
+              </button>
+            </div>
+
+            <GlassPanel className="p-6 mt-8 border border-red-500/20 bg-red-500/5">
+              <h3 className="font-semibold text-red-500 text-lg mb-2">Danger Zone</h3>
+              <p className="text-sm text-text-secondary mb-4">Once you delete your account, there is no going back. Please be certain.</p>
+              <button 
+                onClick={() => setDeleteModal({ isOpen: true, verifyText: "", isDeleting: false })}
+                className="px-4 py-2 border border-red-500 text-red-500 font-medium rounded-lg hover:bg-red-500/10 transition-colors"
+              >
+                Delete Account
+              </button>
+            </GlassPanel>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Verification Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface border border-red-500/30 rounded-3xl w-full max-w-md shadow-2xl">
+            <div className="p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-4 text-red-500">
+                <h2 className="text-2xl font-serif">Delete Account</h2>
+              </div>
+              <p className="text-text-secondary text-sm mb-6">
+                This action is <strong>irreversible</strong>. Your personal data will be completely removed from OrbitDine.
+              </p>
+              
+              <form onSubmit={handleDeleteAccount}>
+                <div className="mb-6">
+                  <label className="block text-xs font-medium text-text-primary mb-1.5">Type <strong>DELETE</strong> to confirm</label>
+                  <input 
+                    required 
+                    autoFocus
+                    type="text" 
+                    value={deleteModal.verifyText} 
+                    onChange={e => setDeleteModal({...deleteModal, verifyText: e.target.value})} 
+                    className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-red-500 focus:outline-none" 
+                    placeholder="DELETE"
+                  />
+                </div>
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
+                  <button type="button" onClick={() => setDeleteModal({ isOpen: false, verifyText: "", isDeleting: false })} className="px-4 py-2 rounded-xl font-medium text-text-secondary hover:text-text-primary transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={deleteModal.isDeleting || deleteModal.verifyText !== "DELETE"} className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium flex items-center gap-2 transition-colors disabled:opacity-50">
+                    {deleteModal.isDeleting ? "Deleting..." : "Permanently Delete"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-surface/90 backdrop-blur-xl border-t border-border px-6 py-4 pb-safe flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         {[
@@ -358,6 +531,9 @@ export default function CustomerDashboardPage() {
               <Link href="/explore" className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-base text-sm font-medium text-text-primary flex items-center gap-3 transition-colors mb-1">
                 <Search className="w-4 h-4" /> Find Restaurants
               </Link>
+              <button onClick={() => setActiveTab("settings")} className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-base text-sm font-medium text-text-primary flex items-center gap-3 transition-colors mb-1">
+                <Settings className="w-4 h-4" /> Account Settings
+              </button>
               <button onClick={() => logout()} className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-sm font-medium text-red-500 flex items-center gap-3 transition-colors">
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>

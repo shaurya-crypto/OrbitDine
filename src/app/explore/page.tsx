@@ -1,16 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Navbar } from "@/components/shared/Navbar";
-import { Footer } from "@/components/shared/Footer";
-import { Search, MapPin, Loader2, Navigation, Compass } from "lucide-react";
+import { Search, MapPin, Loader2, Navigation, Compass, ArrowLeft, LogIn, LayoutDashboard } from "lucide-react";
 import { RestaurantCard } from "@/components/discovery/RestaurantCard";
+import { useAuthStore } from "@/stores/authStore";
+import { useToast } from "@/components/ui/ToastProvider";
+import Link from "next/link";
 import axios from "axios";
 
 export default function ExplorePage() {
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { userId, roles } = useAuthStore();
+  const toast = useToast();
   
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,6 +40,7 @@ export default function ExplorePage() {
           if (err.code === 2) errorMsg = "Location unavailable. Please search by city.";
           if (err.code === 3) errorMsg = "Location request timed out. Please search by city.";
           setError(errorMsg);
+          toast.error(errorMsg);
           setLoading(false);
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
@@ -47,10 +51,10 @@ export default function ExplorePage() {
     }
   };
 
-  const useMockLocation = () => {
-    setLocation({ lat: 28.6186, lng: 77.3275 }); // Mayur Vihar Phase 3
-    setError("");
-  };
+  // const useMockLocation = () => {
+  //   setLocation({ lat: 28.6186, lng: 77.3275 }); // Mayur Vihar Phase 3
+  //   setError("");
+  // };
 
   useEffect(() => {
     // Attempt to get location on mount
@@ -85,6 +89,7 @@ export default function ExplorePage() {
         setRestaurants(res.data.data || []);
       } catch (err) {
         console.error("Failed to fetch restaurants", err);
+        toast.error("Failed to fetch restaurants. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -108,13 +113,39 @@ export default function ExplorePage() {
   }, [debouncedQuery, location]);
 
   return (
-    <div className="min-h-screen bg-base text-text-primary flex flex-col">
-      <Navbar />
+    <div className="min-h-screen bg-base text-text-primary flex flex-col relative pb-12">
+      {/* Dashboard-style Topbar for Explore */}
+      <div className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-border px-4 py-4 flex items-center justify-between shadow-sm">
+        <Link href="/" className="text-xl md:text-2xl font-serif text-text-primary tracking-tight flex items-center gap-2">
+          Orbit<span className="text-accent">Dine</span>
+        </Link>
+        <div>
+          {!!userId ? (
+            <Link 
+              href={`/dashboard/${roles.includes("owner") ? "owner" : roles.includes("manager") ? "manager" : roles.includes("kitchen") ? "kitchen" : roles.includes("staff") ? "staff" : "customer"}`}
+              className="flex items-center gap-2 bg-text-primary text-base px-4 py-2 rounded-full text-sm font-medium hover:scale-105 transition-transform"
+            >
+              <LayoutDashboard size={16} /> Dashboard
+            </Link>
+          ) : (
+            <Link 
+              href="/login" 
+              className="flex items-center gap-2 bg-accent text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-accent/90 transition-colors"
+            >
+              <LogIn size={16} /> Sign In
+            </Link>
+          )}
+        </div>
+      </div>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 mt-16">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 mt-4">
         
         {/* Header Section */}
         <div className="mb-8">
+          <Link href="/" className="inline-flex items-center text-sm font-medium text-text-secondary hover:text-text-primary transition-colors mb-6 group">
+            <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
+            Back to Home
+          </Link>
           <h1 className="text-4xl font-serif font-bold mb-4">Discover Amazing Food</h1>
           <p className="text-text-secondary text-lg max-w-2xl">
             Find the best restaurants near you. Browse menus, read reviews, and order seamlessly.
@@ -170,19 +201,10 @@ export default function ExplorePage() {
           </div>
         </div>
 
-        {/* Error Message */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-xl mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Compass className="w-5 h-5 flex-shrink-0" />
-              <p>{error}</p>
-            </div>
-            <button 
-              onClick={useMockLocation}
-              className="bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
-            >
-              Use Test Location (Mayur Vihar)
-            </button>
+          <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-xl mb-8 flex items-center gap-4">
+            <Compass className="w-5 h-5 flex-shrink-0" />
+            <p>{error}</p>
           </div>
         )}
 
@@ -210,8 +232,6 @@ export default function ExplorePage() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -2,22 +2,20 @@
 
 import { useAuthStore } from "@/stores/authStore";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { ArrowLeft, User, Mail, Shield } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { User, Mail, Shield } from "lucide-react";
+import { SmartBackButton } from "@/components/shared/SmartBackButton";
 
 export default function CustomerSettingsPage() {
   const { name, roles } = useAuthStore();
-  const router = useRouter();
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-fade-in pb-24 md:pb-8 pt-4">
       <div className="flex items-center gap-4 mb-8">
-        <button 
-          onClick={() => router.push('/dashboard/customer')} 
-          className="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center text-text-primary hover:bg-border/50 transition-all"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+        <SmartBackButton 
+          fallbackRoute="/dashboard/customer"
+          label=""
+          className="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center text-text-primary hover:bg-border/50 transition-all group"
+        />
         <div>
           <h1 className="text-3xl font-serif text-text-primary">Account Settings</h1>
           <p className="text-text-secondary">Manage your customer profile</p>

@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Loader2, TrendingUp, TrendingDown, Clock, RefreshCw } from "lucide-react";
+import { useToast } from "@/components/ui/ToastProvider";
 import { 
   LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -16,6 +17,7 @@ export default function AnalyticsPage() {
   const { restaurantId } = useAuthStore();
   const [activeSection, setActiveSection] = useState<Section>('revenue');
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
+  const toast = useToast();
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -29,6 +31,7 @@ export default function AnalyticsPage() {
       setLastUpdated(new Date());
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load analytics data.");
     } finally {
       setIsLoading(false);
     }
@@ -290,6 +293,7 @@ function FeedbackSection({ data }: { data: any }) {
   const { restaurantId } = useAuthStore();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     async function fetchReviews() {
@@ -299,6 +303,7 @@ function FeedbackSection({ data }: { data: any }) {
         setReviews(res.data.reviews || []);
       } catch (err) {
         console.error("Failed to fetch reviews", err);
+        toast.error("Failed to load reviews.");
       } finally {
         setLoadingReviews(false);
       }

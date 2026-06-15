@@ -58,6 +58,8 @@ export default function MenuPage() {
         const matchesSearch = !query || 
           item.name.toLowerCase().includes(query) || 
           (item.description && item.description.toLowerCase().includes(query)) ||
+          (item.ingredients && item.ingredients.some((i: string) => i.toLowerCase().includes(query))) ||
+          (item.dietaryTags && item.dietaryTags.some((d: string) => d.toLowerCase().includes(query))) ||
           category.name.toLowerCase().includes(query);
           
         return matchesSearch;

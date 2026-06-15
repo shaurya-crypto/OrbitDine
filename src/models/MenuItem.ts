@@ -10,6 +10,15 @@ export interface IMenuItem extends Document {
   veg?: boolean;
   available: boolean;
   addons?: Array<{ name: string; price: number }>;
+  ingredients?: string[];
+  allergens?: string[];
+  dietaryTags?: string[];
+  nutritionInfo?: {
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+  };
   tags?: string[];
   isBestseller?: boolean;
   isRecommended?: boolean;
@@ -67,6 +76,15 @@ const MenuItemSchema = new Schema<IMenuItem>(
         price: Number,
       },
     ],
+    ingredients: [String],
+    allergens: [String],
+    dietaryTags: [String],
+    nutritionInfo: {
+      calories: Number,
+      protein: Number,
+      carbs: Number,
+      fat: Number,
+    },
     tags: [String],
     isBestseller: {
       type: Boolean,

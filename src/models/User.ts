@@ -6,7 +6,7 @@ export interface IUser extends Document {
   email: string;
   phoneNumber?: string;
   password?: string; // Optional because OAuth might not have a password
-  roles: ("owner" | "manager" | "staff" | "kitchen" | "customer")[];
+  roles: ("owner" | "manager" | "staff" | "kitchen" | "customer" | "superadmin")[];
   restaurantId?: mongoose.Types.ObjectId;
   savedRestaurants: mongoose.Types.ObjectId[];
   favoriteItems: mongoose.Types.ObjectId[];
@@ -16,6 +16,8 @@ export interface IUser extends Document {
   isVerified: boolean;
   profileImage?: string;
   lastLogin?: Date;
+  locationEnabled?: boolean;
+  defaultCity?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword: (password: string) => Promise<boolean>;
@@ -45,7 +47,7 @@ const UserSchema = new Schema<IUser>(
     },
     roles: {
       type: [String],
-      enum: ["owner", "manager", "staff", "kitchen", "customer"],
+      enum: ["owner", "manager", "staff", "kitchen", "customer", "superadmin"],
       default: ["customer"],
     },
     restaurantId: {
@@ -86,6 +88,14 @@ const UserSchema = new Schema<IUser>(
     },
     lastLogin: {
       type: Date,
+    },
+    locationEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    defaultCity: {
+      type: String,
+      trim: true,
     },
   },
   {

@@ -49,10 +49,13 @@ export async function GET(req: Request) {
         profile: {
           fullName: user.fullName,
           email: user.email,
+          phoneNumber: user.phoneNumber || "",
           totalSpent: user.totalSpent || 0,
           totalOrders: user.totalOrders || 0,
           achievements: user.achievements || [],
           restaurantsVisited,
+          locationEnabled: user.locationEnabled || false,
+          defaultCity: user.defaultCity || "",
         },
         recentOrders: sessions.map((s: any) => ({
           sessionId: s._id,

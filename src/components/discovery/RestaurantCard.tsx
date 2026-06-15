@@ -1,16 +1,27 @@
-import Link from "next/link";
 import Image from "next/image";
 import { Star, MapPin, Tag, Clock } from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
+import { useRouter } from "next/navigation";
 
 interface RestaurantCardProps {
   restaurant: any;
 }
 
 export function RestaurantCard({ restaurant }: RestaurantCardProps) {
+  const { userId } = useAuthStore();
+  const router = useRouter();
   const bgImage = restaurant.bannerImage || restaurant.logo || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80";
 
+  const handleCardClick = () => {
+    if (!!userId) {
+      router.push(`/menu/${restaurant._id}`);
+    } else {
+      router.push(`/login`);
+    }
+  };
+
   return (
-    <Link href={`/menu/${restaurant._id}`} className="block group">
+    <div onClick={handleCardClick} className="block group cursor-pointer">
       <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all h-full flex flex-col hover:border-accent/50">
         
         {/* Banner */}
@@ -91,6 +102,6 @@ export function RestaurantCard({ restaurant }: RestaurantCardProps) {
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

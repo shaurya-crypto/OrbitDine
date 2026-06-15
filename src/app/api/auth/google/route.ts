@@ -3,6 +3,8 @@ import connectToDatabase from "@/lib/mongodb/db";
 import User from "@/models/User";
 import { SignJWT } from "jose";
 import { OAuth2Client } from "google-auth-library";
+import { signAccessToken, signRefreshToken } from "@/lib/auth/jwt";
+import Session from "@/models/Session";
 
 const client = new OAuth2Client(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
 
@@ -34,33 +36,47 @@ export async function POST(request: Request) {
 
     if (existingUser) {
       // User exists, log them in
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback_secret");
-      const token = await new SignJWT({ 
+      const payloadObj = {
         userId: existingUser._id.toString(),
         roles: Array.from(existingUser.roles),
-        restaurantId: existingUser.restaurantId?.toString()
-      })
-        .setProtectedHeader({ alg: "HS256" })
-        .setExpirationTime("30d")
-        .sign(secret);
+        isVerified: existingUser.isVerified,
+        restaurantId: existingUser.restaurantId?.toString() || null,
+      };
+
+      const accessToken = await signAccessToken(payloadObj);
+      const refreshToken = await signRefreshToken(payloadObj);
+
+      await Session.create({
+        userId: existingUser._id,
+        refreshToken,
+        userAgent: request.headers.get("user-agent"),
+        ipAddress: request.headers.get("x-forwarded-for") || "unknown",
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      });
 
       const response = NextResponse.json({
         message: "Login successful",
-        token,
+        token: accessToken,
         userId: existingUser._id.toString(),
         roles: existingUser.roles,
-        restaurantId: existingUser.restaurantId?.toString(),
+        restaurantId: existingUser.restaurantId?.toString() || null,
         fullName: existingUser.fullName,
       }, { status: 200 });
 
-      response.cookies.set({
-        name: "auth-token",
-        value: token,
+      response.cookies.set("accessToken", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
         maxAge: 30 * 24 * 60 * 60, // 30 days
+      });
+
+      response.cookies.set("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+        path: "/",
       });
 
       return response;

@@ -4,27 +4,47 @@ import User from "@/models/User";
 import Restaurant from "@/models/Restaurant";
 import Session from "@/models/Session";
 import { signAccessToken, signRefreshToken } from "@/lib/auth/jwt";
-import crypto from "crypto";
+import { validateBody, LoginSchema } from "@/lib/api/validation";
+import { rateLimiter } from "@/lib/api/rate-limit";
+import { validateCSRF } from "@/lib/api/csrf";
+import { handleApiError, unauthorized, tooManyRequests } from "@/lib/api/errors";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   try {
-    await connectToDatabase();
-
-    const body = await req.json();
-    const { email, password, rememberMe } = body;
-
-    if (!email || !password) {
-      return NextResponse.json({ error: "Missing email or password" }, { status: 400 });
+    // 1. Rate Limiting (5 requests per minute per IP)
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    const rl = rateLimiter.check(`login_${ip}`, 5, 60000);
+    if (!rl.success) {
+      logger.warn(`Rate limit exceeded for login from IP: ${ip}`);
+      return tooManyRequests();
     }
+
+    // 2. CSRF Protection
+    const isCsrfSafe = await validateCSRF();
+    if (!isCsrfSafe) {
+      return unauthorized("Invalid request origin");
+    }
+
+    // 3. Payload Validation
+    const validation = await validateBody(req, LoginSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: "Invalid payload", details: validation.error }, { status: 400 });
+    }
+    const { email, password, rememberMe } = validation.data;
+
+    await connectToDatabase();
 
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      logger.warn(`Failed login attempt for email: ${email}`);
+      return unauthorized("Invalid credentials");
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      logger.warn(`Failed login attempt for email: ${email} (invalid password)`);
+      return unauthorized("Invalid credentials");
     }
 
     // Update lastLogin
@@ -40,13 +60,12 @@ export async function POST(req: Request) {
     // Self-healing: if user has no restaurantId, try to find it
     let restaurantId = user.restaurantId;
     if (!restaurantId) {
-      // For owners, look up by ownerId
       if (user.roles.includes("owner")) {
         const restaurant = await Restaurant.findOne({ ownerId: user._id });
         if (restaurant) {
           restaurantId = restaurant._id;
           await User.updateOne({ _id: user._id }, { $set: { restaurantId: restaurant._id } });
-          console.log(`[Login] Self-healed: linked owner ${user._id} to restaurant ${restaurant._id}`);
+          logger.info(`Self-healed: linked owner ${user._id} to restaurant ${restaurant._id}`);
         }
       }
     }
@@ -66,9 +85,11 @@ export async function POST(req: Request) {
       userId: user._id,
       refreshToken,
       userAgent: req.headers.get("user-agent"),
-      ipAddress: req.headers.get("x-forwarded-for") || "unknown",
+      ipAddress: ip,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     });
+
+    logger.info(`Successful login for user: ${user._id}`);
 
     const response = NextResponse.json({ 
       message: "Login successful", 
@@ -98,7 +119,6 @@ export async function POST(req: Request) {
 
     return response;
   } catch (error) {
-    console.error("Login error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error, "Auth/Login");
   }
 }

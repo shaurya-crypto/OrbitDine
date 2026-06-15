@@ -29,6 +29,14 @@ export function MenuManagementModal({ restaurantId, onClose }: MenuManagementMod
   const [itemName, setItemName] = useState("");
   const [itemPrice, setItemPrice] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [ingredients, setIngredients] = useState("");
+  const [allergens, setAllergens] = useState("");
+  const [dietaryTags, setDietaryTags] = useState("");
+  const [calories, setCalories] = useState("");
+  const [protein, setProtein] = useState("");
+  const [carbs, setCarbs] = useState("");
+  const [fat, setFat] = useState("");
+  const [veg, setVeg] = useState(false);
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,10 +70,28 @@ export function MenuManagementModal({ restaurantId, onClose }: MenuManagementMod
         categoryId: selectedCategory,
         name: itemName,
         price: parseFloat(itemPrice),
+        veg,
+        ingredients: ingredients.split(",").map(s => s.trim()).filter(Boolean),
+        allergens: allergens.split(",").map(s => s.trim()).filter(Boolean),
+        dietaryTags: dietaryTags.split(",").map(s => s.trim()).filter(Boolean),
+        nutritionInfo: {
+          calories: calories ? parseFloat(calories) : undefined,
+          protein: protein ? parseFloat(protein) : undefined,
+          carbs: carbs ? parseFloat(carbs) : undefined,
+          fat: fat ? parseFloat(fat) : undefined,
+        }
       });
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
       setItemName("");
       setItemPrice("");
+      setIngredients("");
+      setAllergens("");
+      setDietaryTags("");
+      setCalories("");
+      setProtein("");
+      setCarbs("");
+      setFat("");
+      setVeg(false);
       toast.success("Item added");
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Failed to add item");
@@ -121,14 +147,32 @@ export function MenuManagementModal({ restaurantId, onClose }: MenuManagementMod
             ) : (
               <form onSubmit={handleAddItem} className="space-y-4 sticky top-0">
                 <h3 className="font-semibold text-lg">Add Menu Item</h3>
-                <select required value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-neutral-200">
-                  <option value="">Select Category</option>
-                  {menuData?.categories?.map((cat: any) => (
-                    <option key={cat._id} value={cat._id}>{cat.name}</option>
-                  ))}
-                </select>
-                <input required type="text" value={itemName} onChange={e => setItemName(e.target.value)} placeholder="Item Name" className="w-full px-4 py-2 rounded-lg border border-neutral-200" />
-                <input required type="number" step="0.01" value={itemPrice} onChange={e => setItemPrice(e.target.value)} placeholder="Price" className="w-full px-4 py-2 rounded-lg border border-neutral-200" />
+                <div className="max-h-[50vh] overflow-y-auto space-y-4 pr-2">
+                  <select required value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-neutral-200">
+                    <option value="">Select Category</option>
+                    {menuData?.categories?.map((cat: any) => (
+                      <option key={cat._id} value={cat._id}>{cat.name}</option>
+                    ))}
+                  </select>
+                  <input required type="text" value={itemName} onChange={e => setItemName(e.target.value)} placeholder="Item Name" className="w-full px-4 py-2 rounded-lg border border-neutral-200" />
+                  <input required type="number" step="0.01" value={itemPrice} onChange={e => setItemPrice(e.target.value)} placeholder="Price" className="w-full px-4 py-2 rounded-lg border border-neutral-200" />
+                  
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <input type="checkbox" checked={veg} onChange={e => setVeg(e.target.checked)} className="w-4 h-4 accent-neutral-900" />
+                    Vegetarian
+                  </label>
+                  
+                  <input type="text" value={ingredients} onChange={e => setIngredients(e.target.value)} placeholder="Ingredients (comma separated)" className="w-full px-4 py-2 rounded-lg border border-neutral-200 text-sm" />
+                  <input type="text" value={allergens} onChange={e => setAllergens(e.target.value)} placeholder="Allergens (e.g. Dairy, Nuts)" className="w-full px-4 py-2 rounded-lg border border-neutral-200 text-sm" />
+                  <input type="text" value={dietaryTags} onChange={e => setDietaryTags(e.target.value)} placeholder="Dietary Tags (e.g. Vegan, Keto)" className="w-full px-4 py-2 rounded-lg border border-neutral-200 text-sm" />
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="number" value={calories} onChange={e => setCalories(e.target.value)} placeholder="Calories (kcal)" className="w-full px-4 py-2 rounded-lg border border-neutral-200 text-sm" />
+                    <input type="number" value={protein} onChange={e => setProtein(e.target.value)} placeholder="Protein (g)" className="w-full px-4 py-2 rounded-lg border border-neutral-200 text-sm" />
+                    <input type="number" value={carbs} onChange={e => setCarbs(e.target.value)} placeholder="Carbs (g)" className="w-full px-4 py-2 rounded-lg border border-neutral-200 text-sm" />
+                    <input type="number" value={fat} onChange={e => setFat(e.target.value)} placeholder="Fat (g)" className="w-full px-4 py-2 rounded-lg border border-neutral-200 text-sm" />
+                  </div>
+                </div>
                 <button type="submit" className="w-full py-2 bg-neutral-900 text-white rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-neutral-800">
                   <Plus size={16} /> Add Item
                 </button>

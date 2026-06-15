@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { 
       restaurantId, categoryId, name, description, price, image, veg, available, 
-      addons, tags, isBestseller, isRecommended, chefSpecial, isNewArrival, limitedTimeOffer, sortOrder 
+      addons, tags, isBestseller, isRecommended, chefSpecial, isNewArrival, limitedTimeOffer, sortOrder,
+      ingredients, allergens, dietaryTags, nutritionInfo
     } = body;
 
     if (!restaurantId || !categoryId || !name || price === undefined) {
@@ -38,6 +39,10 @@ export async function POST(req: NextRequest) {
       chefSpecial,
       isNewArrival,
       limitedTimeOffer,
+      ingredients,
+      allergens,
+      dietaryTags,
+      nutritionInfo,
       sortOrder: sortOrder || 0,
       isDeleted: false,
     });

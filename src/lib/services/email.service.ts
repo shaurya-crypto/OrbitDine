@@ -144,3 +144,26 @@ export async function sendStaffTransferNotificationEmail(ownerEmail: string, own
 
   return sendBrevoEmail([{ email: ownerEmail, name: ownerName }], `Staff Update: ${staffName} has left your team`, htmlContent);
 }
+
+export async function sendRestaurantDeletedEmail(email: string, ownerName: string, restaurantName: string) {
+  const htmlContent = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
+      <h2 style="color: #ef4444; margin-bottom: 20px;">Restaurant Deleted</h2>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
+        Hello ${ownerName},
+      </p>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
+        This is a confirmation that your restaurant <strong>${restaurantName}</strong> has been completely removed from OrbitDine.
+      </p>
+      <p style="color: #4b5563; font-size: 16px; line-height: 1.5;">
+        All associated menus, tables, and staff records have been permanently cleared. If you did not request this deletion, please contact our support team immediately.
+      </p>
+      <hr style="border-top: 1px solid #e5e7eb; margin: 30px 0;" />
+      <p style="color: #9ca3af; font-size: 14px; margin-top: 24px;">
+        &copy; ${new Date().getFullYear()} OrbitDine. All rights reserved.
+      </p>
+    </div>
+  `;
+
+  return sendBrevoEmail([{ email, name: ownerName }], `Your restaurant ${restaurantName} has been deleted`, htmlContent);
+}

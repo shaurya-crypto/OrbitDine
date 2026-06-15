@@ -7,24 +7,42 @@ import QRCode from "@/models/QRCode";
 import Category from "@/models/Category";
 import qrcodeLib from "qrcode";
 import crypto from "crypto";
+import { validateBody, RestaurantOnboardingSchema } from "@/lib/api/validation";
+import { rateLimiter } from "@/lib/api/rate-limit";
+import { validateCSRF } from "@/lib/api/csrf";
+import { handleApiError, unauthorized, tooManyRequests, badRequest } from "@/lib/api/errors";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    const rl = rateLimiter.check(`onboarding_${ip}`, 3, 3600000); // 3 per hour
+    if (!rl.success) {
+      logger.warn(`Rate limit exceeded for onboarding from IP: ${ip}`);
+      return tooManyRequests("Too many onboarding attempts. Try again later.");
+    }
+
+    const isCsrfSafe = await validateCSRF();
+    if (!isCsrfSafe) {
+      return unauthorized("Invalid request origin");
+    }
+
+    const validation = await validateBody(req, RestaurantOnboardingSchema);
+    if (!validation.success) {
+      return badRequest("Invalid onboarding data", validation.error);
+    }
+
     await dbConnect();
-    const body = await req.json();
+    
     const { 
       userId, restaurantName, address, city, cuisineType, totalTables,
       restaurantType, country, state, pinCode, staffCount, openingHours, closingHours,
       phone, email, latitude, longitude
-    } = body;
-
-    if (!userId || !restaurantName || !address || !city || !cuisineType || typeof totalTables !== 'number') {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
+    } = validation.data;
 
     const user = await User.findById(userId);
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return badRequest("User not found");
     }
 
     const slug = restaurantName
@@ -66,6 +84,7 @@ export async function POST(req: NextRequest) {
         $set: { restaurantId: restaurant._id },
         $addToSet: { roles: "owner" }
       });
+      logger.info(`Created new restaurant ${restaurant._id} for owner ${userId}`);
     } else {
       restaurant.name = restaurantName;
       restaurant.address = address;
@@ -85,6 +104,7 @@ export async function POST(req: NextRequest) {
       restaurant.longitude = longitude;
       restaurant.status = "active";
       await restaurant.save();
+      logger.info(`Updated restaurant ${restaurant._id} during onboarding replay`);
     }
     
     const restaurantId = restaurant._id;
@@ -135,7 +155,7 @@ export async function POST(req: NextRequest) {
 
     const response = NextResponse.json({ message: "Onboarding complete", restaurant });
 
-    // Issue a new token with the restaurantId so middleware knows they have a restaurant
+    // Issue a new token with the restaurantId so proxy knows they have a restaurant
     const { signAccessToken } = await import("@/lib/auth/jwt");
     const payload = {
       userId: user._id.toString(),
@@ -149,13 +169,12 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60, // 30 days
+      maxAge: 15 * 60, // 15 minutes as per new security policy
       path: "/",
     });
 
     return response;
   } catch (error: any) {
-    console.error("Onboarding Error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return handleApiError(error, "Onboarding");
   }
 }

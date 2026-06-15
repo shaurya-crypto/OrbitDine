@@ -7,6 +7,7 @@ import { CheckCircle2, XCircle } from "lucide-react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { Loader } from "@/components/ui/Loader";
+import { useAuthStore } from "@/stores/authStore";
 
 function VerifyEmailContent() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -31,12 +32,28 @@ function VerifyEmailContent() {
           body: JSON.stringify({ token }),
         });
 
+        const data = await res.json();
+
         if (!res.ok) {
-          const data = await res.json();
           throw new Error(data.error || "Failed to verify email");
         }
 
         setStatus("success");
+        
+        // Auto-login since API now returns tokens & auth info
+        const { setAuth } = useAuthStore.getState();
+        if (data.userId) {
+          setAuth(data.userId, data.roles, data.restaurantId, data.fullName);
+          setTimeout(() => {
+            if (data.roles.includes("owner") && !data.restaurantId) {
+              window.location.href = "/onboarding";
+            } else {
+              const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => data.roles.includes(r)) || "customer";
+              window.location.href = `/dashboard/${highestRole}`;
+            }
+          }, 1500); // Wait 1.5s so they see the success message
+        }
+        
       } catch (err: any) {
         setStatus("error");
         setErrorMessage(err.message);
@@ -67,13 +84,11 @@ function VerifyEmailContent() {
             </div>
             <h1 className="text-2xl font-medium text-text-primary mb-4">Email Verified</h1>
             <p className="text-text-secondary mb-8">
-              Your account has been successfully verified. You can now access your dashboard.
+              Your account has been successfully verified. You are being redirected to your dashboard...
             </p>
-            <Link href="/login" className="block w-full">
-              <MagneticButton className="w-full" intensity={5}>
-                Continue to Login
-              </MagneticButton>
-            </Link>
+            <div className="flex justify-center mt-4">
+              <Loader type="spinner" className="w-6 h-6 text-accent" />
+            </div>
           </div>
         )}
 

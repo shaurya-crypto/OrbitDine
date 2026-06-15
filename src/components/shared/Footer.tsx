@@ -25,15 +25,15 @@ export function Footer() {
               The premium restaurant operating system designed for the future of dining.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-text-primary transition-colors">
+              <Link href="/coming-soon" className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-text-primary transition-colors">
                 <span className="text-xs font-mono">X</span>
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-text-primary transition-colors">
+              </Link>
+              <Link href="/coming-soon" className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-text-primary transition-colors">
                 <span className="text-xs font-mono">IG</span>
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-text-primary transition-colors">
+              </Link>
+              <Link href="/coming-soon" className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-text-secondary hover:text-text-primary hover:border-text-primary transition-colors">
                 <span className="text-xs font-mono">IN</span>
-              </a>
+              </Link>
             </div>
           </div>
 

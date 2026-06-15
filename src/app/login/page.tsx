@@ -14,6 +14,7 @@ import { Loader } from "@/components/ui/Loader";
 import { useAuthStore } from "@/stores/authStore";
 import { useEffect } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -25,13 +26,17 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [serverError, setServerError] = useState("");
   const router = useRouter();
   const { roles, setAuth } = useAuthStore();
+  const toast = useToast();
 
   useEffect(() => {
     const currentRoles = useAuthStore.getState().roles;
     if (currentRoles && currentRoles.length > 0) {
+      if (currentRoles.includes("superadmin")) {
+        router.replace("/admin/dashboard");
+        return;
+      }
       const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => currentRoles.includes(r as any)) || "customer";
       router.replace(`/dashboard/${highestRole}`);
     }
@@ -47,7 +52,6 @@ export default function LoginPage() {
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      setServerError("");
       setIsSubmitting(true);
       try {
         const res = await fetch("/api/auth/google", {
@@ -64,7 +68,7 @@ export default function LoginPage() {
         }
 
         if (!res.ok) {
-          setServerError(responseData.error || "Google authentication failed");
+          toast.error(responseData.error || "Google authentication failed");
           setIsSubmitting(false);
           return;
         }
@@ -73,7 +77,9 @@ export default function LoginPage() {
         setAuth(responseData.userId, roles, responseData.restaurantId, responseData.fullName);
         router.refresh();
         
-        if (roles.includes("owner") && !responseData.restaurantId) {
+        if (roles.includes("superadmin")) {
+          window.location.href = "/admin/dashboard";
+        } else if (roles.includes("owner") && !responseData.restaurantId) {
           window.location.href = "/onboarding";
         } else {
           const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r)) || "customer";
@@ -81,18 +87,17 @@ export default function LoginPage() {
         }
       } catch (error) {
         console.error("Login error:", error);
-        setServerError("Network error. Please try again.");
+        toast.error("Network error. Please try again.");
         setIsSubmitting(false);
       }
     },
     onError: () => {
-      setServerError("Google login failed.");
+      toast.error("Google login failed.");
     }
   });
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
-    setServerError("");
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -107,7 +112,7 @@ export default function LoginPage() {
       const responseData = await res.json();
 
       if (!res.ok) {
-        setServerError(responseData.error || "Invalid credentials");
+        toast.error(responseData.error || "Invalid credentials");
         setIsSubmitting(false);
         return;
       }
@@ -116,14 +121,16 @@ export default function LoginPage() {
 
       router.refresh();
       
-      if (responseData.roles.includes("owner") && !responseData.restaurantId) {
+      if (responseData.roles.includes("superadmin")) {
+        window.location.href = "/admin/dashboard";
+      } else if (responseData.roles.includes("owner") && !responseData.restaurantId) {
         window.location.href = "/onboarding";
       } else {
         const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => responseData.roles.includes(r));
         window.location.href = `/dashboard/${highestRole || "customer"}`;
       }
     } catch (error) {
-      setServerError("Network error. Please try again.");
+      toast.error("Network error. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -178,12 +185,6 @@ export default function LoginPage() {
             <h1 className="text-3xl font-medium text-text-primary mb-2">Welcome back</h1>
             <p className="text-text-secondary">Sign in to your OrbitDine account</p>
           </div>
-
-          {serverError && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-500 mb-6">
-              {serverError}
-            </div>
-          )}
 
           <div className="flex flex-col gap-4 mb-6">
             <button

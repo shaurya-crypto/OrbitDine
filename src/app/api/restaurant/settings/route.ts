@@ -1,7 +1,9 @@
 import { NextResponse, NextRequest } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import Restaurant from "@/models/Restaurant";
+import User from "@/models/User";
 import { verifyAccessToken } from "@/lib/auth/jwt";
+import { sendRestaurantDeletedEmail } from "@/lib/services/email.service";
 
 export async function GET(req: NextRequest) {
   try {
@@ -88,6 +90,54 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ message: "Settings updated successfully", restaurant }, { status: 200 });
   } catch (error) {
     console.error("Settings PATCH Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const token = req.cookies.get("accessToken")?.value;
+    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const payload = await verifyAccessToken(token);
+    if (!payload) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const restaurantId = searchParams.get("restaurantId");
+
+    if (!restaurantId) return NextResponse.json({ error: "Missing restaurantId" }, { status: 400 });
+
+    await connectToDatabase();
+    const restaurant = await Restaurant.findById(restaurantId);
+
+    if (!restaurant) {
+      return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
+    }
+
+    if (restaurant.ownerId.toString() !== payload.userId) {
+      return NextResponse.json({ error: "Only the owner can delete the restaurant" }, { status: 403 });
+    }
+
+    const owner = await User.findById(payload.userId);
+
+    // Delete restaurant
+    await Restaurant.deleteOne({ _id: restaurantId });
+
+    // Clean up users' restaurantId references
+    await User.updateMany(
+      { restaurantId },
+      { $unset: { restaurantId: "" }, $pull: { roles: { $in: ["manager", "staff", "kitchen"] } } }
+    );
+
+    if (owner && owner.email) {
+      await sendRestaurantDeletedEmail(owner.email, owner.fullName, restaurant.name);
+    }
+
+    return NextResponse.json({ message: "Restaurant deleted successfully" }, { status: 200 });
+  } catch (error) {
+    console.error("Settings DELETE Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -12,8 +12,9 @@ import { useToast } from "@/components/ui/ToastProvider";
 const MapPicker = dynamic(() => import("@/components/ui/MapPicker"), { ssr: false, loading: () => <div className="w-full h-64 bg-zinc-100 rounded-xl animate-pulse"></div> });
 
 export default function SettingsPage() {
-  const { restaurantId } = useAuthStore();
+  const { restaurantId, roles } = useAuthStore();
   const [saving, setSaving] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, verifyText: "", isDeleting: false });
   const toast = useToast();
   
   const [formData, setFormData] = useState({
@@ -59,7 +60,10 @@ export default function SettingsPage() {
             });
           }
         })
-        .catch(console.error);
+        .catch((e) => {
+          console.error(e);
+          toast.error("Failed to load settings");
+        });
     }
   }, [restaurantId]);
 
@@ -100,6 +104,30 @@ export default function SettingsPage() {
       toast.error("Failed to update settings");
     }
     setSaving(false);
+  };
+
+  const handleDeleteRestaurant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (deleteModal.verifyText !== "DELETE") return;
+    
+    setDeleteModal(prev => ({ ...prev, isDeleting: true }));
+    try {
+      const res = await fetch(`/api/restaurant/settings?restaurantId=${restaurantId}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Restaurant successfully deleted.");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete restaurant");
+        setDeleteModal(prev => ({ ...prev, isDeleting: false }));
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to delete restaurant");
+      setDeleteModal(prev => ({ ...prev, isDeleting: false }));
+    }
   };
 
   return (
@@ -249,7 +277,7 @@ export default function SettingsPage() {
         </div>
       </GlassPanel>
 
-      <div className="flex justify-end pt-4">
+      <div className="flex justify-end pt-4 mb-12">
         <button
           onClick={handleSave}
           disabled={saving}
@@ -259,6 +287,61 @@ export default function SettingsPage() {
           {saving ? "Saving Changes..." : "Save All Changes"}
         </button>
       </div>
+
+      {/* Danger Zone (Owner Only) */}
+      {roles.includes("owner") && (
+        <GlassPanel className="p-8 border-red-500/30 bg-red-500/5">
+          <h2 className="text-xl font-serif text-red-500 mb-2">Danger Zone</h2>
+          <p className="text-zinc-400 text-sm mb-6">
+            Deleting your restaurant is irreversible. It will remove all your menus, tables, orders, and staff associations. Your account will revert to a customer account.
+          </p>
+          <button
+            onClick={() => setDeleteModal({ isOpen: true, verifyText: "", isDeleting: false })}
+            className="px-6 py-3 border border-red-500 text-red-500 font-medium rounded-xl hover:bg-red-500/10 transition-colors"
+          >
+            Delete Restaurant
+          </button>
+        </GlassPanel>
+      )}
+
+      {/* Delete Restaurant Verification Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface border border-red-500/30 rounded-3xl w-full max-w-md shadow-2xl">
+            <div className="p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-4 text-red-500">
+                <h2 className="text-2xl font-serif">Delete Restaurant</h2>
+              </div>
+              <p className="text-zinc-400 text-sm mb-6">
+                This action is <strong>irreversible</strong>. It will completely erase all menus, tables, orders, and staff associations immediately.
+              </p>
+              
+              <form onSubmit={handleDeleteRestaurant}>
+                <div className="mb-6">
+                  <label className="block text-xs font-medium text-white mb-1.5">Type <strong>DELETE</strong> to confirm</label>
+                  <input 
+                    required 
+                    autoFocus
+                    type="text" 
+                    value={deleteModal.verifyText} 
+                    onChange={e => setDeleteModal({...deleteModal, verifyText: e.target.value})} 
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-red-500 focus:outline-none" 
+                    placeholder="DELETE"
+                  />
+                </div>
+                <div className="flex justify-end gap-3 border-t border-zinc-800 pt-4">
+                  <button type="button" onClick={() => setDeleteModal({ isOpen: false, verifyText: "", isDeleting: false })} className="px-4 py-2 rounded-xl font-medium text-zinc-400 hover:text-white transition-colors">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={deleteModal.isDeleting || deleteModal.verifyText !== "DELETE"} className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium flex items-center gap-2 transition-colors disabled:opacity-50">
+                    {deleteModal.isDeleting ? "Deleting..." : "Permanently Delete"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

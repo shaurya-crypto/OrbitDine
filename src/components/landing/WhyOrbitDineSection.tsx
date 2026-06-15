@@ -11,8 +11,8 @@ gsap.registerPlugin(ScrollTrigger);
 const differentiators = [
   {
     icon: Ban,
-    title: "No Commissions",
-    desc: "Flat monthly subscription only. We never take a percentage of your orders. Your revenue stays your revenue.",
+    title: "No Hidden Fees",
+    desc: "Flat monthly subscription only. We never ask for any percentage of your orders or hidden fees. Your revenue stays your revenue.",
   },
   {
     icon: Database,
@@ -31,12 +31,12 @@ const differentiators = [
   },
   {
     icon: Zap,
-    title: "Live in 7–10 Days",
-    desc: "Not months. Not 6-week onboarding projects. Your restaurant goes live on OrbitDine within a week of signing — with full support throughout.",
+    title: "Live in 3-4 Days",
+    desc: "Not months. Not 6-week onboarding projects. Your restaurant goes live on OrbitDine within a few days of signing — with full support throughout.",
   },
   {
     icon: LayoutTemplate,
-    title: "Built in 2026",
+    title: "Built with Modern Technology & Resources",
     desc: "Modern tech stack from the ground up. Fast, reliable, and built to scale with your restaurant — not retrofitted from legacy software.",
   },
 ];

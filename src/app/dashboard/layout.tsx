@@ -12,6 +12,7 @@ import { NotificationCenter } from "@/components/dashboard/layout/NotificationCe
 import { CustomNotificationModal } from "@/components/dashboard/CustomNotificationModal";
 import { useToast } from "@/components/ui/ToastProvider";
 import { Megaphone } from "lucide-react";
+import { SmartBackButton } from "@/components/shared/SmartBackButton";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const toast = useToast();
@@ -177,7 +178,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Mobile Top Bar */}
       {!isCustomerDashboard && (
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface sticky top-0 z-40">
-          <h1 className="text-xl font-serif text-text-primary">OrbitDine</h1>
+          <div className="flex items-center gap-2">
+            <SmartBackButton 
+              fallbackRoute={`/dashboard/${roles.includes('owner') ? 'owner' : roles.includes('manager') ? 'manager' : roles.includes('kitchen') ? 'kitchen' : roles.includes('staff') ? 'staff' : 'customer'}`}
+              className="p-2 -ml-2 text-text-secondary hover:text-text-primary hover:bg-border/30 rounded-lg transition-colors group" 
+            />
+            <h1 className="text-xl font-serif text-text-primary">OrbitDine</h1>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowBroadcastModal(true)}
@@ -200,6 +207,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Top Right Controls: Connection & Notifications (Desktop Only, mobile moved to header) */}
         {!isCustomerDashboard && (
           <div className="hidden md:flex absolute top-8 right-8 z-50 items-center gap-4">
+            <SmartBackButton 
+              label="Back"
+              fallbackRoute={`/dashboard/${roles.includes('owner') ? 'owner' : roles.includes('manager') ? 'manager' : roles.includes('kitchen') ? 'kitchen' : roles.includes('staff') ? 'staff' : 'customer'}`}
+              className="flex items-center px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-base rounded-xl transition-colors bg-surface border border-border shadow-sm group"
+            />
             <button
               onClick={() => setShowBroadcastModal(true)}
               className="p-2 text-text-secondary hover:text-text-primary hover:bg-base rounded-xl transition-colors bg-surface border border-border shadow-sm"

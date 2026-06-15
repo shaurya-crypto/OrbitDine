@@ -6,6 +6,7 @@ import OrderSessionModel from "@/models/OrderSession";
 import OrderModel from "@/models/Order";
 import RestaurantModel from "@/models/Restaurant";
 import TableModel from "@/models/Table";
+import UserModel from "@/models/User";
 import { calculateCartTotals } from "@/lib/services/cartService";
 import { eventBus } from "@/lib/services/eventBus";
 import crypto from "crypto";
@@ -93,8 +94,30 @@ export async function POST(req: Request) {
 
     // 4. Update the OrderSession
     orderSession.orderIds.push(newOrder._id);
+    const orderItems = [...orderSession.cart]; // Keep a copy of the cart to update favorite items
     orderSession.cart = []; // Empty the cart after successful order creation
     await orderSession.save({ session: dbSession });
+
+    // 4.5. Update user's favorite items if logged in
+    if (orderSession.userId) {
+      const user = await UserModel.findById(orderSession.userId).session(dbSession);
+      if (user) {
+        if (!user.favoriteItems) user.favoriteItems = [];
+        const currentFavoriteIds = user.favoriteItems.map((id: any) => id.toString());
+        let updated = false;
+        orderItems.forEach((item: any) => {
+          const itemIdStr = item.menuItemId.toString();
+          if (!currentFavoriteIds.includes(itemIdStr)) {
+            user.favoriteItems.push(item.menuItemId as any);
+            currentFavoriteIds.push(itemIdStr);
+            updated = true;
+          }
+        });
+        if (updated) {
+          await user.save({ session: dbSession });
+        }
+      }
+    }
 
     await dbSession.commitTransaction();
     dbSession.endSession();
