@@ -160,17 +160,15 @@ const DesktopFounderCard = ({
       >
         
         {/* Left Side: Image (65%) */}
-        <div className="w-[65%] relative rounded-[24px] overflow-hidden bg-base">
-          <div className="absolute inset-0 group-hover:brightness-105 group-hover:contrast-105 transition-all duration-500">
-            <Image
-              src={isDark ? founder.darkImage : founder.lightImage}
-              alt={founder.name}
-              fill
-              className="object-cover object-center lg:object-top"
-              sizes="(max-width: 1200px) 65vw, 800px"
-              priority={index === 0}
-            />
-          </div>
+        <div className="w-[65%] h-full relative rounded-[24px] overflow-hidden bg-base group-hover:brightness-105 group-hover:contrast-105 transition-all duration-500">
+          <Image
+            src={isDark ? founder.darkImage : founder.lightImage}
+            alt={founder.name}
+            fill
+            className="object-cover object-center lg:object-top"
+            sizes="(max-width: 1200px) 65vw, 800px"
+            priority={index === 0}
+          />
         </div>
 
         {/* Right Side: Info (35%) */}
