@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/mongodb/db";
@@ -16,8 +17,9 @@ const createOrderSchema = z.object({
   notes: z.string().optional(),
 });
 
-export async function POST(req: Request) {
-  let dbSession;
+export async function POST(req: NextRequest) {
+  return withIdempotency(req, async () => {
+    let dbSession;
   try {
     await dbConnect();
 
@@ -166,4 +168,5 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ success: false, message: "Failed to place order", error: error.message }, { status: 500 });
   }
+  });
 }

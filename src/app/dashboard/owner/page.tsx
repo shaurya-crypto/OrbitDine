@@ -3,7 +3,7 @@
 import { useAuthStore } from "@/stores/authStore";
 import { OwnerCards } from "@/components/dashboard/owner/OwnerCards";
 import { RoleRequestsPanel } from "@/components/dashboard/owner/RoleRequestsPanel";
-import { Users, Settings, Grid, QrCode, LineChart } from "lucide-react";
+import { Users, Settings, Grid, QrCode, LineChart, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -27,6 +27,7 @@ export default function OwnerPage() {
     { title: "Restaurant Settings", icon: <Settings size={24} className="text-zinc-500" />, href: "/dashboard/manager/settings" },
     { title: "Table Management", icon: <Grid size={24} className="text-emerald-500" />, href: "/dashboard/tables" },
     { title: "QR Management", icon: <QrCode size={24} className="text-purple-500" />, href: "/dashboard/manager/qr-center" },
+    { title: "Reviews & Reputation", icon: <Star size={24} className="text-yellow-500" />, href: "/dashboard/owner/reviews" },
     { title: "Full Analytics Center", icon: <LineChart size={24} className="text-indigo-500" />, href: "/dashboard/owner/analytics" },
   ];
 

@@ -101,9 +101,31 @@ export async function GET(request: Request) {
     // Sort by score descending
     processedResults.sort((a, b) => b.score - a.score);
 
+    // Grouping logic for "Explore Page Sections"
+    // Newly Added: created within last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const newlyAdded = processedResults.filter(r => new Date(r.createdAt) > thirtyDaysAgo).slice(0, 5);
+    
+    // Top Rated: Rating >= 4.5
+    const topRated = [...processedResults].sort((a, b) => b.rating - a.rating).filter(r => r.rating >= 4.5).slice(0, 5);
+    
+    // Trending: High Follower Count + High Rating
+    const trending = [...processedResults].sort((a, b) => (b.followerCount || 0) - (a.followerCount || 0)).slice(0, 5);
+
+    // Best Nearby: Lowest distance penalty with high score
+    const bestNearby = [...processedResults].sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0)).slice(0, 10);
+
     return NextResponse.json({
       success: true,
-      data: processedResults,
+      data: {
+        all: processedResults,
+        trending,
+        topRated,
+        newlyAdded,
+        bestNearby
+      },
     });
   } catch (error: any) {
     console.error("Nearby discovery error:", error);

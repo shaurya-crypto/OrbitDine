@@ -21,7 +21,7 @@ export default function AdminSearchPage() {
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (query.length < 2) {
+    if (query.length > 0 && query.length < 2) {
       setResults([]);
       setIsSearching(false);
       return;
@@ -75,10 +75,10 @@ export default function AdminSearchPage() {
         </div>
       </GlassPanel>
 
-      {query.length >= 2 && (
+      {results.length >= 0 && (
         <div className="space-y-4">
           <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-widest">
-            Results ({results.length})
+            {query.length >= 2 ? `Results (${results.length})` : `Recent Activity`}
           </h2>
           
           {results.length === 0 && !isSearching && (

@@ -6,7 +6,7 @@ import { PerformanceProvider } from "@/components/providers/PerformanceProvider"
 import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import CookieConsent from "@/components/shared/CookieConsent";
-import { ConnectionBanner } from "@/components/shared/ConnectionBanner";
+import { NetworkMonitor } from "@/components/shared/NetworkMonitor";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { ConfirmProvider } from "@/components/ui/ConfirmProvider";
 import Script from "next/script";
@@ -56,7 +56,18 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: '/',
-  }
+  },
+  manifest: "/manifest.json"
+};
+
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#111827" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 
@@ -75,19 +86,17 @@ export default function RootLayout({
         <Script
           id="google-analytics"
           strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-TW55C35JV5');
-            `,
-          }}
+          src="/analytics.js"
         />
       </head>
       <body
         className={`${outfit.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
+        <Script
+          id="pwa-sw-registration"
+          strategy="afterInteractive"
+          src="/register-sw.js"
+        />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "MISSING_CLIENT_ID"}>
             <PerformanceProvider>
@@ -95,7 +104,7 @@ export default function RootLayout({
                 <SmoothScrollProvider>
                   <ToastProvider>
                     <ConfirmProvider>
-                      <ConnectionBanner />
+                      <NetworkMonitor />
                       {children}
                       <CookieConsent />
                     </ConfirmProvider>

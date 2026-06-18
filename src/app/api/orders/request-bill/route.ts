@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/mongodb/db";
@@ -10,8 +11,9 @@ const requestBillSchema = z.object({
   sessionId: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), { message: "Invalid sessionId" }),
 });
 
-export async function POST(req: Request) {
-  let dbSession;
+export async function POST(req: NextRequest) {
+  return withIdempotency(req, async () => {
+    let dbSession;
   try {
     await dbConnect();
 
@@ -91,4 +93,5 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ success: false, message: "Failed to request bill", error: error.message }, { status: 500 });
   }
+  });
 }

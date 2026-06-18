@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import OrderSession from "@/models/OrderSession";
-import { pusherServer } from "@/lib/pusher/server";
-import { REALTIME_EVENTS } from "@/lib/constants/realtimeEvents";
+import { eventBus } from "@/lib/services/eventBus";
 import OwnerSetting from "@/models/OwnerSetting";
 
 export async function POST(req: Request) {
@@ -20,7 +19,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    const pusher = pusherServer;
+
     let message = "";
     let targetRoles: string[] = [];
 
@@ -47,7 +46,7 @@ export async function POST(req: Request) {
 
     // Broadcast notification with sound
     for (const role of targetRoles) {
-      await pusher.trigger(`private-${role}-${session.restaurantId}`, REALTIME_EVENTS.STAFF_NOTIFICATION, {
+      await eventBus.broadcast(`private-${role}-${session.restaurantId}`, "staff_notification" as any, {
         message,
         isSilent: false, // User requested ringing for reminders
       });

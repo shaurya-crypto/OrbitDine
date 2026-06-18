@@ -3,7 +3,7 @@
 import { useAuthStore } from "@/stores/authStore";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { apiClient as axios } from "@/services/apiClient";
 import { Loader } from "@/components/ui/Loader";
 import { QrCode, Download, Printer, RefreshCw, XCircle } from "lucide-react";
 
@@ -19,7 +19,7 @@ export default function QrCenterPage() {
   const { data: qrs, isLoading, refetch } = useQuery({
     queryKey: ["qrs", restaurantId],
     queryFn: async () => {
-      const { data } = await axios.get(`/api/dashboard/manager/qrs/${restaurantId}`);
+      const { data } = await axios.get(`/dashboard/manager/qrs/${restaurantId}`);
       return data.data;
     },
     enabled: !!restaurantId,

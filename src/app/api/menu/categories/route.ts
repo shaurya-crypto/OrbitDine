@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb/db";
 import Category from "@/models/Category";
 import MenuItem from "@/models/MenuItem";
+import Restaurant from "@/models/Restaurant";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +21,8 @@ export async function POST(req: NextRequest) {
       image,
     });
     await category.save();
+
+    await Restaurant.findByIdAndUpdate(restaurantId, { $inc: { menuVersion: 1 } });
 
     return NextResponse.json({ message: "Category created", category }, { status: 201 });
   } catch (error: any) {
@@ -49,6 +52,8 @@ export async function PATCH(req: NextRequest) {
 
     await category.save();
 
+    await Restaurant.findByIdAndUpdate(category.restaurantId, { $inc: { menuVersion: 1 } });
+
     return NextResponse.json({ message: "Category updated", category });
   } catch (error: any) {
     console.error("Update Category Error:", error);
@@ -72,7 +77,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Cannot delete category containing active menu items" }, { status: 400 });
     }
 
-    await Category.findByIdAndDelete(categoryId);
+    const category = await Category.findByIdAndDelete(categoryId);
+    if (category) {
+      await Restaurant.findByIdAndUpdate(category.restaurantId, { $inc: { menuVersion: 1 } });
+    }
 
     return NextResponse.json({ message: "Category deleted" });
   } catch (error: any) {

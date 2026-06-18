@@ -18,7 +18,7 @@ export async function GET(req: Request, context: any) {
 
     // 1. Fetch Restaurant (ensure it exists)
     const restaurant = await RestaurantModel.findOne({ _id: restaurantId })
-      .select("name logo bannerImage description cuisineType rating reviewCount keywords settings.currency address phone email openingHours closingHours location");
+      .select("name logo bannerImage description cuisineType rating reviewCount keywords settings.currency address phone email openingHours closingHours location menuVersion");
 
     if (!restaurant) {
       return NextResponse.json({ success: false, message: "Restaurant not found or inactive" }, { status: 404 });

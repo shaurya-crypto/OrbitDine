@@ -11,11 +11,41 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const query = searchParams.get("q");
 
-    if (!query || query.length < 2) {
-      return NextResponse.json({ results: [] });
-    }
-
     await connectToDatabase();
+
+    if (!query || query.length < 2) {
+      // Default: recent 5 restaurants, users, and orders
+      const [recentRestaurants, recentUsers, recentOrders] = await Promise.all([
+        Restaurant.find().sort({ createdAt: -1 }).limit(5).lean(),
+        User.find().sort({ createdAt: -1 }).limit(5).lean(),
+        Order.find().sort({ createdAt: -1 }).limit(5).lean()
+      ]);
+
+      const defaultResults = [
+        ...recentRestaurants.map(r => ({
+          id: r._id.toString(),
+          type: "restaurant",
+          title: r.name,
+          subtitle: r.email || r.city || "No details",
+          url: `/admin/restaurants/${r._id}`
+        })),
+        ...recentUsers.map(u => ({
+          id: u._id.toString(),
+          type: "user",
+          title: u.fullName,
+          subtitle: u.email || u.phoneNumber || "No details",
+          url: `/admin/users/${u._id}`
+        })),
+        ...recentOrders.map((o: any) => ({
+          id: o._id.toString(),
+          type: "order",
+          title: `Order #${o._id.toString().slice(-6)}`,
+          subtitle: `₹${o.totalAmount} - ${o.status}`,
+          url: `/admin/orders/${o._id}`
+        }))
+      ];
+      return NextResponse.json({ results: defaultResults });
+    }
 
     // Use a regex for partial matching if no text index, or full text search
     // Since we want substring matches (e.g. phone numbers, partial emails, partial names)

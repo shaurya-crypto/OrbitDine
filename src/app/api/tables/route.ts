@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withIdempotency } from "@/lib/idempotency";
 import dbConnect from "@/lib/mongodb/db";
 import Table from "@/models/Table";
 import QRCode from "@/models/QRCode";
@@ -7,7 +8,8 @@ import qrcodeLib from "qrcode";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
-  try {
+  return withIdempotency(req, async () => {
+    try {
     await dbConnect();
     const body = await req.json();
     const { restaurantId, tableNumber, capacity, section, notes } = body;
@@ -52,14 +54,16 @@ export async function POST(req: NextRequest) {
     await Restaurant.findByIdAndUpdate(restaurantId, { $inc: { totalTables: 1 } });
 
     return NextResponse.json({ message: "Table created", table }, { status: 201 });
-  } catch (error: any) {
-    console.error("Create Table Error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
-  }
+    } catch (error: any) {
+      console.error("Create Table Error:", error);
+      return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    }
+  });
 }
 
 export async function PATCH(req: NextRequest) {
-  try {
+  return withIdempotency(req, async () => {
+    try {
     await dbConnect()
     const body = await req.json();
     const { tableId, tableNumber, capacity, section, notes, isActive } = body;
@@ -89,14 +93,16 @@ export async function PATCH(req: NextRequest) {
     await table.save();
 
     return NextResponse.json({ message: "Table updated", table });
-  } catch (error: any) {
-    console.error("Update Table Error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
-  }
+    } catch (error: any) {
+      console.error("Update Table Error:", error);
+      return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    }
+  });
 }
 
 export async function DELETE(req: NextRequest) {
-  try {
+  return withIdempotency(req, async () => {
+    try {
     await dbConnect();
     const tableId = req.nextUrl.searchParams.get("tableId");
 
@@ -118,8 +124,9 @@ export async function DELETE(req: NextRequest) {
     await Restaurant.findByIdAndUpdate(table.restaurantId, { $inc: { totalTables: -1 } });
 
     return NextResponse.json({ message: "Table deleted" });
-  } catch (error: any) {
-    console.error("Delete Table Error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
-  }
+    } catch (error: any) {
+      console.error("Delete Table Error:", error);
+      return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    }
+  });
 }

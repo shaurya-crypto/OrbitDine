@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
 import { useAuthStore } from "@/stores/authStore";
-import { Loader } from "@/components/ui/Loader";
 import { useToast } from "@/components/ui/ToastProvider";
+import { apiClient } from "@/services/apiClient";
+import { Loader } from "@/components/ui/Loader";
 
 interface NotificationRouting {
   orderCreated: string[];
@@ -43,13 +45,8 @@ export default function NotificationSettingsPage() {
 
     const fetchSettings = async () => {
       try {
-        const res = await fetch(`/api/owner/settings/notifications?restaurantId=${restaurantId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSettings(data);
-        } else {
-          toast.error("Failed to load settings");
-        }
+        const res = await apiClient.get(`/owner/settings/notifications?restaurantId=${restaurantId}`);
+        setSettings(res.data);
       } catch (error) {
         toast.error("Failed to load settings");
       } finally {
@@ -93,21 +90,13 @@ export default function NotificationSettingsPage() {
     if (!settings || !restaurantId) return;
     setIsSaving(true);
     try {
-      const res = await fetch('/api/owner/settings/notifications', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          restaurantId,
-          globalNotificationsEnabled: settings.globalNotificationsEnabled,
-          kitchenCanCancelOrder: settings.kitchenCanCancelOrder,
-          routing: settings.routing
-        })
+      await apiClient.put('/owner/settings/notifications', {
+        restaurantId,
+        globalNotificationsEnabled: settings.globalNotificationsEnabled,
+        kitchenCanCancelOrder: settings.kitchenCanCancelOrder,
+        routing: settings.routing
       });
-      if (res.ok) {
-        toast.success("Notification settings saved successfully");
-      } else {
-        toast.error("Failed to save settings");
-      }
+      toast.success("Notification settings saved successfully");
     } catch (error) {
       toast.error("Failed to save settings");
     } finally {

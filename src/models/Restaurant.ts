@@ -40,6 +40,27 @@ export interface IRestaurant extends Document {
   };
   plan: "free" | "pro" | "enterprise";
   status: "pending" | "active" | "suspended";
+  menuVersion: number;
+  slugHistory: string[];
+  gallery?: string[];
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+    website?: string;
+  };
+  seoMetadata?: {
+    title?: string;
+    description?: string;
+  };
+  featuredItems?: mongoose.Types.ObjectId[];
+  chefRecommendations?: mongoose.Types.ObjectId[];
+  todaySpecials?: mongoose.Types.ObjectId[];
+  bestSellers?: mongoose.Types.ObjectId[];
+  trendingItems?: mongoose.Types.ObjectId[];
+  promotionBanner?: string;
+  promotionText?: string;
+  followerCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -170,6 +191,67 @@ const RestaurantSchema = new Schema<IRestaurant>(
       type: String,
       enum: ["pending", "active", "suspended"],
       default: "pending",
+    },
+    menuVersion: {
+      type: Number,
+      default: 1,
+    },
+    slugHistory: [
+      {
+        type: String,
+        lowercase: true,
+      }
+    ],
+    gallery: [
+      {
+        type: String,
+      }
+    ],
+    socialLinks: {
+      facebook: String,
+      instagram: String,
+      twitter: String,
+      website: String,
+    },
+    seoMetadata: {
+      title: String,
+      description: String,
+    },
+    featuredItems: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "MenuItem",
+      }
+    ],
+    chefRecommendations: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "MenuItem",
+      }
+    ],
+    todaySpecials: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "MenuItem",
+      }
+    ],
+    bestSellers: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "MenuItem",
+      }
+    ],
+    trendingItems: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "MenuItem",
+      }
+    ],
+    promotionBanner: String,
+    promotionText: String,
+    followerCount: {
+      type: Number,
+      default: 0,
     },
   },
   {

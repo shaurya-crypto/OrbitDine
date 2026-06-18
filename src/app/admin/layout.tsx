@@ -7,5 +7,5 @@ export const metadata = {
 
 export default function AdminRootLayout({ children }: { children: ReactNode }) {
   // Just a pass-through, no sidebar here so the Passphrase Gate looks clean.
-  return <>{children}</>;
+  return <div className="dark bg-black min-h-screen text-white">{children}</div>;
 }

@@ -13,7 +13,7 @@ import {
   LogOut,
   Radio
 } from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
+import { useLogout } from "@/hooks/useLogout";
 
 const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -26,20 +26,21 @@ const NAV_ITEMS = [
   { href: "/admin/exports", label: "Exports", icon: FileDown },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ mobileOpen = false, setMobileOpen = (v: boolean) => {} }: { mobileOpen?: boolean, setMobileOpen?: (v: boolean) => void }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { logout } = useAuthStore();
-
-  const handleLogout = async () => {
-    // Invalidate session at backend if needed, but standard logout works
-    logout();
-    router.push("/login");
-  };
+  const { handleLogout } = useLogout();
 
   return (
-    <aside className="w-64 h-screen bg-zinc-950 border-r border-zinc-900 flex flex-col fixed left-0 top-0">
-      <div className="p-6">
+    <>
+      {/* Mobile Overlay */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      <aside className={`w-64 h-screen bg-zinc-950 border-r border-zinc-900 flex flex-col fixed left-0 top-0 z-50 transition-transform duration-300 md:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="p-6">
         <Link href="/admin/dashboard" className="text-2xl font-serif text-white tracking-tight flex items-center gap-2">
           <div className="w-8 h-8 rounded bg-red-600 flex items-center justify-center">
             <ShieldAlert className="w-4 h-4 text-white" />
@@ -56,6 +57,7 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-colors ${
                 isActive 
                   ? "bg-red-500/10 text-red-500" 
@@ -78,6 +80,7 @@ export function AdminSidebar() {
           Exit to Login
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

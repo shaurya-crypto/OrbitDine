@@ -35,10 +35,9 @@ export async function proxy(request: NextRequest) {
       "Strict-Transport-Security",
       "max-age=31536000; includeSubDomains; preload"
     );
-    // CSP can break some dev tools, keeping it relatively strict but functional
     response.headers.set(
       "Content-Security-Policy",
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; connect-src 'self' wss: https:;"
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; frame-src 'self' https://accounts.google.com; connect-src 'self' wss: https:;"
     );
   }
 
@@ -156,6 +155,7 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith("/dashboard")) {
     // Define which dashboard areas each role can access (cascading permissions)
     const roleAccess: Record<string, string[]> = {
+      superadmin: ["/dashboard/customer", "/dashboard/owner", "/dashboard/manager", "/dashboard/staff", "/dashboard/kitchen", "/dashboard/tables", "/dashboard/settings"],
       owner: ["/dashboard/owner", "/dashboard/manager", "/dashboard/staff", "/dashboard/kitchen", "/dashboard/settings", "/dashboard/tables"],
       manager: ["/dashboard/manager", "/dashboard/staff", "/dashboard/kitchen", "/dashboard/tables"],
       staff: ["/dashboard/staff", "/dashboard/tables"],
@@ -172,7 +172,12 @@ export async function proxy(request: NextRequest) {
 
     if (!isAllowed) {
       // Redirect to their highest role home dashboard if they try to access an unauthorized area
-      const highestRole = ["owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r)) || "customer";
+      const highestRole = ["superadmin", "owner", "manager", "staff", "kitchen", "customer"].find(r => roles.includes(r)) || "customer";
+      
+      if (highestRole === "superadmin") {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+      }
+      
       return NextResponse.redirect(new URL(`/dashboard/${highestRole}`, request.url));
     }
   }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useRealtimeMenu } from "@/hooks/useRealtimeMenu";
 import { Plus, Image as ImageIcon, Trash2, Edit2, Loader2, Search, AlertTriangle } from "lucide-react";
-import axios from "axios";
+import { apiClient as axios } from "@/services/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function MenuManagementPage() {
@@ -116,7 +116,7 @@ export default function MenuManagementPage() {
         });
         
         const base64 = await base64Promise;
-        const uploadRes = await axios.post("/api/upload", { image: base64 });
+        const uploadRes = await axios.post("/upload", { image: base64 });
         finalImageUrl = uploadRes.data.url;
       }
 
@@ -130,9 +130,9 @@ export default function MenuManagementPage() {
       };
 
       if (editingItem) {
-        await axios.patch("/api/menu/items", { itemId: editingItem._id, ...payload });
+        await axios.patch("/menu/items", { itemId: editingItem._id, ...payload });
       } else {
-        await axios.post("/api/menu/items", payload);
+        await axios.post("/menu/items", payload);
       }
 
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
@@ -147,7 +147,7 @@ export default function MenuManagementPage() {
 
   const handleToggleAvailable = async (item: any) => {
     try {
-      await axios.patch("/api/menu/items", { itemId: item._id, available: !item.available });
+      await axios.patch("/menu/items", { itemId: item._id, available: !item.available });
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
     } catch (error) {
       setMessageModal({ isOpen: true, title: 'Error', message: 'Failed to update availability', type: 'error' });
@@ -158,10 +158,10 @@ export default function MenuManagementPage() {
     setIsSubmitting(true);
     try {
       if (deleteModal.type === 'category') {
-        await axios.delete(`/api/menu/categories?categoryId=${deleteModal.target._id}`);
+        await axios.delete(`/menu/categories?categoryId=${deleteModal.target._id}`);
         if (activeCategory === deleteModal.target._id) setActiveCategory(null);
       } else if (deleteModal.type === 'item') {
-        await axios.delete(`/api/menu/items?itemId=${deleteModal.target._id}`);
+        await axios.delete(`/menu/items?itemId=${deleteModal.target._id}`);
       }
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
       setDeleteModal({ ...deleteModal, isOpen: false });
@@ -191,7 +191,7 @@ export default function MenuManagementPage() {
     }
     setIsSubmitting(true);
     try {
-      await axios.patch("/api/menu/categories", { 
+      await axios.patch("/menu/categories", { 
         categoryId: categoryModal.category._id, 
         name: categoryModal.name.trim() 
       });
@@ -210,7 +210,7 @@ export default function MenuManagementPage() {
     
     setIsSubmitting(true);
     try {
-      await axios.delete(`/api/menu/admin/${restaurantId}`);
+      await axios.delete(`/restaurant/menu?restaurantId=${restaurantId}`);
       queryClient.invalidateQueries({ queryKey: ["realtimeMenu", restaurantId] });
       setClearAllModal({ isOpen: false, verifyName: "" });
       setActiveCategory(null);
@@ -307,7 +307,7 @@ export default function MenuManagementPage() {
                   if (!input.value.trim()) return;
                   
                   try {
-                    const res = await axios.post('/api/menu/categories', {
+                    const res = await axios.post('/menu/categories', {
                       restaurantId,
                       name: input.value.trim(),
                       sortOrder: categories.length

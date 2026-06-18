@@ -15,6 +15,7 @@ export default function SettingsPage() {
   const { restaurantId, roles } = useAuthStore();
   const [saving, setSaving] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, verifyText: "", isDeleting: false });
+  const [activeTab, setActiveTab] = useState<"general" | "location" | "profile">("general");
   const toast = useToast();
   
   const [formData, setFormData] = useState({
@@ -32,7 +33,14 @@ export default function SettingsPage() {
     closingHours: "",
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
-    logo: ""
+    logo: "",
+    bannerImage: "",
+    description: "",
+    seoTitle: "",
+    seoDescription: "",
+    website: "",
+    instagram: "",
+    facebook: "",
   });
 
   useEffect(() => {
@@ -56,7 +64,14 @@ export default function SettingsPage() {
               closingHours: data.closingHours || "",
               latitude: data.latitude,
               longitude: data.longitude,
-              logo: data.logo || ""
+              logo: data.logo || "",
+              bannerImage: data.bannerImage || "",
+              description: data.description || "",
+              seoTitle: data.seoMetadata?.title || "",
+              seoDescription: data.seoMetadata?.description || "",
+              website: data.socialLinks?.website || "",
+              instagram: data.socialLinks?.instagram || "",
+              facebook: data.socialLinks?.facebook || "",
             });
           }
         })
@@ -86,13 +101,42 @@ export default function SettingsPage() {
     }
   };
 
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size must be under 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, bannerImage: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch("/api/restaurant/settings", {
+      const payload = {
+        restaurantId, 
+        ...formData,
+        socialLinks: {
+          website: formData.website,
+          instagram: formData.instagram,
+          facebook: formData.facebook
+        },
+        seoMetadata: {
+          title: formData.seoTitle,
+          description: formData.seoDescription
+        }
+      };
+
+      const res = await fetch("/api/owner/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId, ...formData })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         toast.success("Settings updated successfully");
@@ -139,8 +183,23 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Logo & Identity */}
-      <GlassPanel className="p-8">
+      {/* Tabs */}
+      <div className="flex items-center gap-4 border-b border-border mb-6 overflow-x-auto pb-2">
+        <button onClick={() => setActiveTab("general")} className={`px-4 py-2 font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === "general" ? "border-accent text-accent" : "border-transparent text-text-secondary hover:text-text-primary"}`}>
+          General Info
+        </button>
+        <button onClick={() => setActiveTab("location")} className={`px-4 py-2 font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === "location" ? "border-accent text-accent" : "border-transparent text-text-secondary hover:text-text-primary"}`}>
+          Location & Contact
+        </button>
+        <button onClick={() => setActiveTab("profile")} className={`px-4 py-2 font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === "profile" ? "border-accent text-accent" : "border-transparent text-text-secondary hover:text-text-primary"}`}>
+          Public Profile & SEO
+        </button>
+      </div>
+
+      {/* Tab: General Info */}
+      {activeTab === "general" && (
+        <>
+          <GlassPanel className="p-8">
         <h2 className="text-xl font-serif text-white mb-6 border-b border-zinc-800 pb-2">Identity & Operations</h2>
         
         <div className="flex flex-col md:flex-row gap-8 mb-8">
@@ -199,7 +258,12 @@ export default function SettingsPage() {
           </div>
         </div>
       </GlassPanel>
+        </>
+      )}
 
+      {/* Tab: Location & Contact */}
+      {activeTab === "location" && (
+        <>
       {/* Contact Details */}
       <GlassPanel className="p-8">
         <h2 className="text-xl font-serif text-white mb-6 border-b border-zinc-800 pb-2">Contact Details</h2>
@@ -276,6 +340,76 @@ export default function SettingsPage() {
           />
         </div>
       </GlassPanel>
+        </>
+      )}
+
+      {/* Tab: Public Profile & SEO */}
+      {activeTab === "profile" && (
+        <>
+          <GlassPanel className="p-8 mb-6">
+            <h2 className="text-xl font-serif text-white mb-6 border-b border-zinc-800 pb-2">Public Profile Identity</h2>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="text-sm font-medium flex items-center gap-2 text-zinc-300 mb-2">
+                  <Upload size={16} className="text-accent" /> Banner Image (Max 5MB)
+                </label>
+                <div className="w-full h-48 rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden flex items-center justify-center relative group cursor-pointer">
+                  {formData.bannerImage ? (
+                    <Image src={formData.bannerImage} alt="Banner" fill className="object-cover" />
+                  ) : (
+                    <div className="text-zinc-500 text-sm flex flex-col items-center">
+                      <Upload className="mb-2" /> Upload Banner
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Upload size={24} className="text-white mb-2" />
+                    <span className="text-white font-medium">Change Banner</span>
+                  </div>
+                  <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleBannerUpload} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-300">Public Description</label>
+                <textarea name="description" value={formData.description} onChange={handleChange as any} rows={4} className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:border-accent" placeholder="Tell diners about your restaurant..." />
+              </div>
+            </div>
+          </GlassPanel>
+
+          <GlassPanel className="p-8 mb-6">
+            <h2 className="text-xl font-serif text-white mb-6 border-b border-zinc-800 pb-2">Social Links</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-300">Website</label>
+                <input name="website" value={formData.website} onChange={handleChange} className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:border-accent" placeholder="https://" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-300">Instagram</label>
+                <input name="instagram" value={formData.instagram} onChange={handleChange} className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:border-accent" placeholder="https://instagram.com/..." />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-300">Facebook</label>
+                <input name="facebook" value={formData.facebook} onChange={handleChange} className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:border-accent" placeholder="https://facebook.com/..." />
+              </div>
+            </div>
+          </GlassPanel>
+
+          <GlassPanel className="p-8">
+            <h2 className="text-xl font-serif text-white mb-6 border-b border-zinc-800 pb-2">SEO Metadata</h2>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-300">SEO Title</label>
+                <input name="seoTitle" value={formData.seoTitle} onChange={handleChange} className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:border-accent" placeholder="Best Italian Restaurant in NY" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-300">SEO Description</label>
+                <textarea name="seoDescription" value={formData.seoDescription} onChange={handleChange as any} rows={2} className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white focus:outline-none focus:border-accent" placeholder="Write a short meta description for Google search results." />
+              </div>
+            </div>
+          </GlassPanel>
+        </>
+      )}
 
       <div className="flex justify-end pt-4 mb-12">
         <button

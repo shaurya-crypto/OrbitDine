@@ -6,6 +6,8 @@ import TableModel from "@/models/Table";
 import OrderSessionModel from "@/models/OrderSession";
 import { eventBus } from "@/lib/services/eventBus";
 import { pusherServer } from "@/lib/pusher/server";
+import BillModel from "@/models/Bill";
+import UserModel from "@/models/User";
 
 const closeSchema = z.object({
   sessionId: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
@@ -59,6 +61,18 @@ export async function POST(req: Request) {
       orderSession.status = "completed";
       orderSession.endedAt = new Date();
       await orderSession.save({ session: dbSession });
+
+      // 2.5 Update User Stats
+      if (orderSession.userId) {
+        const user = await UserModel.findById(orderSession.userId).session(dbSession);
+        if (user) {
+          const bill = await BillModel.findOne({ sessionId: orderSession._id }).session(dbSession);
+          const amount = bill ? bill.grandTotal : 0;
+          user.totalOrders = (user.totalOrders || 0) + 1;
+          user.totalSpent = (user.totalSpent || 0) + amount;
+          await user.save({ session: dbSession });
+        }
+      }
 
       // 3. Update Table Status
       const table = await TableModel.findById(orderSession.tableId).session(dbSession);

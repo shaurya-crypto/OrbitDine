@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb/db";
 import MenuItem from "@/models/MenuItem";
 import Category from "@/models/Category";
+import Restaurant from "@/models/Restaurant";
 import { eventBus } from "@/lib/services/eventBus";
 
 export async function POST(req: NextRequest) {
@@ -47,6 +48,8 @@ export async function POST(req: NextRequest) {
       isDeleted: false,
     });
     await menuItem.save();
+    
+    await Restaurant.findByIdAndUpdate(restaurantId, { $inc: { menuVersion: 1 } });
 
     return NextResponse.json({ message: "Menu item created", menuItem }, { status: 201 });
   } catch (error: any) {
@@ -74,6 +77,8 @@ export async function PATCH(req: NextRequest) {
     Object.assign(menuItem, updates);
 
     await menuItem.save();
+    
+    await Restaurant.findByIdAndUpdate(menuItem.restaurantId, { $inc: { menuVersion: 1 } });
 
     eventBus.emitMenuItemUpdated({
       menuItemId: menuItem._id.toString(),
@@ -106,6 +111,8 @@ export async function DELETE(req: NextRequest) {
     // Soft delete
     menuItem.isDeleted = true;
     await menuItem.save();
+    
+    await Restaurant.findByIdAndUpdate(menuItem.restaurantId, { $inc: { menuVersion: 1 } });
 
     eventBus.emitMenuItemUpdated({
       menuItemId: menuItem._id.toString(),

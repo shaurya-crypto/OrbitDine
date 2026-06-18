@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { withIdempotency } from "@/lib/idempotency";
 import { z } from "zod";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/mongodb/db";
@@ -11,8 +12,9 @@ const updateStatusSchema = z.object({
   servedBy: z.string().optional().refine((val) => !val || mongoose.Types.ObjectId.isValid(val), { message: "Invalid servedBy ID" }),
 });
 
-export async function PATCH(req: Request) {
-  try {
+export async function PATCH(req: NextRequest) {
+  return withIdempotency(req, async () => {
+    try {
     await dbConnect();
 
     const body = await req.json();
@@ -81,8 +83,9 @@ export async function PATCH(req: Request) {
       data: order,
     }, { status: 200 });
 
-  } catch (error: any) {
-    console.error("Update Order Status Error:", error);
-    return NextResponse.json({ success: false, message: "Failed to update status", error: error.message }, { status: 500 });
-  }
+    } catch (error: any) {
+      console.error("Update Order Status Error:", error);
+      return NextResponse.json({ success: false, message: "Failed to update status", error: error.message }, { status: 500 });
+    }
+  });
 }

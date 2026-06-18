@@ -9,13 +9,48 @@ class RealtimeService {
   private listeners: Set<(state: ConnectionState) => void> = new Set();
   private isNullProvider = !this.pusher;
 
+  private queryClientRef: QueryClient | null = null;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+
   constructor() {
     if (this.pusher) {
-      this.pusher.connection.bind("connected", () => this.updateState("connected"));
-      this.pusher.connection.bind("unavailable", () => this.updateState("offline"));
-      this.pusher.connection.bind("failed", () => this.updateState("offline"));
-      this.pusher.connection.bind("disconnected", () => this.updateState("offline"));
+      this.pusher.connection.bind("connected", () => {
+        this.updateState("connected");
+        this.startHeartbeat();
+        this.triggerFullSync(); // Recover missed events
+      });
+      this.pusher.connection.bind("unavailable", () => { this.updateState("offline"); this.stopHeartbeat(); });
+      this.pusher.connection.bind("failed", () => { this.updateState("offline"); this.stopHeartbeat(); });
+      this.pusher.connection.bind("disconnected", () => { this.updateState("offline"); this.stopHeartbeat(); });
       this.pusher.connection.bind("connecting", () => this.updateState("reconnecting"));
+    }
+  }
+
+  private startHeartbeat() {
+    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+    this.heartbeatInterval = setInterval(() => {
+      // Force a ping if connection is stale
+      if (this.pusher?.connection.state !== "connected") {
+        this.updateState("reconnecting");
+        this.pusher?.connect();
+      }
+    }, 30000);
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
+
+  private triggerFullSync() {
+    // If we just reconnected, invalidate all realtime queries to fetch missed data
+    if (this.queryClientRef) {
+      this.queryClientRef.invalidateQueries({ queryKey: ["realtimeOrders"] });
+      this.queryClientRef.invalidateQueries({ queryKey: ["realtimeTables"] });
+      this.queryClientRef.invalidateQueries({ queryKey: ["realtimeSessions"] });
+      this.queryClientRef.invalidateQueries({ queryKey: ["realtimeOverview"] });
     }
   }
 
@@ -46,6 +81,7 @@ class RealtimeService {
    * Ensures Zero UI component changes!
    */
   bindDashboardEvents(restaurantId: string, role: string, queryClient: QueryClient) {
+    this.queryClientRef = queryClient;
     if (!this.pusher) return; // Null provider mode, polling will take over
 
     // 1. Everyone listens to the main restaurant channel

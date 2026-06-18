@@ -4,6 +4,12 @@ import { useRef, useState } from "react";
 import { motion, HTMLMotionProps } from "framer-motion";
 import { usePerformance } from "@/components/providers/PerformanceProvider";
 import { transitionSpring } from "@/lib/design-system";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 interface MagneticButtonProps extends HTMLMotionProps<"button"> {
   children: React.ReactNode;
@@ -66,7 +72,11 @@ export function MagneticButton({
       animate={{ x: position.x, y: position.y }}
       transition={transitionSpring}
       whileTap={{ scale: 0.96 }}
-      className={`relative px-8 py-4 rounded-full font-medium transition-colors overflow-hidden group ${getVariantStyles()} ${className}`}
+      className={cn(
+        "relative px-8 py-4 rounded-full font-medium transition-colors overflow-hidden group",
+        getVariantStyles(),
+        className
+      )}
       {...props}
     >
       {/* Button Glow effect */}

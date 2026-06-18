@@ -7,10 +7,12 @@ import { ChefHat, LayoutDashboard, Utensils, LineChart, LogOut, ShieldAlert, Moo
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { RequestRoleModal } from "./RequestRoleModal";
+import { useLogout } from "@/hooks/useLogout";
 
 export function Sidebar({ mobileOpen = false, setMobileOpen = (v: boolean) => {} }: { mobileOpen?: boolean, setMobileOpen?: (v: boolean) => void }) {
   const pathname = usePathname();
-  const { roles, logout } = useAuthStore();
+  const { roles } = useAuthStore();
+  const { handleLogout } = useLogout();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -83,7 +85,7 @@ export function Sidebar({ mobileOpen = false, setMobileOpen = (v: boolean) => {}
             <p className="text-white font-medium">{roles && roles.length > 0 ? roles.join(", ") : "Select Role"}</p>
           </div>
           {roles && roles.length > 0 && (
-            <button onClick={logout} className="text-neutral-500 hover:text-white transition-colors" title="Logout">
+            <button onClick={handleLogout} className="text-neutral-500 hover:text-white transition-colors" title="Logout">
               <LogOut size={18} />
             </button>
           )}

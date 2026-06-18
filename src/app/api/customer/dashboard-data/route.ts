@@ -5,6 +5,8 @@ import OrderSession from "@/models/OrderSession";
 import Restaurant from "@/models/Restaurant";
 import Review from "@/models/Review";
 import MenuItem from "@/models/MenuItem";
+import Order from "@/models/Order";
+import Bill from "@/models/Bill";
 import { verifyAccessToken } from "@/lib/auth/jwt";
 
 export async function GET(req: Request) {
@@ -21,6 +23,8 @@ export async function GET(req: Request) {
     if (!MenuItem) console.warn("MenuItem not loaded");
     if (!Restaurant) console.warn("Restaurant not loaded");
     if (!Review) console.warn("Review not loaded");
+    if (!Order) console.warn("Order not loaded");
+    if (!Bill) console.warn("Bill not loaded");
 
     const user = await User.findById(decoded.userId)
       .populate("savedRestaurants", "name bannerImage cuisine type")
@@ -31,8 +35,14 @@ export async function GET(req: Request) {
     // Fetch order history (sessions linked to this user)
     const sessions = await OrderSession.find({ userId: user._id })
       .populate("restaurantId", "name bannerImage")
+      .populate("orderIds")
       .sort({ createdAt: -1 })
       .limit(10); // Fetch top 10 recent
+
+    // Fetch corresponding bills
+    const sessionIds = sessions.map(s => s._id);
+    const bills = await Bill.find({ sessionId: { $in: sessionIds } }).lean();
+    const billMap = new Map(bills.map((b: any) => [b.sessionId.toString(), b]));
 
     // Fetch reviews submitted by this user
     const reviews = await Review.find({ customerId: user._id })
@@ -57,14 +67,38 @@ export async function GET(req: Request) {
           locationEnabled: user.locationEnabled || false,
           defaultCity: user.defaultCity || "",
         },
-        recentOrders: sessions.map((s: any) => ({
-          sessionId: s._id,
-          restaurant: s.restaurantId ? { id: s.restaurantId._id, name: s.restaurantId.name, image: s.restaurantId.bannerImage } : null,
-          date: s.createdAt,
-          itemsCount: s.cart.reduce((acc: number, item: any) => acc + item.quantity, 0),
-          total: s.cart.reduce((acc: number, item: any) => acc + item.itemTotal, 0),
-          status: s.status,
-        })),
+        recentOrders: sessions.map((s: any) => {
+          const bill: any = billMap.get(s._id.toString());
+          const orders = s.orderIds || [];
+          
+          let itemsCount = 0;
+          let total = 0;
+          
+          if (bill) {
+             itemsCount = bill.itemsSnapshot?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0;
+             total = bill.grandTotal || 0;
+          } else {
+             // Fallback to active orders if bill not generated yet
+             orders.forEach((order: any) => {
+               if (order.status !== 'cancelled') {
+                 itemsCount += order.items?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0;
+                 total += order.grandTotal || 0;
+               }
+             });
+             // Also include cart if they haven't ordered everything
+             itemsCount += s.cart?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0;
+             total += s.cart?.reduce((acc: number, item: any) => acc + item.itemTotal, 0) || 0;
+          }
+          
+          return {
+            sessionId: s._id,
+            restaurant: s.restaurantId ? { id: s.restaurantId._id, name: s.restaurantId.name, image: s.restaurantId.bannerImage } : null,
+            date: s.createdAt,
+            itemsCount,
+            total,
+            status: s.status,
+          };
+        }),
         savedRestaurants: user.savedRestaurants || [],
         favoriteItems: user.favoriteItems || [],
         recentReviews: reviews,

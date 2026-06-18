@@ -10,6 +10,18 @@ export interface IReview extends Document {
   serviceRating?: number;
   ambienceRating?: number;
   feedback?: string;
+  reviewSource?: "qr" | "web" | "app";
+  visitDate?: Date;
+  orderReference?: string;
+  sentimentScore?: number;
+  extractedKeywords?: string[];
+  moderationStatus: "pending" | "approved" | "rejected";
+  flagged: boolean;
+  flaggedReason?: string;
+  helpfulVotes: number;
+  restaurantReply?: string;
+  restaurantRepliedAt?: Date;
+  isVerifiedDiner: boolean;
   createdAt: Date;
 }
 
@@ -23,6 +35,18 @@ const reviewSchema: Schema<IReview> = new Schema({
   serviceRating: { type: Number, min: 1, max: 5 },
   ambienceRating: { type: Number, min: 1, max: 5 },
   feedback: { type: String, maxlength: 1000 },
+  reviewSource: { type: String, enum: ["qr", "web", "app"], default: "web" },
+  visitDate: { type: Date },
+  orderReference: { type: String },
+  sentimentScore: { type: Number },
+  extractedKeywords: [{ type: String }],
+  moderationStatus: { type: String, enum: ["pending", "approved", "rejected"], default: "approved" },
+  flagged: { type: Boolean, default: false },
+  flaggedReason: { type: String },
+  helpfulVotes: { type: Number, default: 0 },
+  restaurantReply: { type: String, maxlength: 2000 },
+  restaurantRepliedAt: { type: Date },
+  isVerifiedDiner: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 

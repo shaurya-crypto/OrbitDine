@@ -2,7 +2,7 @@
 
 import { useAuthStore } from "@/stores/authStore";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { apiClient as axios } from "@/services/apiClient";
 import { Loader2, TrendingUp, TrendingDown, Clock, RefreshCw } from "lucide-react";
 import { useToast } from "@/components/ui/ToastProvider";
 import { 
@@ -26,7 +26,7 @@ export default function AnalyticsPage() {
     if (!restaurantId) return;
     setIsLoading(true);
     try {
-      const res = await axios.get(`/api/restaurant/analytics?restaurantId=${restaurantId}&section=${activeSection}&timeRange=${timeRange}`);
+      const res = await axios.get(`/restaurant/analytics?restaurantId=${restaurantId}&section=${activeSection}&timeRange=${timeRange}`);
       setData(res.data);
       setLastUpdated(new Date());
     } catch (err) {

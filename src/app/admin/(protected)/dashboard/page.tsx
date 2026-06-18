@@ -4,11 +4,76 @@ import User from "@/models/User";
 import Order from "@/models/Order";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Users, Store, IndianRupee, ShoppingBag } from "lucide-react";
-import { FeedClient } from "./FeedClient"; // We'll create this client component
+import { FeedClient } from "./FeedClient";
+import { DashboardCharts } from "./DashboardCharts";
 
 export const dynamic = "force-dynamic";
 
-export default function SuperAdminDashboard() {
+export default async function SuperAdminDashboard() {
+  await connectToDatabase();
+
+  // 1. Fetch Plan Distribution Real Data
+  const planStats = await Restaurant.aggregate([
+    {
+      $group: {
+        _id: { $ifNull: ["$plan", "free"] },
+        count: { $sum: 1 },
+      }
+    }
+  ]);
+
+  const planMap = planStats.reduce((acc, curr) => {
+    acc[curr._id] = curr.count;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const planData = [
+    { name: 'Free', count: planMap["free"] || 0, mrr: 0 },
+    { name: 'Pro', count: planMap["pro"] || 0, mrr: (planMap["pro"] || 0) * 2999 },
+    { name: 'Enterprise', count: planMap["enterprise"] || 0, mrr: (planMap["enterprise"] || 0) * 9999 },
+  ];
+
+  // 2. Fetch Growth Data (Last 6 Months)
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+  sixMonthsAgo.setDate(1);
+
+  const [userGrowth, restaurantGrowth] = await Promise.all([
+    User.aggregate([
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      { $group: { _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } }
+    ]),
+    Restaurant.aggregate([
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      { $group: { _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } }
+    ])
+  ]);
+
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const growthData = [];
+
+  let runningUsers = 0;
+  let runningRestaurants = 0;
+
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const m = d.getMonth() + 1; // 1-12
+    const y = d.getFullYear();
+
+    const uCount = userGrowth.find(x => x._id.month === m && x._id.year === y)?.count || 0;
+    const rCount = restaurantGrowth.find(x => x._id.month === m && x._id.year === y)?.count || 0;
+
+    runningUsers += uCount;
+    runningRestaurants += rCount;
+
+    growthData.push({
+      name: monthNames[m - 1],
+      users: runningUsers,
+      restaurants: runningRestaurants,
+    });
+  }
+
   return (
     <div className="p-8 pb-20 space-y-8">
       <div>
@@ -22,10 +87,14 @@ export default function SuperAdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="col-span-1 lg:col-span-2">
           <GlassPanel className="p-6 border-zinc-800/50 bg-zinc-900/50">
-            <h2 className="text-xl font-medium text-white mb-6">Revenue Growth (Coming Soon)</h2>
-            <div className="h-64 flex items-center justify-center text-zinc-600 border border-dashed border-zinc-800 rounded-xl">
-              [Recharts Area Graph implementation pending]
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-medium text-white">Platform Growth</h2>
+              <div className="flex items-center gap-4 text-xs font-medium">
+                <div className="flex items-center gap-1.5 text-zinc-400"><div className="w-2 h-2 rounded-full bg-purple-500"></div> Users</div>
+                <div className="flex items-center gap-1.5 text-zinc-400"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Restaurants</div>
+              </div>
             </div>
+            <DashboardCharts planData={planData} growthData={growthData} />
           </GlassPanel>
         </div>
         

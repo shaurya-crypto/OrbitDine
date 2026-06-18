@@ -130,4 +130,13 @@ const MenuItemSchema = new Schema<IMenuItem>(
   }
 );
 
+MenuItemSchema.index({
+  name: "text",
+  description: "text",
+  ingredients: "text",
+  allergens: "text",
+  dietaryTags: "text",
+  tags: "text",
+});
+
 export default mongoose.models.MenuItem || mongoose.model<IMenuItem>("MenuItem", MenuItemSchema);

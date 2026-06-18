@@ -1,14 +1,28 @@
 import { NextResponse, NextRequest } from "next/server";
+import { withIdempotency } from "@/lib/idempotency";
 import connectToDatabase from "@/lib/mongodb/db";
 import Restaurant from "@/models/Restaurant";
 import ReviewModel from "@/models/Review";
+import { verifyAccessToken } from "@/lib/auth/jwt";
 
 export async function POST(req: NextRequest) {
-  try {
+  return withIdempotency(req, async () => {
+    try {
     await connectToDatabase();
     
     const body = await req.json();
-    const { restaurantId, sessionId, customerId, orderId, rating, foodRating, serviceRating, ambienceRating, feedback } = body;
+    let { restaurantId, sessionId, customerId, orderId, rating, foodRating, serviceRating, ambienceRating, feedback } = body;
+    
+    // Automatically infer customerId if logged in
+    if (!customerId) {
+      const token = req.cookies.get("accessToken")?.value;
+      if (token) {
+        const decoded = await verifyAccessToken(token);
+        if (decoded?.userId) {
+          customerId = decoded.userId;
+        }
+      }
+    }
     
     if (!restaurantId || typeof rating !== "number") {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -49,8 +63,9 @@ export async function POST(req: NextRequest) {
     });
     
     return NextResponse.json({ message: "Rating submitted successfully" }, { status: 200 });
-  } catch (error) {
-    console.error("Rate Restaurant API Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+    } catch (error) {
+      console.error("Rate Restaurant API Error:", error);
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
+  });
 }

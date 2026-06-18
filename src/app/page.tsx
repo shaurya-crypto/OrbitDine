@@ -12,6 +12,7 @@ import { TrainingSection } from "@/components/landing/TrainingSection";
 import { PartnerSection } from "@/components/landing/PartnerSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
+import { FounderShowcase } from "@/components/landing/FounderShowcase";
 import { Footer } from "@/components/shared/Footer";
 import { SchemaMarkup } from "@/components/seo/SchemaMarkup";
 
@@ -60,15 +61,12 @@ export default function Home() {
       <SchemaMarkup schema={faqSchema} />
       <Navbar />
       <HeroSection />
-      {/* <RestaurantOperationsSection /> */}
       <ProblemStorySection />
       <JourneySection />
-      {/* <DeviceShowcase /> */}
       <FeaturesSection />
-      {/* <LiveInsightsSection /> */}
-      {/* <RolesSection /> */}
       <WhyOrbitDineSection />
-      {/* <TrainingSection /> */}
+      {/* <LiveInsightsSection /> */}
+      <FounderShowcase />
       <PartnerSection />
       <FAQSection />
       {/* <CTASection /> */}

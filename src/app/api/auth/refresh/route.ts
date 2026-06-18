@@ -53,10 +53,8 @@ export async function POST(req: NextRequest) {
     }
 
     const newAccessToken = await signAccessToken(payloadData);
-    const newRefreshToken = await signRefreshToken(payloadData);
 
-    // Update Session in DB
-    session.refreshToken = newRefreshToken;
+    // Extend Session expiration in DB but keep the same refresh token
     session.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     await session.save();
 
@@ -76,13 +74,7 @@ export async function POST(req: NextRequest) {
       path: "/",
     });
 
-    response.cookies.set("refreshToken", newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60,
-      path: "/",
-    });
+    // We don't rotate the refresh token cookie to prevent race conditions in React strict mode
 
     return response;
   } catch (error) {

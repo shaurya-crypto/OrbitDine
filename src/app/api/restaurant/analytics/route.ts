@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import connectToDatabase from "@/lib/mongodb/db";
 import Order from "@/models/Order";
 import OrderSession from "@/models/OrderSession";
@@ -11,11 +12,16 @@ import mongoose from "mongoose";
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get("accessToken")?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const payload = await verifyAccessToken(token);
-    if (!payload || (!payload.roles.includes("owner") && !payload.roles.includes("manager"))) {
+    if (!payload) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    if (!payload.roles.includes("owner") && !payload.roles.includes("manager")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

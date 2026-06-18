@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, useEffect, use } from "react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Star, CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function RateRestaurantPage({ params }: { params: Promise<{ restaurantId: string }> }) {
+export default function RateRestaurantPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [rating, setRating] = useState<number>(0);
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [feedback, setFeedback] = useState("");
@@ -14,9 +15,20 @@ export default function RateRestaurantPage({ params }: { params: Promise<{ resta
   const [submitted, setSubmitted] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    // Fetch restaurantId from slug
+    fetch(`/api/search?q=${resolvedParams.slug}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.results?.restaurants?.[0]) {
+          setRestaurantId(data.results.restaurants[0]._id);
+        }
+      });
+  }, [resolvedParams.slug]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (rating === 0) return;
+    if (rating === 0 || !restaurantId) return;
     
     setSubmitting(true);
     try {
@@ -24,7 +36,7 @@ export default function RateRestaurantPage({ params }: { params: Promise<{ resta
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          restaurantId: resolvedParams.restaurantId,
+          restaurantId,
           rating,
           feedback
         })
@@ -106,9 +118,9 @@ export default function RateRestaurantPage({ params }: { params: Promise<{ resta
 
             <button 
               type="submit"
-              disabled={rating === 0 || submitting}
+              disabled={rating === 0 || submitting || !restaurantId}
               className={`w-full py-4 rounded-xl font-medium shadow-lg transition-all ${
-                rating > 0 
+                rating > 0 && restaurantId
                   ? "bg-accent text-white hover:bg-accent/90" 
                   : "bg-border text-text-secondary cursor-not-allowed"
               }`}

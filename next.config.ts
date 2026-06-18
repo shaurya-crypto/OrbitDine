@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
     ],
   },
   // @ts-ignore
-  allowedDevOrigins: ['172.16.2.7'],
+  allowedDevOrigins: ['172.16.2.6'],
   async headers() {
     return [
       {

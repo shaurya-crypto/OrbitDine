@@ -1,11 +1,13 @@
 import { NextResponse, NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import connectToDatabase from "@/lib/mongodb/db";
 import OwnerSetting from "@/models/OwnerSetting";
 import { verifyAccessToken } from "@/lib/auth/jwt";
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get("accessToken")?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const payload = await verifyAccessToken(token);
@@ -49,7 +51,8 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const token = req.cookies.get("accessToken")?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("accessToken")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const payload = await verifyAccessToken(token);

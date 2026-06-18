@@ -4,7 +4,7 @@ export interface IAnalyticsEvent extends Document {
   restaurantId?: mongoose.Types.ObjectId;
   sessionId?: string; // Links to the guest session
   customerId?: mongoose.Types.ObjectId; // Links to registered user if migrated
-  eventType: "item_view" | "item_click" | "add_to_cart" | "checkout" | "restaurant_view" | "restaurant_click" | "discovery_search" | "menu_open";
+  eventType: "item_view" | "item_click" | "add_to_cart" | "checkout" | "restaurant_view" | "restaurant_click" | "discovery_search" | "menu_open" | "cart_abandonment" | "follow" | "unfollow" | "favorite" | "unfavorite";
   itemId?: mongoose.Types.ObjectId;
   metadata?: Record<string, any>;
   createdAt: Date;
@@ -29,7 +29,7 @@ const AnalyticsEventSchema = new Schema<IAnalyticsEvent>(
     },
     eventType: {
       type: String,
-      enum: ["item_view", "item_click", "add_to_cart", "checkout", "restaurant_view", "restaurant_click", "discovery_search", "menu_open"],
+      enum: ["item_view", "item_click", "add_to_cart", "checkout", "restaurant_view", "restaurant_click", "discovery_search", "menu_open", "cart_abandonment", "follow", "unfollow", "favorite", "unfavorite"],
       required: true,
       index: true,
     },

@@ -6,8 +6,9 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { 
   Search, MapPin, Star, Clock, Utensils, Heart, ChevronRight, 
   Home, User, MoreHorizontal, Settings, LogOut, Receipt, Award, 
-  TrendingUp, MessageSquare, Users
+  TrendingUp, MessageSquare, Users, ShieldAlert
 } from "lucide-react";
+import { useLogout } from "@/hooks/useLogout";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -16,7 +17,8 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { FloatingInput } from "@/components/ui/FloatingInput";
 
 export default function CustomerDashboardPage() {
-  const { name, logout } = useAuthStore();
+  const { name, roles } = useAuthStore();
+  const { handleLogout } = useLogout();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "history" | "favorites" | "reviews" | "settings">("overview");
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -45,6 +47,31 @@ export default function CustomerDashboardPage() {
     }
   };
 
+  if (roles?.includes("superadmin")) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-base p-6">
+        <GlassPanel className="max-w-md p-8 text-center space-y-6">
+          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
+            <ShieldAlert className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-serif text-text-primary">Administrative Access Only</h2>
+          <p className="text-text-secondary text-sm leading-relaxed">
+            Your account is currently set to the Superadmin role. The customer dashboard is unavailable to administrative accounts.
+          </p>
+          <div className="pt-4 border-t border-border">
+            <Link 
+              href="/admin/dashboard" 
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-accent text-white rounded-full font-medium hover:bg-accent/90 transition-colors"
+            >
+              Go to Admin Panel
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </GlassPanel>
+      </div>
+    );
+  }
+
   if (loading || !dashboardData) {
     return (
       <div className="min-h-screen p-6 max-w-7xl mx-auto space-y-6 bg-base">
@@ -67,7 +94,7 @@ export default function CustomerDashboardPage() {
     try {
       const res = await fetch("/api/customer/settings", { method: "DELETE" });
       if (res.ok) {
-        logout();
+        handleLogout();
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to delete account.");
@@ -534,7 +561,7 @@ export default function CustomerDashboardPage() {
               <button onClick={() => setActiveTab("settings")} className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-base text-sm font-medium text-text-primary flex items-center gap-3 transition-colors mb-1">
                 <Settings className="w-4 h-4" /> Account Settings
               </button>
-              <button onClick={() => logout()} className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-sm font-medium text-red-500 flex items-center gap-3 transition-colors">
+              <button onClick={() => handleLogout()} className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-sm font-medium text-red-500 flex items-center gap-3 transition-colors">
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>
             </div>

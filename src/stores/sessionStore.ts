@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { idbStorage } from "@/lib/idbStorage";
 
 interface SessionState {
   sessionId: string | null;
@@ -21,7 +22,8 @@ export const useSessionStore = create<SessionState>()(
       clearSession: () => set({ sessionId: null, restaurantId: null, tableId: null, tableNumber: null }),
     }),
     {
-      name: "orbitdine-session", // unique name for localStorage key
+      name: "orbitdine-session",
+      storage: createJSONStorage(() => idbStorage),
     }
   )
 );

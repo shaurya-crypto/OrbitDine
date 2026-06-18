@@ -21,6 +21,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [connState, setConnState] = useState<ConnectionState>("offline");
   const router = useRouter();
   const pathname = usePathname();
@@ -42,7 +43,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           window.location.href = `/dashboard/${highestRole || "customer"}`;
         }
       } else {
-        if (!silent) toast.error("Failed to refresh permissions. Please log out and back in.");
+        if (!silent) toast.error("Session expired. Please log in again.");
+        useAuthStore.getState().logout();
+        window.location.href = "/login?session_expired=true";
       }
     } catch (e) {
       console.error(e);
@@ -52,18 +55,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     setMounted(true);
+    let unsub: (() => void) | undefined;
     // Check if Zustand has already hydrated
     if (useAuthStore.persist.hasHydrated()) {
       setIsHydrated(true);
       handleRefreshPermissions(true);
     } else {
       // Subscribe to hydration finish event
-      const unsub = useAuthStore.persist.onFinishHydration(() => {
+      unsub = useAuthStore.persist.onFinishHydration(() => {
         setIsHydrated(true);
         handleRefreshPermissions(true);
       });
-      return () => { if (unsub) unsub(); };
     }
+
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => {
+      if (unsub) unsub();
+      window.removeEventListener('resize', checkMobile);
+    };
   }, []);
 
   // WebSocket Subscription Initialization
@@ -193,7 +204,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Megaphone size={20} />
             </button>
-            <NotificationCenter />
+            {isMobile && <NotificationCenter />}
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 ml-2 text-text-secondary hover:bg-border/30 rounded-lg">
               <Menu size={24} />
             </button>
@@ -219,9 +230,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Megaphone size={20} />
             </button>
-            <div className="bg-surface border border-border shadow-sm rounded-xl">
-              <NotificationCenter />
-            </div>
+            {!isMobile && (
+              <div className="bg-surface border border-border shadow-sm rounded-xl">
+                <NotificationCenter />
+              </div>
+            )}
           </div>
         )}
 

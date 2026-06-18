@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { idbStorage } from "@/lib/idbStorage";
 
 export type Role = "owner" | "manager" | "staff" | "kitchen" | "customer" | "superadmin";
 
@@ -24,6 +25,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "orbitdine-auth",
+      storage: createJSONStorage(() => idbStorage),
       partialize: (state) => {
         const { role, ...rest } = state as any; // Strip legacy 'role' key
         return rest;
