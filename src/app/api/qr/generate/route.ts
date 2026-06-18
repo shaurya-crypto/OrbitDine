@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     // Generate PNG QR image (Base64 data URI)
     const qrImageBase64 = await QRCode.toDataURL(scanUrl, {
       margin: 2,
-      width: 400,
+      scale: 15, // Using scale instead of width prevents sub-pixel rendering artifacts (the vertical split bug)
       color: {
         dark: "#000000",
         light: "#ffffff",

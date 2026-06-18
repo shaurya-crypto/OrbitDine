@@ -24,7 +24,11 @@ export async function GET(
       // Dynamically generate one on the fly
       const code = crypto.randomBytes(4).toString("hex");
       const url = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/scan/${code}`;
-      const qrImage = await qrcodeLib.toDataURL(url);
+      const qrImage = await qrcodeLib.toDataURL(url, {
+        margin: 2,
+        scale: 15,
+        color: { dark: "#000000", light: "#ffffff" }
+      });
 
       activeQr = new QRCode({
         restaurantId: table.restaurantId,
