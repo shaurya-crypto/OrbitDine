@@ -1,16 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import PasswordResetToken from "@/models/PasswordResetToken";
 import User from "@/models/User";
-import bcrypt from "bcryptjs";
+import { processSecurityPipeline } from "@/lib/security/pipeline";
+import { z } from "zod";
 
-export async function POST(req: Request) {
+const ResetPasswordSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters")
+});
+
+export async function POST(req: NextRequest) {
   try {
-    const { token, newPassword } = await req.json();
+    const pipeline = await processSecurityPipeline(req, {
+      requireCsrf: true,
+      rateLimit: { key: "reset_password", limit: 3, windowMs: 900000 }, // 3 per 15 min
+      schema: ResetPasswordSchema,
+    });
 
-    if (!token || !newPassword) {
-      return NextResponse.json({ error: "Token and new password are required" }, { status: 400 });
-    }
+    if (!pipeline.success) return pipeline.response;
+
+    const { token, newPassword } = pipeline.sanitizedBody;
 
     await connectToDatabase();
 

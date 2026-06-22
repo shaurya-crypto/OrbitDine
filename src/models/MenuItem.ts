@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { softDeletePlugin, ISoftDeleted } from "@/lib/mongodb/softDeletePlugin";
 
-export interface IMenuItem extends Document {
+export interface IMenuItem extends Document, ISoftDeleted {
   restaurantId: mongoose.Types.ObjectId;
   categoryId: mongoose.Types.ObjectId;
   name: string;
@@ -129,6 +130,8 @@ const MenuItemSchema = new Schema<IMenuItem>(
     timestamps: true,
   }
 );
+
+MenuItemSchema.plugin(softDeletePlugin);
 
 MenuItemSchema.index({
   name: "text",

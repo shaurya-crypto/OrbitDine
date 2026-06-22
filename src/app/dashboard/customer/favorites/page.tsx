@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Heart, Store, Utensils, Star, ArrowRight } from "lucide-react";
 import { RestaurantCard } from "@/components/discovery/RestaurantCard";
 import Link from "next/link";
@@ -84,7 +83,7 @@ export default function FavoritesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {data.favoriteItems.length > 0 ? (
             data.favoriteItems.map((item: any) => (
-              <GlassPanel key={item._id} className="p-4 flex gap-4">
+              <div key={item._id} className="card p-4 flex gap-4">
                 <div className="w-20 h-20 bg-zinc-800 rounded-xl flex-shrink-0 overflow-hidden relative">
                   {item.image ? (
                     <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
@@ -109,7 +108,7 @@ export default function FavoritesPage() {
                     <Heart className="w-4 h-4 text-red-500 fill-current" />
                   </div>
                 </div>
-              </GlassPanel>
+              </div>
             ))
           ) : (
             <div className="col-span-full py-12 text-center border border-dashed border-border rounded-2xl bg-surface/30">

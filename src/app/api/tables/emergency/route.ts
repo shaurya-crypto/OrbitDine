@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eventBus } from "@/lib/services/eventBus";
+import connectToDatabase from "@/lib/mongodb/db";
+import Table from "@/models/Table";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,9 +11,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "tableId and restaurantId are required" }, { status: 400 });
     }
 
+    await connectToDatabase();
+    const table = await Table.findById(tableId);
+
     await eventBus.emitEmergency({
       tableId,
       restaurantId,
+      tableName: table ? `Table ${table.tableNumber}` : tableId,
       timestamp: new Date()
     });
 

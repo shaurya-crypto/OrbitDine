@@ -6,7 +6,6 @@ import { Loader2 } from "lucide-react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-
 import { useToast } from "@/components/ui/ToastProvider";
 
 export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
@@ -67,17 +66,17 @@ export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
   };
 
   return (
-    <div className="flex space-x-6 h-full overflow-x-auto pb-4 snap-x">
+    <div className="flex gap-4 h-full overflow-x-auto pb-4 snap-x snap-mandatory px-4 sm:px-0 scroll-smooth">
       {/* Column 1: Received */}
-      <div className="w-[340px] flex-shrink-0 flex flex-col bg-zinc-900/50 border border-zinc-800 rounded-3xl overflow-hidden snap-center">
-        <div className="bg-zinc-900 p-5 flex justify-between items-center border-b border-zinc-800">
-          <h2 className="font-serif text-lg text-white flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-red-400" />
+      <div className="w-[85vw] sm:w-[340px] flex-shrink-0 flex flex-col card p-0 overflow-hidden snap-center sm:snap-start bg-base/50">
+        <div className="bg-surface p-4 flex justify-between items-center border-b border-border">
+          <h2 className="font-sans font-bold text-[15px] text-text-primary flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
             Received
           </h2>
-          <span className="bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full text-xs font-medium">{received.length}</span>
+          <span className="bg-base border border-border text-text-secondary px-2.5 py-0.5 rounded-full text-[11px] font-bold">{received.length}</span>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {received.map((order: any) => (
             <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} canCancel={kitchenCanCancel} onItemCancel={handleItemCancel} />
           ))}
@@ -85,15 +84,15 @@ export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
       </div>
 
       {/* Column 2: Preparing */}
-      <div className="w-[340px] flex-shrink-0 flex flex-col bg-zinc-900/50 border border-zinc-800 rounded-3xl overflow-hidden snap-center">
-        <div className="bg-zinc-900 p-5 flex justify-between items-center border-b border-zinc-800">
-          <h2 className="font-serif text-lg text-white flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-blue-400" />
+      <div className="w-[85vw] sm:w-[340px] flex-shrink-0 flex flex-col card p-0 overflow-hidden snap-center sm:snap-start bg-base/50">
+        <div className="bg-surface p-4 flex justify-between items-center border-b border-border">
+          <h2 className="font-sans font-bold text-[15px] text-text-primary flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-blue-500" />
             Preparing
           </h2>
-          <span className="bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full text-xs font-medium">{preparing.length}</span>
+          <span className="bg-base border border-border text-text-secondary px-2.5 py-0.5 rounded-full text-[11px] font-bold">{preparing.length}</span>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {preparing.map((order: any) => (
             <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} canCancel={kitchenCanCancel} onItemCancel={handleItemCancel} />
           ))}
@@ -101,15 +100,15 @@ export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
       </div>
 
       {/* Column 3: Ready */}
-      <div className="w-[340px] flex-shrink-0 flex flex-col bg-zinc-900/50 border border-zinc-800 rounded-3xl overflow-hidden snap-center">
-        <div className="bg-zinc-900 p-5 flex justify-between items-center border-b border-zinc-800">
-          <h2 className="font-serif text-lg text-white flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+      <div className="w-[85vw] sm:w-[340px] flex-shrink-0 flex flex-col card p-0 overflow-hidden snap-center sm:snap-start bg-base/50">
+        <div className="bg-surface p-4 flex justify-between items-center border-b border-border">
+          <h2 className="font-sans font-bold text-[15px] text-text-primary flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
             Ready to Serve
           </h2>
-          <span className="bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full text-xs font-medium">{ready.length}</span>
+          <span className="bg-base border border-border text-text-secondary px-2.5 py-0.5 rounded-full text-[11px] font-bold">{ready.length}</span>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {ready.map((order: any) => (
             <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} />
           ))}
@@ -117,15 +116,15 @@ export function KitchenBoard({ restaurantId }: { restaurantId: string }) {
       </div>
 
       {/* Column 4: Served */}
-      <div className="w-[340px] flex-shrink-0 flex flex-col bg-zinc-900/50 border border-zinc-800 rounded-3xl overflow-hidden snap-center">
-        <div className="bg-zinc-900 p-5 flex justify-between items-center border-b border-zinc-800 opacity-60">
-          <h2 className="font-serif text-lg text-white flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-zinc-600" />
+      <div className="w-[85vw] sm:w-[340px] flex-shrink-0 flex flex-col card p-0 overflow-hidden snap-center sm:snap-start bg-base/50 opacity-60 hover:opacity-100 transition-opacity">
+        <div className="bg-surface p-4 flex justify-between items-center border-b border-border">
+          <h2 className="font-sans font-bold text-[15px] text-text-primary flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-text-tertiary" />
             Served (Today)
           </h2>
-          <span className="bg-zinc-800 text-zinc-300 px-3 py-1 rounded-full text-xs font-medium">{served.length}</span>
+          <span className="bg-base border border-border text-text-secondary px-2.5 py-0.5 rounded-full text-[11px] font-bold">{served.length}</span>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 opacity-60">
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {served.map((order: any) => (
             <OrderCard key={order._id} order={order} onStatusChange={handleStatusChange} isServed />
           ))}

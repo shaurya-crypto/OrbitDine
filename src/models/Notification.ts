@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import { softDeletePlugin, ISoftDeleted } from "@/lib/mongodb/softDeletePlugin";
 
-export interface INotification extends Document {
+export interface INotification extends Document, ISoftDeleted {
   recipientId?: mongoose.Types.ObjectId; // User ID if targeted
   restaurantId?: mongoose.Types.ObjectId; // Restaurant ID if targeted
   audience: "user" | "restaurant" | "admin" | "broadcast";
@@ -81,6 +82,11 @@ const NotificationSchema = new Schema<INotification>(
     timestamps: true,
   }
 );
+
+NotificationSchema.plugin(softDeletePlugin);
+
+// Create compound index for querying notifications by restaurant
+NotificationSchema.index({ restaurantId: 1, createdAt: -1 });
 
 const NotificationModel: Model<INotification> =
   mongoose.models.Notification || mongoose.model<INotification>("Notification", NotificationSchema);

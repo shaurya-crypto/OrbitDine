@@ -11,27 +11,34 @@ export default function KitchenPage() {
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted) return <div className="p-8 bg-base min-h-screen text-text-primary">Loading dashboard...</div>;
-  if (!restaurantId) return <div className="p-8 bg-base min-h-screen text-red-500">Error: No Restaurant ID linked to your account. Please relogin.</div>;
+  if (!mounted) return (
+    <div className="max-w-full space-y-4">
+      <div className="skeleton h-8 w-48" />
+      <div className="skeleton h-64 rounded-2xl" />
+    </div>
+  );
+  if (!restaurantId) return <div className="p-6 text-red-400 text-[14px]">Error: No Restaurant ID linked. Please relogin.</div>;
 
   return (
-    <div className="min-h-screen bg-base text-text-primary p-6 md:p-8 overflow-hidden flex flex-col">
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0">
+    <div className="flex flex-col h-[calc(100dvh-100px)] md:h-[calc(100vh-60px)]">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 flex-shrink-0 px-4 sm:px-0">
         <div>
-          <h1 className="text-3xl font-serif tracking-tight mb-1 flex items-center gap-3 text-text-primary">
-            <ChefHat className="text-orange-400" size={32} />
-            Kitchen Display System
+          <h1 className="text-page-title text-text-primary flex items-center gap-2">
+            <ChefHat className="text-orange-400" size={24} />
+            Kitchen Display
           </h1>
-          <p className="text-text-secondary text-sm">Live order ticketing & Menu Actions</p>
+          <p className="text-caption text-text-secondary mt-0.5">Live order ticketing & menu actions</p>
         </div>
         <button 
           onClick={() => window.location.href = "/dashboard/manager/menu"}
-          className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-text-primary rounded-xl text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 card text-[13px] font-medium text-text-primary hover:bg-hover transition-colors min-h-[44px]"
         >
-          <ListTree size={16} /> Edit Menu
+          <ListTree size={14} /> Edit Menu
         </button>
       </div>
 
+      {/* Kitchen Board - Full height */}
       <div className="flex-1 overflow-hidden">
         <KitchenBoard restaurantId={restaurantId} />
       </div>

@@ -1,42 +1,32 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import User from "@/models/User";
 import VerificationToken from "@/models/VerificationToken";
-import Restaurant from "@/models/Restaurant";
 import crypto from "crypto";
 import { sendVerificationEmail } from "@/lib/services/email.service";
-import { validateBody, SignupSchema } from "@/lib/api/validation";
-import { rateLimiter } from "@/lib/api/rate-limit";
-import { validateCSRF } from "@/lib/api/csrf";
-import { handleApiError, unauthorized, tooManyRequests, badRequest } from "@/lib/api/errors";
+import { SignupSchema } from "@/lib/api/validation";
+import { processSecurityPipeline } from "@/lib/security/pipeline";
+import { handleApiError, badRequest } from "@/lib/api/errors";
 import { logger } from "@/lib/logger";
+import { z } from "zod";
 
-export async function POST(req: Request) {
+// Extended schema to include dynamic roles safely
+const ExtendedSignupSchema = SignupSchema.extend({
+  restaurantId: z.string().optional(),
+  role: z.string().optional(),
+});
+
+export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get("x-forwarded-for") || "unknown";
-    const rl = rateLimiter.check(`signup_${ip}`, 5, 3600000); // 5 per hour per IP
-    if (!rl.success) {
-      logger.warn(`Rate limit exceeded for signup from IP: ${ip}`);
-      return tooManyRequests("Too many signup attempts from this IP.");
-    }
-
-    const isCsrfSafe = await validateCSRF();
-    if (!isCsrfSafe) {
-      return unauthorized("Invalid request origin");
-    }
-
-    // Since Signup payload can include extra fields not strictly in SignupSchema (like restaurantId, role),
-    // we extract them separately or we could update the schema.
-    // For now, we will validate the core fields, and extract the rest.
-    const body = await req.json();
-    const coreValidation = SignupSchema.safeParse(body);
+    const pipeline = await processSecurityPipeline(req, {
+      requireCsrf: true,
+      rateLimit: { key: "signup", limit: 5, windowMs: 3600000 }, // 5 per hour
+      schema: ExtendedSignupSchema,
+    });
     
-    if (!coreValidation.success) {
-      return badRequest("Invalid payload", coreValidation.error.format());
-    }
+    if (!pipeline.success) return pipeline.response;
 
-    const { fullName, email, password } = coreValidation.data;
-    const { restaurantId, role: requestedRole } = body;
+    const { fullName, email, password, restaurantId, role: requestedRole } = pipeline.sanitizedBody;
 
     await connectToDatabase();
     
@@ -50,7 +40,7 @@ export async function POST(req: Request) {
     const isCustomer = requestedRole === "customer";
     const isNewOwner = !restaurantId && !isCustomer;
     const assignedRole = isCustomer ? "customer" : (isNewOwner ? "owner" : (requestedRole || "staff"));
-    const roles = [assignedRole]; // Store as array
+    const roles = [assignedRole] as ("owner" | "manager" | "staff" | "kitchen" | "customer" | "superadmin")[];
 
     const newUser = await User.create({
       fullName,

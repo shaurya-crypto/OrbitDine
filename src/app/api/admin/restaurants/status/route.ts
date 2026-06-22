@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import Restaurant from "@/models/Restaurant";
-import AuditLog from "@/models/AuditLog";
+import { createAuditLog } from "@/lib/audit/createAuditLog";
 import { jwtVerify } from "jose";
 
 const getJwtSecret = () => {
@@ -41,8 +41,9 @@ export async function PUT(req: NextRequest) {
     await restaurant.save();
 
     // Log the action immutably
-    await AuditLog.create({
-      adminId: adminSession.userId,
+    await createAuditLog({
+      actorId: adminSession.userId,
+      actorRole: "admin",
       action: "UPDATE_RESTAURANT_STATUS",
       targetId: restaurant._id,
       targetType: "Restaurant",
@@ -75,8 +76,9 @@ export async function DELETE(req: NextRequest) {
     const restaurant = await Restaurant.findByIdAndDelete(id);
     if (!restaurant) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    await AuditLog.create({
-      adminId: adminSession.userId,
+    await createAuditLog({
+      actorId: adminSession.userId,
+      actorRole: "admin",
       action: "DELETE_RESTAURANT",
       targetId: restaurant._id,
       targetType: "Restaurant",

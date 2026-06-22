@@ -55,7 +55,7 @@ export function DashboardCharts({ growthData, planData }: DashboardChartsProps) 
         <div>
           <h3 className="text-sm font-medium text-zinc-400 mb-4">Subscription Distribution</h3>
           <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={planData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                 <XAxis dataKey="name" stroke="#71717a" fontSize={12} tickLine={false} axisLine={false} />
@@ -73,7 +73,7 @@ export function DashboardCharts({ growthData, planData }: DashboardChartsProps) 
         <div>
           <h3 className="text-sm font-medium text-zinc-400 mb-4">MRR by Tier (₹)</h3>
           <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={planData} margin={{ top: 0, right: 0, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                 <XAxis dataKey="name" stroke="#71717a" fontSize={12} tickLine={false} axisLine={false} />

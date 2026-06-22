@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { softDeletePlugin, ISoftDeleted } from "@/lib/mongodb/softDeletePlugin";
 
-export interface IOrder extends Document {
+export interface IOrder extends Document, ISoftDeleted {
   orderNumber: string;
   restaurantId: mongoose.Types.ObjectId;
   tableId?: mongoose.Types.ObjectId;
@@ -93,5 +94,7 @@ const OrderSchema = new Schema<IOrder>(
     timestamps: true,
   }
 );
+
+OrderSchema.plugin(softDeletePlugin);
 
 export default mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);

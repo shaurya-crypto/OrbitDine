@@ -2,15 +2,14 @@
 
 import { useAuthStore } from "@/stores/authStore";
 import { ManagerCards } from "@/components/dashboard/manager/ManagerCards";
-import { ManagerAnalytics } from "@/components/dashboard/manager/ManagerAnalytics";
 import { RevenueCharts } from "@/components/dashboard/owner/RevenueCharts";
-
 import { SessionDrawer } from "@/components/dashboard/manager/SessionDrawer";
 import { useDashboardStore } from "@/stores/dashboardStore";
-import { MenuManagementModal } from "@/components/dashboard/manager/MenuManagementModal";
+import { QuickActions } from "@/components/dashboard/ui/QuickActions";
+import { SectionHeader } from "@/components/dashboard/ui/SectionHeader";
 
 import { useState, useEffect } from "react";
-import { Plus, Settings2, Grid, QrCode, Users, Settings, TrendingUp } from "lucide-react";
+import { Users, Settings, Grid, QrCode, Settings2, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function ManagerPage() {
@@ -21,69 +20,50 @@ export default function ManagerPage() {
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted) return <div className="p-8 bg-base min-h-screen text-text-primary">Loading dashboard...</div>;
-  if (!restaurantId) return <div className="p-8 bg-base min-h-screen text-red-500">Error: No Restaurant ID linked to your account. Please relogin.</div>;
+  if (!mounted) return (
+    <div className="max-w-[1400px] mx-auto space-y-4">
+      <div className="skeleton h-8 w-48" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[1,2,3,4].map(i => <div key={i} className="skeleton h-20 rounded-2xl" />)}
+      </div>
+    </div>
+  );
+  if (!restaurantId) return <div className="p-6 text-red-400 text-[14px]">Error: No Restaurant ID linked. Please relogin.</div>;
+
+  const quickActions = [
+    { label: "Staff Management", icon: <Users size={16} />, onClick: () => router.push("/dashboard/manager/staff") },
+    { label: "Table Management", icon: <Grid size={16} />, onClick: () => router.push("/dashboard/tables") },
+    { label: "Analytics", icon: <TrendingUp size={16} />, onClick: () => router.push("/dashboard/manager/analytics")},
+    { label: "QR Center", icon: <QrCode size={16} />, onClick: () => router.push("/dashboard/manager/qr-center") },
+    { label: "Settings", icon: <Settings size={16} />, onClick: () => router.push("/dashboard/manager/settings") },
+    { label: "Menu Console", icon: <Settings2 size={16} />, onClick: () => router.push("/dashboard/manager/menu"), variant: "accent" as const },
+  ];
 
   return (
-    <div className="min-h-screen bg-base text-text-primary p-6 md:p-8 overflow-y-auto">
-      <div className="max-w-[1400px] mx-auto flex flex-col gap-8">
-        
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-serif tracking-tight mb-1 text-text-primary">Manager Dashboard</h1>
-            <p className="text-text-secondary text-sm">Full operations overview</p>
-          </div>
-          <div className="flex flex-wrap gap-4 w-full sm:w-auto">
-            <button 
-              onClick={() => router.push("/dashboard/manager/staff")}
-              className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-text-primary rounded-xl text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <Users size={16} /> Staff
-            </button>
-            <button 
-              onClick={() => router.push("/dashboard/manager/settings")}
-              className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-text-primary rounded-xl text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <Settings size={16} /> Settings
-            </button>
-            <button 
-              onClick={() => router.push("/dashboard/tables")}
-              className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-text-primary rounded-xl text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <Grid size={16} /> Table Management
-            </button>
-            <button 
-              onClick={() => router.push("/dashboard/manager/qr-center")}
-              className="flex items-center gap-2 px-4 py-2 bg-surface border border-border text-text-primary rounded-xl text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <QrCode size={16} /> QR Center
-            </button>
-            <button 
-              onClick={() => router.push("/dashboard/manager/menu")}
-              className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors"
-            >
-              <Settings2 size={16} /> Menu Console
-            </button>
-          </div>
+    <div className="max-w-[1400px] mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h1 className="text-page-title text-text-primary">Operations Center</h1>
+          <p className="text-caption text-text-secondary mt-0.5">Live operations overview</p>
         </div>
-
-        {/* Top KPI Cards */}
-        <ManagerCards restaurantId={restaurantId} />
-
-        <div className="w-full">
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="text-emerald-400 w-5 h-5" />
-            <h2 className="text-xl font-serif text-text-primary">Advanced Analytics</h2>
-          </div>
-          <RevenueCharts restaurantId={restaurantId} />
-        </div>
-
-        <div className="flex justify-center">
-          {/* Main Content Area (Removed Quick Controls as full menu page is available) */}
-        </div>
+        <QuickActions actions={quickActions} label="Quick Actions" />
       </div>
 
+      {/* KPI Cards */}
+      <ManagerCards restaurantId={restaurantId} />
+
+      {/* Analytics Section */}
+      <div>
+        <SectionHeader 
+          title="Performance" 
+          subtitle="Today's revenue and trends"
+          className="mb-4"
+        />
+        <RevenueCharts restaurantId={restaurantId} />
+      </div>
+
+      {/* Session Drawer */}
       {selectedTableId && (
         <>
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={() => useDashboardStore.getState().setSelectedTable(null)} />

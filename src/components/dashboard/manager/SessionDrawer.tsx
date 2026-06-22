@@ -2,6 +2,7 @@
 
 import { useDashboardStore } from "@/stores/dashboardStore";
 import { useRealtimeSessions } from "@/hooks/useRealtimeSessions";
+import { useRealtimeTables } from "@/hooks/useRealtimeTables";
 import { X, Receipt, LogOut, Ban, QrCode, RefreshCw, Trash2, Edit, AlertTriangle } from "lucide-react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
   const { roles } = useAuthStore();
   const { selectedTableId, setSelectedTable } = useDashboardStore();
   const { data: sessions } = useRealtimeSessions(restaurantId);
+  const { data: tables } = useRealtimeTables(restaurantId);
   const queryClient = useQueryClient();
   const [showQR, setShowQR] = useState(false);
   const toast = useToast();
@@ -80,10 +82,13 @@ export function SessionDrawer({ restaurantId }: { restaurantId: string }) {
   };
 
   const handleEmergencyAlert = async () => {
+    const activeTable = tables?.find((t: any) => t._id === selectedTableId);
+    const tableName = activeTable ? activeTable.tableNumber : selectedTableId;
+
     const ok = await confirm({ title: "Emergency Alert", message: "Send an emergency alert to all staff for this table?", isDanger: true });
     if (ok) {
       try {
-        await axios.post("/api/tables/emergency", { tableId: selectedTableId, restaurantId });
+        await axios.post("/api/tables/emergency", { tableId: selectedTableId, restaurantId, tableName });
         toast.success("Emergency alert broadcasted!");
       } catch (err: any) {
         toast.error("Failed to send emergency alert");

@@ -77,9 +77,10 @@ export default async function RestaurantProfilePage({ params }: { params: { slug
   const restaurant = data.restaurant as any;
 
   // Generate structured data
-  const jsonLd = {
+  const restaurantUrl = restaurant.socialLinks?.website || `${process.env.NEXT_PUBLIC_APP_URL}/restaurant/${restaurant.slug}`;
+  const localBusinessSchema = {
     "@context": "https://schema.org",
-    "@type": "Restaurant",
+    "@type": "LocalBusiness", // or Restaurant
     "name": restaurant.name,
     "image": restaurant.bannerImage || restaurant.logo,
     "description": restaurant.description,
@@ -92,13 +93,54 @@ export default async function RestaurantProfilePage({ params }: { params: { slug
       "addressCountry": restaurant.country
     },
     "telephone": restaurant.phone,
-    "url": restaurant.socialLinks?.website || `${process.env.NEXT_PUBLIC_APP_URL}/restaurant/${restaurant.slug}`,
+    "url": restaurantUrl,
+    "menu": `${process.env.NEXT_PUBLIC_APP_URL}/restaurant/${restaurant.slug}/menu`,
     "aggregateRating": restaurant.reviewCount > 0 ? {
       "@type": "AggregateRating",
       "ratingValue": restaurant.rating,
       "reviewCount": restaurant.reviewCount
     } : undefined
   };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": process.env.NEXT_PUBLIC_APP_URL
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Restaurants",
+        "item": `${process.env.NEXT_PUBLIC_APP_URL}/explore`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": restaurant.name,
+        "item": `${process.env.NEXT_PUBLIC_APP_URL}/restaurant/${restaurant.slug}`
+      }
+    ]
+  };
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "OrbitDine",
+    "url": process.env.NEXT_PUBLIC_APP_URL,
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": `${process.env.NEXT_PUBLIC_APP_URL}/explore?q={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  };
+
+  // Aggregated array of schemas
+  const schemas = [localBusinessSchema, breadcrumbSchema, websiteSchema];
 
   const getGoogleMapsLink = () => {
     if (restaurant.location?.coordinates) {
@@ -112,7 +154,7 @@ export default async function RestaurantProfilePage({ params }: { params: { slug
     <div className="min-h-screen bg-base pb-24">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }}
       />
       
       {/* Hero Section */}

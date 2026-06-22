@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
     await table.save();
 
     const code = crypto.randomBytes(4).toString("hex");
-    const url = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/scan/${code}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
+    const url = `${baseUrl}/scan/${code}`;
     const qrImage = await qrcodeLib.toDataURL(url);
 
     const qr = new QRCode({

@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
-import { GlassPanel } from "@/components/ui/GlassPanel";
-import { Loader } from "@/components/ui/Loader";
-import { Users, ShieldAlert, MoreVertical, Trash2, Edit } from "lucide-react";
+import { Users, Plus, Shield, Search, MoreVertical, Trash2, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Loader } from "@/components/ui/Loader";
 
 import { useToast } from "@/components/ui/ToastProvider";
 import { useConfirm } from "@/components/ui/ConfirmProvider";
@@ -122,7 +121,7 @@ export default function StaffManagementPage() {
         </div>
       </div>
 
-      <GlassPanel className="p-0 overflow-hidden border-neutral-200">
+      <div className="card p-0 overflow-hidden border-border">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -196,7 +195,7 @@ export default function StaffManagementPage() {
             </tbody>
           </table>
         </div>
-      </GlassPanel>
+      </div>
     </div>
   );
 }

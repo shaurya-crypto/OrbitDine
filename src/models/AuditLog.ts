@@ -1,10 +1,12 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IAuditLog extends Document {
-  adminId: mongoose.Types.ObjectId;
+  actorId: mongoose.Types.ObjectId | "system";
+  actorRole: "owner" | "manager" | "admin" | "system";
+  restaurantId?: mongoose.Types.ObjectId;
   action: string;
   targetId?: mongoose.Types.ObjectId;
-  targetType?: "Restaurant" | "User" | "Subscription" | "System" | "Warning" | "Report";
+  targetType?: "Restaurant" | "User" | "Subscription" | "System" | "Warning" | "Report" | "Menu" | "Order" | "Review";
   reason?: string;
   ipAddress?: string;
   userAgent?: string;
@@ -15,10 +17,19 @@ export interface IAuditLog extends Document {
 
 const AuditLogSchema = new Schema<IAuditLog>(
   {
-    adminId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
+    actorId: {
+      type: Schema.Types.Mixed, // Can be ObjectId or "system" string
       required: true,
+      index: true,
+    },
+    actorRole: {
+      type: String,
+      enum: ["owner", "manager", "admin", "system"],
+      required: true,
+    },
+    restaurantId: {
+      type: Schema.Types.ObjectId,
+      ref: "Restaurant",
       index: true,
     },
     action: {
@@ -31,7 +42,7 @@ const AuditLogSchema = new Schema<IAuditLog>(
     },
     targetType: {
       type: String,
-      enum: ["Restaurant", "User", "Subscription", "System", "Warning", "Report"],
+      enum: ["Restaurant", "User", "Subscription", "System", "Warning", "Report", "Menu", "Order", "Review"],
     },
     reason: {
       type: String,

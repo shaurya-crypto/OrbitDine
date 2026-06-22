@@ -18,6 +18,7 @@ export function MenuHero({ restaurant, tableNumber }: MenuHeroProps) {
             src={bgImage} 
             alt={restaurant.name}
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />

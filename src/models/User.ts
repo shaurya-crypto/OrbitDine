@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from "bcryptjs";
+import { softDeletePlugin, ISoftDeleted } from "@/lib/mongodb/softDeletePlugin";
 
-export interface IUser extends Document {
+export interface IUser extends Document, ISoftDeleted {
   fullName: string;
   email: string;
   phoneNumber?: string;
@@ -123,6 +124,8 @@ const UserSchema = new Schema<IUser>(
     timestamps: true, // Automatically manages createdAt and updatedAt
   }
 );
+
+UserSchema.plugin(softDeletePlugin);
 
 // Pre-save hook to hash password before saving
 UserSchema.pre("save", async function (this: any) {

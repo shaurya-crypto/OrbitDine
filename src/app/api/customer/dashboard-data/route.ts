@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import User from "@/models/User";
 import OrderSession from "@/models/OrderSession";
@@ -8,10 +8,17 @@ import MenuItem from "@/models/MenuItem";
 import Order from "@/models/Order";
 import Bill from "@/models/Bill";
 import { verifyAccessToken } from "@/lib/auth/jwt";
+import { processSecurityPipeline } from "@/lib/security/pipeline";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const token = req.headers.get("cookie")?.split("; ").find(r => r.startsWith("accessToken="))?.split("=")[1];
+    const pipeline = await processSecurityPipeline(req, {
+      requireCsrf: false, // Not needed for GET
+      rateLimit: { key: "customer_dashboard", limit: 60, windowMs: 60000 },
+    });
+    if (!pipeline.success) return pipeline.response;
+
+    const token = req.cookies.get("accessToken")?.value;
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     
     const decoded = await verifyAccessToken(token);
@@ -26,6 +33,11 @@ export async function GET(req: Request) {
     if (!Order) console.warn("Order not loaded");
     if (!Bill) console.warn("Bill not loaded");
 
+    const url = new URL(req.url);
+    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") || "10")));
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
+    const skip = (page - 1) * limit;
+
     const user = await User.findById(decoded.userId)
       .populate("savedRestaurants", "name bannerImage cuisine type")
       .populate("favoriteItems", "name price image");
@@ -37,7 +49,8 @@ export async function GET(req: Request) {
       .populate("restaurantId", "name bannerImage")
       .populate("orderIds")
       .sort({ createdAt: -1 })
-      .limit(10); // Fetch top 10 recent
+      .skip(skip)
+      .limit(limit);
 
     // Fetch corresponding bills
     const sessionIds = sessions.map(s => s._id);
@@ -48,7 +61,8 @@ export async function GET(req: Request) {
     const reviews = await Review.find({ customerId: user._id })
       .populate("restaurantId", "name")
       .sort({ createdAt: -1 })
-      .limit(5);
+      .skip(skip)
+      .limit(limit);
 
     // Calculate dynamic analytics from sessions if not set correctly
     const restaurantsVisited = new Set(sessions.map(s => s.restaurantId?._id?.toString())).size;

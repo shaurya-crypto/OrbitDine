@@ -6,13 +6,13 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { realtimeService, ConnectionState } from "@/services/realtimeService";
 import { useQueryClient } from "@tanstack/react-query";
-import { Wifi, WifiOff, RefreshCw, ShieldAlert, Menu } from "lucide-react";
+import { Wifi, WifiOff, RefreshCw, ShieldAlert, Menu, Search } from "lucide-react";
 import { RequestRoleModal } from "@/components/dashboard/layout/RequestRoleModal";
 import { NotificationCenter } from "@/components/dashboard/layout/NotificationCenter";
 import { CustomNotificationModal } from "@/components/dashboard/CustomNotificationModal";
 import { useToast } from "@/components/ui/ToastProvider";
 import { Megaphone } from "lucide-react";
-import { SmartBackButton } from "@/components/shared/SmartBackButton";
+import { CommandPalette } from "@/components/dashboard/ui/CommandPalette";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const toast = useToast();
@@ -28,7 +28,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const queryClient = useQueryClient();
 
   const [isHydrated, setIsHydrated] = useState(false);
-
   const [isHydratingRole, setIsHydratingRole] = useState(false);
 
   const handleRefreshPermissions = async (silent = false) => {
@@ -56,12 +55,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     setMounted(true);
     let unsub: (() => void) | undefined;
-    // Check if Zustand has already hydrated
     if (useAuthStore.persist.hasHydrated()) {
       setIsHydrated(true);
       handleRefreshPermissions(true);
     } else {
-      // Subscribe to hydration finish event
       unsub = useAuthStore.persist.onFinishHydration(() => {
         setIsHydrated(true);
         handleRefreshPermissions(true);
@@ -80,20 +77,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // WebSocket Subscription Initialization
   useEffect(() => {
     if (isHydrated && roles.length > 0) {
-      // 1. Subscribe to connection state changes
       const unsubscribe = realtimeService.subscribeToState((state) => {
         setConnState(state);
       });
 
-      // 2. Bind user specific events for role updates
       const userId = useAuthStore.getState().userId;
       if (userId) {
         realtimeService.bindUserEvents(userId, () => {
-          handleRefreshPermissions(); // Auto refresh when server triggers a role update!
+          handleRefreshPermissions();
         });
       }
 
-      // 3. Bind all dashboard events to QueryClient invalidations if they belong to a restaurant
       const primaryRole = (["owner", "manager", "staff", "kitchen", "customer"] as Role[]).find(r => roles.includes(r)) || "customer";
       if (restaurantId) {
         realtimeService.bindDashboardEvents(restaurantId, primaryRole as any, queryClient);
@@ -108,17 +102,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [isHydrated, roles, restaurantId, queryClient]);
 
   useEffect(() => {
-    // Redirect to login if no role is set AFTER hydration is complete
     if (isHydrated && roles.length === 0) {
       router.replace("/login");
     }
   }, [isHydrated, roles, router]);
 
-  if (!isHydrated || roles.length === 0) {
-    return <div className="min-h-screen bg-surface flex items-center justify-center"><RefreshCw className="animate-spin text-neutral-400" /></div>;
-  }
 
-  // Basic Role Verification Check (client side for MVP)
+
+  // Role-based access control
   if (isHydrated && roles.length > 0) {
     const isKitchenArea = pathname.includes("/kitchen");
     const isStaffArea = pathname.includes("/staff");
@@ -139,39 +130,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     } else if (isTablesArea) {
       hasAccess = roles.includes("owner") || roles.includes("manager") || roles.includes("staff");
     } else {
-      hasAccess = true; // /dashboard home
+      hasAccess = true;
     }
 
     if (!hasAccess) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-surface relative">
-          <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-md w-full border border-neutral-100">
-            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <ShieldAlert size={32} />
+        <div className="min-h-screen flex items-center justify-center bg-base relative p-4">
+          <div className="card p-8 text-center max-w-md w-full">
+            <div className="w-14 h-14 bg-red-500/10 text-red-400 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <ShieldAlert size={28} />
             </div>
-            <h1 className="text-2xl font-serif text-neutral-900 mb-2">Access Denied</h1>
-            <p className="text-neutral-500 mb-8">You do not have the required permissions to view this area.</p>
+            <h1 className="text-page-title text-text-primary mb-2">Access Denied</h1>
+            <p className="text-body text-text-secondary mb-6">You do not have the required permissions to view this area.</p>
             
             <button 
               onClick={() => setShowRoleModal(true)}
-              className="w-full py-3 bg-neutral-900 text-white rounded-xl font-medium hover:bg-neutral-800 transition-colors"
+              className="w-full py-3 bg-accent text-white rounded-xl text-[14px] font-medium hover:bg-accent/90 transition-colors min-h-[44px]"
             >
               Request Access Upgrade
             </button>
             <button 
               onClick={() => handleRefreshPermissions(false)}
               disabled={isHydratingRole}
-              className="w-full py-3 mt-3 bg-neutral-100 text-neutral-900 rounded-xl font-medium hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 mt-3 card text-text-primary text-[14px] font-medium hover:bg-hover transition-colors flex items-center justify-center gap-2 min-h-[44px]"
             >
-              {isHydratingRole ? <RefreshCw size={18} className="animate-spin" /> : <RefreshCw size={18} />}
-              Refresh Access Permissions
+              {isHydratingRole ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+              Refresh Access
             </button>
             <button 
               onClick={() => {
                 const highestRole = (["owner", "manager", "staff", "kitchen", "customer"] as Role[]).find(r => roles.includes(r));
                 router.push(highestRole ? `/dashboard/${highestRole.toLowerCase()}` : '/');
               }}
-              className="w-full py-3 mt-3 text-neutral-500 font-medium hover:text-neutral-900 transition-colors"
+              className="w-full py-3 mt-2 text-text-tertiary text-[13px] font-medium hover:text-text-primary transition-colors min-h-[44px]"
             >
               Return to My Dashboard
             </button>
@@ -184,63 +175,108 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const isCustomerDashboard = pathname.startsWith("/dashboard/customer");
 
+  // Build breadcrumb from pathname
+  const breadcrumbSegments = pathname.split("/").filter(Boolean).slice(1); // Remove "dashboard"
+  const breadcrumbLabels: Record<string, string> = {
+    owner: "Owner", manager: "Manager", staff: "Floor Staff", kitchen: "Kitchen",
+    customer: "Customer", tables: "Tables", analytics: "Analytics", settings: "Settings",
+    reviews: "Reviews", backups: "Backups", exports: "Exports", notifications: "Notifications",
+    menu: "Menu", "qr-center": "QR Center",
+  };
+
   return (
     <div className="min-h-screen bg-base flex flex-col md:flex-row">
       {/* Mobile Top Bar */}
       {!isCustomerDashboard && (
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface sticky top-0 z-40">
-          <div className="flex items-center gap-2">
-            <SmartBackButton 
-              fallbackRoute={`/dashboard/${roles.includes('owner') ? 'owner' : roles.includes('manager') ? 'manager' : roles.includes('kitchen') ? 'kitchen' : roles.includes('staff') ? 'staff' : 'customer'}`}
-              className="p-2 -ml-2 text-text-secondary hover:text-text-primary hover:bg-border/30 rounded-lg transition-colors group" 
-            />
-            <h1 className="text-xl font-serif text-text-primary">OrbitDine</h1>
+        <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-surface sticky top-0 z-40">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-text-secondary hover:text-text-primary hover:bg-hover rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label="Toggle navigation"
+            >
+              <Menu size={20} />
+            </button>
+            <h1 className="text-[15px] font-semibold text-text-primary tracking-tight">OrbitDine</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
+              className="p-2 text-text-secondary hover:text-text-primary hover:bg-hover rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label="Search"
+            >
+              <Search size={18} />
+            </button>
             <button
               onClick={() => setShowBroadcastModal(true)}
-              className="p-2 text-text-secondary hover:text-text-primary hover:bg-border/30 rounded-lg transition-colors"
+              className="p-2 text-text-secondary hover:text-text-primary hover:bg-hover rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="Broadcast Message"
             >
-              <Megaphone size={20} />
+              <Megaphone size={18} />
             </button>
             {isMobile && <NotificationCenter />}
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 ml-2 text-text-secondary hover:bg-border/30 rounded-lg">
-              <Menu size={24} />
-            </button>
           </div>
-        </div>
+        </header>
       )}
 
       {!isCustomerDashboard && <Sidebar mobileOpen={mobileMenuOpen} setMobileOpen={setMobileMenuOpen} />}
       
-      <div className={`flex-1 ${!isCustomerDashboard ? "md:ml-64 p-4 md:p-8" : ""} min-h-screen relative w-full overflow-x-hidden`}>
-        {/* Top Right Controls: Connection & Notifications (Desktop Only, mobile moved to header) */}
+      <div className={`flex-1 flex flex-col min-w-0 ${!isCustomerDashboard ? "md:ml-[280px]" : ""}`}>
+        {/* Desktop Topbar */}
         {!isCustomerDashboard && (
-          <div className="hidden md:flex absolute top-8 right-8 z-50 items-center gap-4">
-            <SmartBackButton 
-              label="Back"
-              fallbackRoute={`/dashboard/${roles.includes('owner') ? 'owner' : roles.includes('manager') ? 'manager' : roles.includes('kitchen') ? 'kitchen' : roles.includes('staff') ? 'staff' : 'customer'}`}
-              className="flex items-center px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-base rounded-xl transition-colors bg-surface border border-border shadow-sm group"
-            />
-            <button
-              onClick={() => setShowBroadcastModal(true)}
-              className="p-2 text-text-secondary hover:text-text-primary hover:bg-base rounded-xl transition-colors bg-surface border border-border shadow-sm"
-              title="Broadcast Message"
-            >
-              <Megaphone size={20} />
-            </button>
-            {!isMobile && (
-              <div className="bg-surface border border-border shadow-sm rounded-xl">
-                <NotificationCenter />
+          <header className="hidden md:flex items-center justify-between px-6 py-3 border-b border-border bg-surface/80 backdrop-blur-lg sticky top-0 z-30">
+            {/* Breadcrumb */}
+            <nav className="flex items-center gap-1 text-[13px]" aria-label="Breadcrumb">
+              <span className="text-text-tertiary">Dashboard</span>
+              {breadcrumbSegments.map((seg, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  <span className="text-text-tertiary">/</span>
+                  <span className={i === breadcrumbSegments.length - 1 ? "text-text-primary font-medium" : "text-text-tertiary"}>
+                    {breadcrumbLabels[seg] || seg}
+                  </span>
+                </span>
+              ))}
+            </nav>
+
+            {/* Right Controls */}
+            <div className="flex items-center gap-2">
+              {/* Sync Status */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium" title={`Status: ${connState}`}>
+                {connState === "connected" ? (
+                  <><Wifi size={12} className="text-emerald-500" /><span className="text-text-tertiary">Live</span></>
+                ) : (
+                  <><WifiOff size={12} className="text-text-tertiary" /><span className="text-text-tertiary">Offline</span></>
+                )}
               </div>
-            )}
-          </div>
+
+              <button
+                onClick={() => setShowBroadcastModal(true)}
+                className="p-2 text-text-secondary hover:text-text-primary hover:bg-hover rounded-xl transition-colors"
+                title="Broadcast Message"
+              >
+                <Megaphone size={16} />
+              </button>
+
+              <NotificationCenter />
+            </div>
+          </header>
         )}
 
-        {children}
+        <main className={!isCustomerDashboard ? "p-4 md:p-6" : ""}>
+          {(!isHydrated || roles.length === 0) ? (
+            <div className="flex items-center justify-center min-h-[50vh]">
+              <RefreshCw className="animate-spin text-text-tertiary" />
+            </div>
+          ) : (
+            children
+          )}
+        </main>
+        
         {showBroadcastModal && <CustomNotificationModal onClose={() => setShowBroadcastModal(false)} />}
       </div>
+
+      {/* Global Command Palette */}
+      <CommandPalette />
     </div>
   );
 }

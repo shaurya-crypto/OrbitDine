@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
-import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Star, MessageSquare, ThumbsUp, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -60,48 +59,48 @@ export default function OwnerReviewsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-24 text-text-primary">
       <div className="mb-6">
-        <h1 className="text-3xl font-serif mb-1">Reputation Engine</h1>
-        <p className="text-zinc-400">Manage your reviews, analytics, and customer feedback.</p>
+        <h1 className="text-page-title text-text-primary mb-1">Reputation Engine</h1>
+        <p className="text-caption text-text-secondary">Manage your reviews, analytics, and customer feedback.</p>
       </div>
 
       {/* Analytics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <GlassPanel className="p-6 flex items-center justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card p-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-zinc-400 mb-1">Average Rating</p>
-            <div className="text-3xl font-bold flex items-center gap-2">
-              {averageRating} <Star className="w-6 h-6 text-yellow-500 fill-current" />
+            <p className="text-caption text-text-secondary mb-1">Average Rating</p>
+            <div className="text-metric-value flex items-center gap-2">
+              {averageRating} <Star className="w-5 h-5 text-yellow-500 fill-current" />
             </div>
           </div>
-        </GlassPanel>
-        <GlassPanel className="p-6 flex items-center justify-between">
+        </div>
+        <div className="card p-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-zinc-400 mb-1">Total Reviews</p>
-            <div className="text-3xl font-bold">{totalReviews}</div>
+            <p className="text-caption text-text-secondary mb-1">Total Reviews</p>
+            <div className="text-metric-value">{totalReviews}</div>
           </div>
           <MessageSquare className="w-8 h-8 text-accent opacity-50" />
-        </GlassPanel>
-        <GlassPanel className="p-6 flex items-center justify-between">
+        </div>
+        <div className="card p-6 flex items-center justify-between">
           <div>
-            <p className="text-sm text-zinc-400 mb-1">Pending Replies</p>
-            <div className="text-3xl font-bold text-orange-400">{pendingReplies}</div>
+            <p className="text-caption text-text-secondary mb-1">Pending Replies</p>
+            <div className="text-metric-value text-orange-400">{pendingReplies}</div>
           </div>
           <Clock className="w-8 h-8 text-orange-400 opacity-50" />
-        </GlassPanel>
+        </div>
       </div>
 
       {/* Reviews List */}
-      <GlassPanel className="p-8">
-        <h2 className="text-xl font-serif mb-6 border-b border-zinc-800 pb-2">Recent Reviews</h2>
+      <div className="card p-6">
+        <h2 className="text-section-title mb-6 border-b border-border pb-2">Recent Reviews</h2>
         <div className="space-y-6">
           {reviews.length === 0 ? (
-            <p className="text-zinc-500">No reviews yet.</p>
+            <p className="text-text-secondary text-[13px]">No reviews yet.</p>
           ) : (
             reviews.map(review => (
-              <div key={review._id} className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
+              <div key={review._id} className="p-5 bg-elevated rounded-xl border border-border">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 rounded-full bg-base flex items-center justify-center font-bold text-text-primary">
                       {review.customerId?.fullName?.charAt(0) || "A"}
                     </div>
                     <div>
@@ -109,7 +108,7 @@ export default function OwnerReviewsPage() {
                         {review.customerId?.fullName || "Anonymous"}
                         {review.isVerifiedDiner && <CheckCircle className="w-3 h-3 text-green-500" />}
                       </div>
-                      <div className="text-xs text-zinc-500">
+                      <div className="text-[11px] text-text-tertiary">
                         {new Date(review.createdAt).toLocaleDateString()} • {review.reviewSource || "web"}
                       </div>
                     </div>
@@ -121,11 +120,11 @@ export default function OwnerReviewsPage() {
                   </div>
                 </div>
 
-                <p className="text-zinc-300 mb-4">{review.feedback}</p>
+                <p className="text-text-secondary text-[13px] mb-4">{review.feedback}</p>
 
                 {review.sentimentScore !== undefined && (
                   <div className="flex gap-2 mb-4">
-                    <span className={`text-xs px-2 py-1 rounded-md ${review.sentimentScore > 0 ? "bg-green-500/10 text-green-500" : review.sentimentScore < 0 ? "bg-red-500/10 text-red-500" : "bg-zinc-800 text-zinc-400"}`}>
+                    <span className={`text-[11px] font-medium px-2 py-1 rounded-md ${review.sentimentScore > 0 ? "bg-emerald-500/10 text-emerald-500" : review.sentimentScore < 0 ? "bg-red-500/10 text-red-500" : "bg-base text-text-tertiary"}`}>
                       AI Sentiment: {review.sentimentScore > 0 ? "Positive" : review.sentimentScore < 0 ? "Negative" : "Neutral"}
                     </span>
                   </div>
@@ -133,9 +132,9 @@ export default function OwnerReviewsPage() {
 
                 {/* Owner Reply Section */}
                 {review.restaurantReply ? (
-                  <div className="mt-4 p-4 bg-accent/10 border border-accent/20 rounded-lg ml-6">
-                    <div className="text-xs text-accent font-medium mb-1">Your Reply • {new Date(review.restaurantRepliedAt).toLocaleDateString()}</div>
-                    <p className="text-sm text-zinc-300">{review.restaurantReply}</p>
+                  <div className="mt-4 p-4 bg-accent-soft border border-accent/20 rounded-xl ml-6">
+                    <div className="text-[11px] text-accent font-medium mb-1">Your Reply • {new Date(review.restaurantRepliedAt).toLocaleDateString()}</div>
+                    <p className="text-[13px] text-text-primary">{review.restaurantReply}</p>
                   </div>
                 ) : (
                   <div className="mt-4">
@@ -149,8 +148,8 @@ export default function OwnerReviewsPage() {
                           rows={3}
                         />
                         <div className="flex gap-2">
-                          <button onClick={() => submitReply(review._id)} className="px-4 py-2 bg-accent text-white text-sm rounded-lg hover:bg-accent/90">Post Reply</button>
-                          <button onClick={() => setActiveReplyId(null)} className="px-4 py-2 bg-zinc-800 text-white text-sm rounded-lg hover:bg-zinc-700">Cancel</button>
+                          <button onClick={() => submitReply(review._id)} className="px-4 py-2 bg-accent text-white text-[13px] font-medium rounded-xl hover:bg-accent/90 min-h-[44px]">Post Reply</button>
+                          <button onClick={() => setActiveReplyId(null)} className="px-4 py-2 bg-base border border-border text-text-primary text-[13px] font-medium rounded-xl hover:bg-hover min-h-[44px]">Cancel</button>
                         </div>
                       </div>
                     ) : (
@@ -164,7 +163,7 @@ export default function OwnerReviewsPage() {
             ))
           )}
         </div>
-      </GlassPanel>
+      </div>
     </div>
   );
 }

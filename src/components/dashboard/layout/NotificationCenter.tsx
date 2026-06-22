@@ -196,7 +196,7 @@ export function NotificationCenter() {
     });
 
     channel.bind("TABLE_EMERGENCY", (data: any) => {
-      addNotification("🚨 TABLE EMERGENCY 🚨", `Table ${data.tableId} requires IMMEDIATE assistance!`, 'emergency');
+      addNotification("🚨 TABLE EMERGENCY 🚨", `Table ${data.tableName || data.tableId} requires IMMEDIATE assistance!`, 'emergency');
     });
 
     channel.bind(REALTIME_EVENTS.STAFF_NOTIFICATION, (data: any) => {

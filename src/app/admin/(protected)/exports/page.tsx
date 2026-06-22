@@ -13,10 +13,12 @@ export default function AdminExportsPage() {
     setExporting(`${type}-${format}`);
     toast.success(`Started export for ${type}...`);
     
-    // Simulate export generation since we don't have real CSV building API yet
+    // Trigger download via browser navigation to our streaming endpoint
+    window.location.href = `/api/admin/exports?type=${type}&format=${format}`;
+    
+    // Clear the loading state shortly after triggering the download
     setTimeout(() => {
       setExporting(null);
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} export completed! Check your downloads.`);
     }, 2000);
   };
 

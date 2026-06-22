@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
-import { GlassPanel } from "@/components/ui/GlassPanel";
 import { 
   Search, MapPin, Star, Clock, Utensils, Heart, ChevronRight, 
   Home, User, MoreHorizontal, Settings, LogOut, Receipt, Award, 
@@ -50,7 +49,7 @@ export default function CustomerDashboardPage() {
   if (roles?.includes("superadmin")) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-base p-6">
-        <GlassPanel className="max-w-md p-8 text-center space-y-6">
+        <div className="card max-w-md p-8 text-center space-y-6">
           <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
             <ShieldAlert className="w-8 h-8 text-red-500" />
           </div>
@@ -67,7 +66,7 @@ export default function CustomerDashboardPage() {
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-        </GlassPanel>
+        </div>
       </div>
     );
   }
@@ -157,29 +156,33 @@ export default function CustomerDashboardPage() {
         <div className="space-y-8">
           {/* Profile Summary Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <GlassPanel premium className="p-5 flex flex-col gap-2">
-              <div className="w-10 h-10 rounded-full bg-accent-soft flex items-center justify-center text-accent mb-2"><Receipt size={20} /></div>
-              <p className="text-sm text-text-secondary font-medium">Total Orders</p>
-              <h3 className="text-2xl font-bold text-text-primary">{profile.totalOrders}</h3>
-            </GlassPanel>
+            <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center text-accent mb-2"><Receipt size={20} /></div>
+              <p className="text-caption text-text-secondary">Total Orders</p>
+              <h3 className="text-metric-value text-text-primary">{profile.totalOrders}</h3>
+            </div>
             
-            <GlassPanel premium className="p-5 flex flex-col gap-2">
-              <div className="w-10 h-10 rounded-full bg-accent-soft flex items-center justify-center text-accent mb-2"><TrendingUp size={20} /></div>
-              <p className="text-sm text-text-secondary font-medium">Total Spent</p>
-              <h3 className="text-2xl font-bold text-text-primary">₹{profile.totalSpent.toFixed(2)}</h3>
-            </GlassPanel>
+            <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center text-accent mb-2"><TrendingUp size={20} /></div>
+              <p className="text-caption text-text-secondary">Total Spent</p>
+              <h3 className="text-metric-value text-text-primary">₹{profile.totalSpent.toFixed(2)}</h3>
+            </div>
 
-            <GlassPanel premium className="p-5 flex flex-col gap-2">
-              <div className="w-10 h-10 rounded-full bg-accent-soft flex items-center justify-center text-accent mb-2"><MapPin size={20} /></div>
-              <p className="text-sm text-text-secondary font-medium">Places Visited</p>
-              <h3 className="text-2xl font-bold text-text-primary">{profile.restaurantsVisited}</h3>
-            </GlassPanel>
+            <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center text-accent mb-2"><MapPin size={20} /></div>
+              <p className="text-caption text-text-secondary">Places Visited</p>
+              <h3 className="text-metric-value text-text-primary">{profile.restaurantsVisited}</h3>
+            </div>
 
-            <GlassPanel premium className="p-5 flex flex-col gap-2">
-              <div className="w-10 h-10 rounded-full bg-accent-soft flex items-center justify-center text-accent mb-2"><Award size={20} /></div>
-              <p className="text-sm text-text-secondary font-medium">Loyalty Progress</p>
-              <h3 className="text-2xl font-bold text-text-primary">Level 1</h3>
-            </GlassPanel>
+            <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center text-accent mb-2"><Award size={20} /></div>
+              <p className="text-caption text-text-secondary">Loyalty Progress</p>
+              <h3 className="text-metric-value text-text-primary">Level 1</h3>
+            </div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8">
@@ -191,7 +194,7 @@ export default function CustomerDashboardPage() {
               </div>
               <div className="space-y-4">
                 {recentOrders.slice(0, 3).map((order: any) => (
-                  <GlassPanel key={order.sessionId} className="p-4 flex items-center gap-4 hover:border-accent/30 transition-colors">
+                  <div key={order.sessionId} className="card p-4 flex items-center gap-4 hover:border-accent/30 transition-colors">
                     <div className="w-12 h-12 rounded-xl bg-surface border border-border flex items-center justify-center overflow-hidden">
                       {order.restaurant?.image ? (
                         <img src={order.restaurant.image} className="w-full h-full object-cover" alt="" />
@@ -205,9 +208,9 @@ export default function CustomerDashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-text-primary">₹{order.total.toFixed(2)}</p>
-                      <Link href={`/menu/${order.restaurant?.id}`} className="text-xs text-accent mt-1 inline-block font-medium">Reorder</Link>
+                      <Link href={`/menu/${order.restaurant?.id}`} className="text-xs text-accent mt-1 inline-block font-medium hover:underline">Reorder</Link>
                     </div>
-                  </GlassPanel>
+                  </div>
                 ))}
                 {recentOrders.length === 0 && (
                   <div className="p-8 text-center border border-dashed border-border rounded-2xl">
@@ -220,17 +223,17 @@ export default function CustomerDashboardPage() {
             {/* Loyalty / Achievements Snippet */}
             <div>
               <h2 className="text-xl font-serif text-text-primary mb-4">Achievements</h2>
-              <GlassPanel premium className="p-6 text-center border-dashed border-border relative overflow-hidden group">
+              <div className="card p-6 text-center border-dashed border-border relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent z-0"></div>
                 <div className="relative z-10">
                   <Award size={48} className="mx-auto text-accent mb-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-                  <h3 className="font-semibold text-text-primary mb-2">Foodie Starter</h3>
-                  <p className="text-sm text-text-secondary max-w-xs mx-auto">Complete 5 more orders to unlock your next tier and earn exclusive rewards.</p>
+                  <h3 className="text-card-title text-text-primary mb-2">Foodie Starter</h3>
+                  <p className="text-caption text-text-secondary max-w-xs mx-auto">Complete 5 more orders to unlock your next tier and earn exclusive rewards.</p>
                   <div className="w-full bg-surface border border-border h-2 rounded-full mt-6 overflow-hidden">
                     <div className="bg-accent h-full w-1/4 rounded-full"></div>
                   </div>
                 </div>
-              </GlassPanel>
+              </div>
             </div>
           </div>
         </div>
@@ -241,7 +244,7 @@ export default function CustomerDashboardPage() {
           <h2 className="text-2xl font-serif text-text-primary">Full Order History</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {recentOrders.map((order: any) => (
-              <GlassPanel key={order.sessionId} className="p-5 flex flex-col md:flex-row gap-5 hover:border-accent/30 transition-colors">
+              <div key={order.sessionId} className="card p-5 flex flex-col md:flex-row gap-5 hover:border-accent/30 transition-colors">
                 <div className="w-full md:w-24 h-32 md:h-24 rounded-2xl bg-surface border border-border flex items-center justify-center overflow-hidden flex-shrink-0">
                   {order.restaurant?.image ? (
                     <img src={order.restaurant.image} className="w-full h-full object-cover" alt="" />
@@ -261,16 +264,16 @@ export default function CustomerDashboardPage() {
                       <span className="capitalize text-accent font-medium">{order.status}</span>
                     </div>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-border border-dashed flex justify-between items-center">
-                    <p className="text-sm text-text-secondary font-medium">{order.itemsCount} items ordered</p>
+                  <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
+                    <p className="text-caption text-text-secondary">{order.itemsCount} items ordered</p>
                     {order.restaurant?.id && (
-                      <Link href={`/menu/${order.restaurant.id}`} className="text-sm bg-text-primary text-base px-4 py-2 rounded-full font-medium active:scale-95 transition-transform">
+                      <Link href={`/menu/${order.restaurant.id}`} className="text-xs bg-elevated border border-border px-4 py-2 rounded-xl font-medium hover:bg-hover active:scale-95 transition-all">
                         Order Again
                       </Link>
                     )}
                   </div>
                 </div>
-              </GlassPanel>
+              </div>
             ))}
             {recentOrders.length === 0 && (
               <div className="col-span-full py-20 text-center">
@@ -289,7 +292,7 @@ export default function CustomerDashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {savedRestaurants.map((restaurant: any) => (
                 <Link href={`/menu/${restaurant._id}`} key={restaurant._id} className="group block">
-                  <GlassPanel premium className="p-0 overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:border-accent/40 hover:-translate-y-1">
+                  <div className="card p-0 overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:border-accent/40 hover:-translate-y-1">
                     <div className="relative h-40 w-full overflow-hidden bg-surface">
                       {restaurant.bannerImage ? (
                         <Image src={restaurant.bannerImage} alt={restaurant.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
@@ -304,7 +307,7 @@ export default function CustomerDashboardPage() {
                       <h3 className="font-bold text-text-primary text-lg">{restaurant.name}</h3>
                       <p className="text-sm text-text-secondary">{restaurant.cuisineType}</p>
                     </div>
-                  </GlassPanel>
+                  </div>
                 </Link>
               ))}
               {savedRestaurants.length === 0 && (
@@ -319,7 +322,7 @@ export default function CustomerDashboardPage() {
             <h2 className="text-2xl font-serif text-text-primary mb-6">Favorite Items</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {favoriteItems.map((item: any) => (
-                <GlassPanel key={item._id} className="p-4 flex items-center gap-4">
+                <div key={item._id} className="card p-4 flex items-center gap-4">
                   <div className="w-16 h-16 rounded-xl bg-surface border border-border overflow-hidden flex items-center justify-center">
                     {item.image ? <img src={item.image} className="w-full h-full object-cover" alt="" /> : <Utensils className="text-text-secondary opacity-50" />}
                   </div>
@@ -327,7 +330,7 @@ export default function CustomerDashboardPage() {
                     <h4 className="font-semibold text-text-primary">{item.name}</h4>
                     <p className="font-medium text-text-primary">₹{item.price}</p>
                   </div>
-                </GlassPanel>
+                </div>
               ))}
               {favoriteItems.length === 0 && (
                 <div className="col-span-full p-10 text-center border border-dashed border-border rounded-3xl">
@@ -344,7 +347,7 @@ export default function CustomerDashboardPage() {
           <h2 className="text-2xl font-serif text-text-primary">Feedback History</h2>
           <div className="grid gap-4 max-w-3xl">
             {recentReviews.map((review: any) => (
-              <GlassPanel key={review._id} className="p-6">
+              <div key={review._id} className="card p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-bold text-lg text-text-primary">{review.restaurantId?.name || "Restaurant"}</h3>
@@ -356,11 +359,11 @@ export default function CustomerDashboardPage() {
                   </div>
                 </div>
                 {review.feedback && (
-                  <div className="bg-surface p-4 rounded-xl border border-border">
+                  <div className="bg-base p-4 rounded-xl border border-border">
                     <p className="text-text-primary italic">"{review.feedback}"</p>
                   </div>
                 )}
-              </GlassPanel>
+              </div>
             ))}
             {recentReviews.length === 0 && (
               <div className="p-16 text-center border border-dashed border-border rounded-3xl">
@@ -377,7 +380,7 @@ export default function CustomerDashboardPage() {
           <h2 className="text-2xl font-serif text-text-primary mb-6">Account Settings</h2>
           
           <div className="max-w-2xl space-y-6">
-            <GlassPanel className="p-6 space-y-6">
+            <div className="card p-6 space-y-6">
               <h3 className="font-semibold text-text-primary text-lg border-b border-border pb-4">Personal Information</h3>
               <div className="space-y-4">
                 <div>
@@ -408,9 +411,9 @@ export default function CustomerDashboardPage() {
                   />
                 </div>
               </div>
-            </GlassPanel>
+            </div>
 
-            <GlassPanel className="p-6 space-y-6">
+            <div className="card p-6 space-y-6">
               <h3 className="font-semibold text-text-primary text-lg border-b border-border pb-4">Location Preferences</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -432,7 +435,7 @@ export default function CustomerDashboardPage() {
                   />
                 </div>
               </div>
-            </GlassPanel>
+            </div>
 
             <div className="flex justify-end gap-4 pt-4 border-t border-border">
               <button 
@@ -465,7 +468,7 @@ export default function CustomerDashboardPage() {
               </button>
             </div>
 
-            <GlassPanel className="p-6 mt-8 border border-red-500/20 bg-red-500/5">
+            <div className="card p-6 mt-8 border-red-500/20 bg-red-500/5">
               <h3 className="font-semibold text-red-500 text-lg mb-2">Danger Zone</h3>
               <p className="text-sm text-text-secondary mb-4">Once you delete your account, there is no going back. Please be certain.</p>
               <button 
@@ -474,7 +477,7 @@ export default function CustomerDashboardPage() {
               >
                 Delete Account
               </button>
-            </GlassPanel>
+            </div>
           </div>
         </div>
       )}

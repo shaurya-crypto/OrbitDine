@@ -299,8 +299,8 @@ function FeedbackSection({ data }: { data: any }) {
     async function fetchReviews() {
       if (!restaurantId) return;
       try {
-        const res = await axios.get(`/api/restaurant/reviews?restaurantId=${restaurantId}`);
-        setReviews(res.data.reviews || []);
+        const response = await axios.get(`/restaurant/reviews?restaurantId=${restaurantId}`);
+        setReviews(response.data.reviews || []);
       } catch (err) {
         console.error("Failed to fetch reviews", err);
         toast.error("Failed to load reviews.");

@@ -9,9 +9,11 @@ import { useToast } from "@/components/ui/ToastProvider";
 export function NetworkMonitor() {
   const { isOnline, setOnlineStatus, queue, isSyncing } = useSyncStore();
   const [showRestored, setShowRestored] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
+    setMounted(true);
     const handleOnline = () => {
       setOnlineStatus(true);
       setShowRestored(true);
@@ -63,6 +65,7 @@ export function NetworkMonitor() {
     }
   }, [queue, toast]);
 
+  if (!mounted) return null;
   if (isOnline && !showRestored && !isSyncing) return null;
 
   return (

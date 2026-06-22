@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuthStore } from "@/stores/authStore";
-import { GlassPanel } from "@/components/ui/GlassPanel";
 import { User, Mail, Shield } from "lucide-react";
 import { SmartBackButton } from "@/components/shared/SmartBackButton";
 
@@ -22,7 +21,7 @@ export default function CustomerSettingsPage() {
         </div>
       </div>
 
-      <GlassPanel premium className="p-8">
+      <div className="card p-8">
         <div className="flex items-center gap-6 mb-8 pb-8 border-b border-border">
           <div className="w-20 h-20 bg-accent/10 rounded-full border border-accent/20 flex items-center justify-center text-accent text-3xl font-serif uppercase">
             {name?.[0] || "?"}
@@ -62,7 +61,7 @@ export default function CustomerSettingsPage() {
             </div>
           </div>
         </div>
-      </GlassPanel>
+      </div>
     </div>
   );
 }

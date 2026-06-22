@@ -1,11 +1,11 @@
 "use client";
 
 import { useRealtimeSessions } from "@/hooks/useRealtimeSessions";
-import { Loader } from "@/components/ui/Loader";
+import { SkeletonCard } from "@/components/dashboard/ui/Skeleton";
+import { EmptyState } from "@/components/dashboard/ui/EmptyState";
 import { Receipt, Check } from "lucide-react";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
-
 import { useToast } from "@/components/ui/ToastProvider";
 
 export function BillRequestPanel({ restaurantId }: { restaurantId: string }) {
@@ -13,7 +13,7 @@ export function BillRequestPanel({ restaurantId }: { restaurantId: string }) {
   const queryClient = useQueryClient();
   const toast = useToast();
 
-  if (isLoading) return <div className="p-6 flex justify-center"><Loader /></div>;
+  if (isLoading) return <div className="space-y-3"><SkeletonCard lines={2} /><SkeletonCard lines={2} /></div>;
 
   const billRequests = (sessions || []).filter((s: any) => s.status === "bill_requested" || s.billRequested === true);
 
@@ -41,41 +41,47 @@ export function BillRequestPanel({ restaurantId }: { restaurantId: string }) {
 
   if (billRequests.length === 0) {
     return (
-      <div className="bg-neutral-50 rounded-2xl p-8 text-center border border-neutral-100">
-        <Receipt className="mx-auto text-neutral-300 mb-3" size={32} />
-        <h3 className="text-neutral-500 font-medium">No pending bill requests</h3>
+      <div className="card">
+        <EmptyState 
+          icon={Receipt} 
+          title="No pending requests" 
+          description="Active bill requests will appear here."
+          compact
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {billRequests.map((session: any) => (
-        <div key={session._id} className="bg-white rounded-xl shadow-sm border border-blue-100 p-4">
-          <div className="flex justify-between items-center mb-3 border-b border-neutral-100 pb-3">
+        <div key={session._id} className="card p-4 relative overflow-hidden group hover:border-blue-500/30 transition-colors">
+          <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+          
+          <div className="flex justify-between items-center mb-4">
             <div>
-              <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded-md uppercase tracking-wider">
-                Table {session.tableId} {/* In a real app, populate tableNumber instead of ID */}
+              <span className="text-[11px] font-bold bg-blue-500/10 text-blue-500 px-2 py-1 rounded uppercase tracking-wider">
+                Table {session.tableId?.tableNumber || session.tableId}
               </span>
             </div>
-            <span className="text-xs text-neutral-500">
-              {new Date(session.updatedAt).toLocaleTimeString()}
+            <span className="text-[11px] text-text-tertiary font-medium">
+              {new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
 
           <div className="flex gap-2">
             <button 
               onClick={() => handleGenerate(session._id)}
-              className="flex-1 bg-neutral-900 text-white font-medium py-2 rounded-lg text-sm"
+              className="flex-1 bg-elevated border border-border text-text-primary font-medium rounded-xl text-[13px] hover:bg-hover transition-colors min-h-[36px]"
             >
               Generate Bill
             </button>
             <button 
               onClick={() => handleMarkPaid(session._id)}
-              className="flex-1 bg-green-100 text-green-700 font-medium py-2 rounded-lg text-sm border border-green-200 flex items-center justify-center space-x-1"
+              className="flex-1 bg-emerald-500/10 text-emerald-500 font-medium rounded-xl text-[13px] hover:bg-emerald-500/20 transition-colors flex items-center justify-center gap-1.5 min-h-[36px]"
             >
-              <Check size={16} />
-              <span>Mark Paid</span>
+              <Check size={14} />
+              Mark Paid
             </button>
           </div>
         </div>

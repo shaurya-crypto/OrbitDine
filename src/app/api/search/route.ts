@@ -1,14 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import Restaurant from "@/models/Restaurant";
 import MenuItem from "@/models/MenuItem";
+import { processSecurityPipeline } from "@/lib/security/pipeline";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+    const pipeline = await processSecurityPipeline(req, {
+      requireCsrf: false, // Not needed for GET
+      rateLimit: { key: "search", limit: 30, windowMs: 60000 }, // 30 per min
+    });
+    if (!pipeline.success) return pipeline.response;
     await connectToDatabase();
     
     const url = new URL(req.url);
     const query = url.searchParams.get("q");
+    const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
+    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") || "10")));
+    const skip = (page - 1) * limit;
+
     if (!query) {
       return NextResponse.json({ error: "Missing search query" }, { status: 400 });
     }
@@ -26,7 +36,8 @@ export async function GET(req: Request) {
       )
       .select("name slug logo bannerImage cuisineType rating reviewCount averagePrice city address")
       .sort({ score: { $meta: "textScore" }, followerCount: -1, rating: -1 })
-      .limit(10)
+      .skip(skip)
+      .limit(limit)
       .lean(),
       
       MenuItem.find(
@@ -43,7 +54,8 @@ export async function GET(req: Request) {
       .populate("restaurantId", "name slug")
       .select("name description price image veg tags isBestseller")
       .sort({ score: { $meta: "textScore" }, sortOrder: 1 })
-      .limit(15)
+      .skip(skip)
+      .limit(Math.floor(limit * 1.5)) // Items can have slightly more limit per page
       .lean()
     ]);
 
@@ -59,7 +71,8 @@ export async function GET(req: Request) {
         status: "active"
       })
       .select("name slug logo cuisineType rating reviewCount")
-      .limit(5)
+      .skip(skip)
+      .limit(limit)
       .lean();
 
       fallbackItems = await MenuItem.find({
@@ -68,13 +81,18 @@ export async function GET(req: Request) {
       })
       .populate("restaurantId", "name slug")
       .select("name description price image veg isBestseller")
-      .limit(10)
+      .skip(skip)
+      .limit(limit)
       .lean();
     }
 
     return NextResponse.json({
       success: true,
       query,
+      pagination: {
+        page,
+        limit,
+      },
       results: {
         restaurants: fallbackRestaurants,
         items: fallbackItems,

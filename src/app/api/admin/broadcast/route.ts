@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb/db";
 import PlatformNotification from "@/models/PlatformNotification";
-import AuditLog from "@/models/AuditLog";
+import { createAuditLog } from "@/lib/audit/createAuditLog";
+import User from "@/models/User";
 import { jwtVerify } from "jose";
 import { broadcastAdminEvent } from "../feed/route"; // the SSE broadcaster
 
@@ -46,8 +47,9 @@ export async function POST(req: NextRequest) {
     });
 
     // 2. Audit the action
-    await AuditLog.create({
-      adminId: payload.userId,
+    await createAuditLog({
+      actorId: payload.userId,
+      actorRole: "admin",
       action: "SEND_BROADCAST",
       targetType: "System",
       reason: `Broadcasted ${type} message to ${targetAudience}`,

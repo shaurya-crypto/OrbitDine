@@ -75,10 +75,10 @@ export default async function SuperAdminDashboard() {
   }
 
   return (
-    <div className="p-8 pb-20 space-y-8">
+    <div className="p-6 pb-20 space-y-6">
       <div>
-        <h1 className="text-3xl font-serif text-white tracking-tight">Platform Overview</h1>
-        <p className="text-zinc-400 mt-1">Real-time metrics and global activity.</p>
+        <h1 className="text-page-title text-text-primary">Platform Overview</h1>
+        <p className="text-caption text-text-secondary mt-0.5">Real-time metrics and global activity.</p>
       </div>
 
       {/* Server Component wrapped KPI fetching for speed */}
@@ -86,24 +86,23 @@ export default async function SuperAdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="col-span-1 lg:col-span-2">
-          <GlassPanel className="p-6 border-zinc-800/50 bg-zinc-900/50">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-medium text-white">Platform Growth</h2>
-              <div className="flex items-center gap-4 text-xs font-medium">
-                <div className="flex items-center gap-1.5 text-zinc-400"><div className="w-2 h-2 rounded-full bg-purple-500"></div> Users</div>
-                <div className="flex items-center gap-1.5 text-zinc-400"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Restaurants</div>
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-section-title text-text-primary">Platform Growth</h2>
+              <div className="flex items-center gap-4 text-[11px] font-medium">
+                <div className="flex items-center gap-1.5 text-text-tertiary"><div className="w-2 h-2 rounded-full bg-purple-500"></div> Users</div>
+                <div className="flex items-center gap-1.5 text-text-tertiary"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Restaurants</div>
               </div>
             </div>
             <DashboardCharts planData={planData} growthData={growthData} />
-          </GlassPanel>
+          </div>
         </div>
         
         <div className="col-span-1">
-          <GlassPanel className="p-6 border-zinc-800/50 bg-zinc-900/50 h-full">
-            <h2 className="text-xl font-medium text-white mb-6">Live Activity</h2>
-            {/* The client component that connects to SSE */}
+          <div className="card p-5 h-full">
+            <h2 className="text-section-title text-text-primary mb-4">Live Activity</h2>
             <FeedClient />
-          </GlassPanel>
+          </div>
         </div>
       </div>
     </div>
@@ -139,19 +138,19 @@ async function KPICards() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {kpis.map((kpi, idx) => {
         const Icon = kpi.icon;
         return (
-          <GlassPanel key={idx} className="p-6 border-zinc-800/50 bg-zinc-900/50 flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${kpi.bg}`}>
-              <Icon className={`w-6 h-6 ${kpi.color}`} />
+          <div key={idx} className="card p-4 flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${kpi.bg}`}>
+              <Icon className={`w-5 h-5 ${kpi.color}`} />
             </div>
             <div>
-              <p className="text-zinc-400 text-sm font-medium">{kpi.label}</p>
-              <h3 className="text-2xl font-semibold text-white tracking-tight">{kpi.value}</h3>
+              <p className="text-caption text-text-secondary">{kpi.label}</p>
+              <h3 className="text-metric-value text-text-primary">{kpi.value}</h3>
             </div>
-          </GlassPanel>
+          </div>
         );
       })}
     </div>

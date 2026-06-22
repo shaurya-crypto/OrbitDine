@@ -38,8 +38,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Next.js hot-reloading exclusion
-  if (url.pathname.startsWith('/_next/webpack-hmr')) {
+  // Next.js hot-reloading exclusion and development bypass
+  if (
+    url.pathname.startsWith('/_next/webpack-hmr') ||
+    url.hostname === 'localhost' ||
+    url.hostname === '127.0.0.1'
+  ) {
     return;
   }
 

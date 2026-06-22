@@ -1,18 +1,29 @@
 "use client";
 
 import { useRealtimeAnalytics } from "@/hooks/useRealtimeAnalytics";
-import { Loader } from "@/components/ui/Loader";
+import { EmptyState } from "@/components/dashboard/ui/EmptyState";
+import { SkeletonCard } from "@/components/dashboard/ui/Skeleton";
+import { BarChart3, ShoppingBag, Star, TrendingUp } from "lucide-react";
 
 export function RevenueCharts({ restaurantId }: { restaurantId: string }) {
   const { data: analytics, isLoading } = useRealtimeAnalytics(restaurantId);
 
-  if (isLoading) return <div className="p-12 flex justify-center"><Loader /></div>;
+  if (isLoading) return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <SkeletonCard lines={6} />
+      <SkeletonCard lines={6} />
+    </div>
+  );
 
   if (!analytics || !analytics.hourlyData) {
     return (
-      <div className="text-center py-12 border border-dashed border-border rounded-2xl bg-surface/50">
-        <p className="text-text-secondary text-sm font-medium">No analytics data available</p>
-        <p className="text-text-secondary opacity-70 text-xs mt-2">Graphs will render once orders are processed.</p>
+      <div className="card">
+        <EmptyState 
+          icon={BarChart3} 
+          title="No analytics yet" 
+          description="Charts will appear once your restaurant starts processing orders."
+          compact
+        />
       </div>
     );
   }
@@ -35,34 +46,32 @@ export function RevenueCharts({ restaurantId }: { restaurantId: string }) {
   const fmt = (v: number) => `₹${v.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         
         {/* Hourly Revenue Today */}
-        <div className="bg-surface border border-border p-6 rounded-2xl">
-          <div className="flex justify-between items-baseline mb-6">
-            <h4 className="text-sm font-semibold tracking-wide text-text-primary">Today's Revenue</h4>
-            <span className="text-xs font-medium text-emerald-500">
+        <div className="card p-4">
+          <div className="flex justify-between items-baseline mb-4">
+            <h4 className="text-card-title text-text-primary">Today's Revenue</h4>
+            <span className="text-caption text-emerald-400 font-medium">
               {totalHourlyRevenue > 0 ? `${fmt(totalHourlyRevenue)} total` : "No revenue"}
             </span>
           </div>
           {totalHourlyRevenue === 0 ? (
-            <div className="h-48 flex items-center justify-center border border-dashed border-border rounded-xl">
-              <p className="text-text-secondary text-sm font-medium">Awaiting orders</p>
-            </div>
+            <EmptyState icon={TrendingUp} title="Awaiting orders" description="Revenue will appear as orders are completed." compact />
           ) : (
             <div className="relative">
-              <div className="flex items-end gap-1 h-48 px-1">
+              <div className="flex items-end gap-[2px] h-28 px-1">
                 {hourlyData.map((h: any, i: number) => {
                   const height = `${(h.revenue / maxHourly) * 100}%`;
                   return (
-                    <div key={i} className="flex-1 flex flex-col items-center justify-end group relative min-w-[4px]" style={{ height: "100%" }}>
+                    <div key={i} className="flex-1 flex flex-col items-center justify-end group relative min-w-[2px]" style={{ height: "100%" }}>
                       <div
-                        className="w-full rounded-t-sm transition-all duration-500 ease-out bg-gradient-to-t from-emerald-600 to-emerald-400 group-hover:from-emerald-400 group-hover:to-emerald-200"
-                        style={{ height: h.revenue > 0 ? height : "2px", minHeight: h.revenue > 0 ? "4px" : "1px", opacity: h.revenue > 0 ? 1 : 0.15 }}
+                        className="w-full rounded-t-sm transition-colors bg-emerald-500/70 group-hover:bg-emerald-400"
+                        style={{ height: h.revenue > 0 ? height : "1px", minHeight: h.revenue > 0 ? "2px" : "1px", opacity: h.revenue > 0 ? 1 : 0.1 }}
                       />
                       {h.revenue > 0 && (
-                        <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-neutral-900 text-white text-[11px] font-medium py-1 px-2.5 rounded-lg whitespace-nowrap z-10 pointer-events-none transition-all duration-200 shadow-xl">
+                        <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-elevated text-text-primary text-[10px] font-medium py-1 px-2 rounded-lg whitespace-nowrap z-10 pointer-events-none transition-opacity border border-border shadow-lg">
                           {h.hour} • {fmt(h.revenue)}
                         </div>
                       )}
@@ -70,7 +79,7 @@ export function RevenueCharts({ restaurantId }: { restaurantId: string }) {
                   );
                 })}
               </div>
-              <div className="flex justify-between mt-3 text-[10px] font-medium text-text-secondary px-1 uppercase tracking-wider">
+              <div className="flex justify-between mt-2 text-[10px] font-medium text-text-tertiary px-1">
                 <span>12am</span><span>6am</span><span>12pm</span><span>6pm</span><span>11pm</span>
               </div>
             </div>
@@ -78,71 +87,63 @@ export function RevenueCharts({ restaurantId }: { restaurantId: string }) {
         </div>
 
         {/* 7-Day Revenue Trend */}
-        <div className="bg-surface border border-border p-6 rounded-2xl">
-          <div className="flex justify-between items-baseline mb-6">
-            <h4 className="text-sm font-semibold tracking-wide text-text-primary">7-Day Trend</h4>
-            <span className="text-xs font-medium text-indigo-500">
+        <div className="card p-4">
+          <div className="flex justify-between items-baseline mb-4">
+            <h4 className="text-card-title text-text-primary">7-Day Trend</h4>
+            <span className="text-caption text-indigo-400 font-medium">
               {total7DayRevenue > 0 ? `${fmt(total7DayRevenue)} total` : "No revenue"}
             </span>
           </div>
           {total7DayRevenue === 0 ? (
-            <div className="h-48 flex items-center justify-center border border-dashed border-border rounded-xl">
-              <p className="text-text-secondary text-sm font-medium">Awaiting orders</p>
-            </div>
+            <EmptyState icon={BarChart3} title="Awaiting orders" description="Trend data builds over multiple days of operation." compact />
           ) : (
-            <div className="flex items-end justify-between gap-3 h-48 px-1">
+            <div className="flex items-end justify-between gap-2 h-28 px-1">
               {last7Days.map((d: any, i: number) => {
                 const height = `${(d.revenue / max7Day) * 100}%`;
                 return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-3 group relative max-w-[45px]" style={{ height: "100%" }}>
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group relative max-w-[40px]" style={{ height: "100%" }}>
                     <div className="w-full flex-1 flex items-end relative">
                       <div
-                        className="w-full rounded-t-md transition-all duration-500 ease-out bg-gradient-to-t from-indigo-600/80 to-indigo-400 group-hover:from-indigo-500 group-hover:to-indigo-300"
-                        style={{ height: d.revenue > 0 ? height : "2px", minHeight: d.revenue > 0 ? "8px" : "2px", opacity: d.revenue > 0 ? 1 : 0.2 }}
+                        className="w-full rounded-t transition-colors bg-indigo-500/60 group-hover:bg-indigo-400"
+                        style={{ height: d.revenue > 0 ? height : "1px", minHeight: d.revenue > 0 ? "4px" : "1px", opacity: d.revenue > 0 ? 1 : 0.15 }}
                       />
                       {d.revenue > 0 && (
-                        <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-neutral-900 text-white text-[11px] font-medium py-1 px-2.5 rounded-lg whitespace-nowrap z-10 pointer-events-none transition-all duration-200 shadow-xl">
+                        <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-elevated text-text-primary text-[10px] font-medium py-1 px-2 rounded-lg whitespace-nowrap z-10 pointer-events-none transition-opacity border border-border shadow-lg">
                           {fmt(d.revenue)}
                         </div>
                       )}
                     </div>
-                    <span className="text-[11px] text-text-secondary font-medium tracking-wide uppercase">{d.date}</span>
+                    <span className="text-[10px] text-text-tertiary font-medium">{d.date}</span>
                   </div>
                 );
               })}
             </div>
           )}
         </div>
-
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
-        {/* Popular Items Chart */}
-        <div className="bg-surface border border-border p-6 rounded-2xl lg:col-span-1">
-          <div className="flex justify-between items-baseline mb-6">
-            <h4 className="text-sm font-semibold tracking-wide text-text-primary">Top Selling Items</h4>
-            <span className="text-[10px] font-medium text-text-secondary uppercase tracking-widest">Last 30 Days</span>
+        {/* Popular Items */}
+        <div className="card p-4">
+          <div className="flex justify-between items-baseline mb-4">
+            <h4 className="text-card-title text-text-primary">Top Selling</h4>
+            <span className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">30 Days</span>
           </div>
           {popularItems.length === 0 ? (
-            <div className="h-40 flex items-center justify-center border border-dashed border-border rounded-xl">
-              <p className="text-text-secondary text-sm font-medium">Not enough data</p>
-            </div>
+            <EmptyState icon={ShoppingBag} title="No data yet" description="Sell items to see popularity trends." compact />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {popularItems.map((item: any, i: number) => {
                 const width = `${(item.totalSold / maxPopular) * 100}%`;
                 return (
-                  <div key={i} className="group relative">
-                    <div className="flex justify-between text-[11px] font-medium mb-1.5">
-                      <span className="text-text-primary truncate pr-4">{item._id}</span>
-                      <span className="text-text-secondary whitespace-nowrap">{item.totalSold} sold</span>
+                  <div key={i}>
+                    <div className="flex justify-between text-[11px] font-medium mb-1">
+                      <span className="text-text-primary truncate pr-3">{item._id}</span>
+                      <span className="text-text-tertiary whitespace-nowrap">{item.totalSold}</span>
                     </div>
-                    <div className="w-full h-2.5 bg-border rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-1000 ease-out" 
-                        style={{ width }} 
-                      />
+                    <div className="w-full h-1.5 bg-text-primary/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500/60 rounded-full transition-all duration-700 ease-out" style={{ width }} />
                     </div>
                   </div>
                 );
@@ -151,85 +152,77 @@ export function RevenueCharts({ restaurantId }: { restaurantId: string }) {
           )}
         </div>
 
-        {/* Order Status Breakdown */}
-        <div className="bg-surface border border-border p-6 rounded-2xl flex flex-col lg:col-span-1">
-          <div className="flex justify-between items-baseline mb-6">
-            <h4 className="text-sm font-semibold tracking-wide text-text-primary">Today's Pipeline</h4>
-            <span className="text-[10px] font-medium text-text-secondary uppercase tracking-widest">{totalActiveOrders} Active</span>
+        {/* Order Pipeline */}
+        <div className="card p-4 flex flex-col">
+          <div className="flex justify-between items-baseline mb-4">
+            <h4 className="text-card-title text-text-primary">Pipeline</h4>
+            <span className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">{totalActiveOrders} Active</span>
           </div>
           {totalActiveOrders === 0 ? (
-            <div className="flex-1 flex items-center justify-center border border-dashed border-border rounded-xl min-h-[160px]">
-              <p className="text-text-secondary text-sm font-medium">No active orders</p>
+            <div className="flex-1">
+              <EmptyState icon={BarChart3} title="No active orders" description="Order pipeline status appears here." compact />
             </div>
           ) : (
-            <div className="flex-1 flex flex-col justify-center gap-6">
-              <div className="w-full flex h-6 rounded-full overflow-hidden ring-1 ring-border">
-                <div style={{ width: `${(statusBreakdown.received / totalActiveOrders) * 100}%` }} className="bg-red-500 hover:bg-red-400 transition-colors h-full" title={`Received: ${statusBreakdown.received}`} />
-                <div style={{ width: `${(statusBreakdown.preparing / totalActiveOrders) * 100}%` }} className="bg-orange-500 hover:bg-orange-400 transition-colors h-full" title={`Preparing: ${statusBreakdown.preparing}`} />
-                <div style={{ width: `${(statusBreakdown.ready / totalActiveOrders) * 100}%` }} className="bg-yellow-400 hover:bg-yellow-300 transition-colors h-full" title={`Ready: ${statusBreakdown.ready}`} />
-                <div style={{ width: `${(statusBreakdown.served / totalActiveOrders) * 100}%` }} className="bg-emerald-500 hover:bg-emerald-400 transition-colors h-full" title={`Served: ${statusBreakdown.served}`} />
+            <div className="flex-1 flex flex-col justify-center gap-4">
+              <div className="w-full flex h-3 rounded-full overflow-hidden bg-text-primary/5">
+                <div style={{ width: `${(statusBreakdown.received / totalActiveOrders) * 100}%` }} className="bg-red-400 transition-all" title={`Received: ${statusBreakdown.received}`} />
+                <div style={{ width: `${(statusBreakdown.preparing / totalActiveOrders) * 100}%` }} className="bg-orange-400 transition-all" title={`Preparing: ${statusBreakdown.preparing}`} />
+                <div style={{ width: `${(statusBreakdown.ready / totalActiveOrders) * 100}%` }} className="bg-yellow-400 transition-all" title={`Ready: ${statusBreakdown.ready}`} />
+                <div style={{ width: `${(statusBreakdown.served / totalActiveOrders) * 100}%` }} className="bg-emerald-400 transition-all" title={`Served: ${statusBreakdown.served}`} />
               </div>
-              <div className="grid grid-cols-2 gap-y-4 gap-x-2 px-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <span className="text-xs font-medium text-text-secondary">Received ({statusBreakdown.received})</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-orange-500" />
-                  <span className="text-xs font-medium text-text-secondary">Preparing ({statusBreakdown.preparing})</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                  <span className="text-xs font-medium text-text-secondary">Ready ({statusBreakdown.ready})</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                  <span className="text-xs font-medium text-text-secondary">Served ({statusBreakdown.served})</span>
-                </div>
+              <div className="grid grid-cols-2 gap-y-2 gap-x-2">
+                {[
+                  { label: "Received", count: statusBreakdown.received, color: "bg-red-400" },
+                  { label: "Preparing", count: statusBreakdown.preparing, color: "bg-orange-400" },
+                  { label: "Ready", count: statusBreakdown.ready, color: "bg-yellow-400" },
+                  { label: "Served", count: statusBreakdown.served, color: "bg-emerald-400" },
+                ].map(s => (
+                  <div key={s.label} className="flex items-center gap-1.5">
+                    <div className={`w-2 h-2 rounded-full ${s.color}`} />
+                    <span className="text-[11px] font-medium text-text-secondary">{s.label} ({s.count})</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
         </div>
 
-        {/* Rating Trend (Last 7 Days) */}
-        <div className="bg-surface border border-border p-6 rounded-2xl lg:col-span-1">
-          <div className="flex justify-between items-baseline mb-6">
-            <h4 className="text-sm font-semibold tracking-wide text-text-primary">Rating Trend</h4>
-            <span className="text-[10px] font-medium text-text-secondary uppercase tracking-widest">7 Days</span>
+        {/* Rating Trend */}
+        <div className="card p-4">
+          <div className="flex justify-between items-baseline mb-4">
+            <h4 className="text-card-title text-text-primary">Ratings</h4>
+            <span className="text-[10px] font-medium text-text-tertiary uppercase tracking-wider">7 Days</span>
           </div>
           {ratingTrend.length === 0 || ratingTrend.every((d: any) => d.rating == null) ? (
-            <div className="h-40 flex items-center justify-center border border-dashed border-border rounded-xl">
-              <p className="text-text-secondary text-sm font-medium">No recent reviews</p>
-            </div>
+            <EmptyState icon={Star} title="No reviews yet" description="Rating trends show once customers leave feedback." compact />
           ) : (
-            <div className="flex items-end justify-between gap-3 h-40 px-1">
+            <div className="flex items-end justify-between gap-2 h-24 px-1">
               {ratingTrend.map((d: any, i: number) => {
                 const height = d.rating != null ? `${(d.rating / maxRating) * 100}%` : "0%";
                 return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-3 group relative max-w-[45px]" style={{ height: "100%" }}>
+                  <div key={i} className="flex-1 flex flex-col items-center gap-2 group relative max-w-[40px]" style={{ height: "100%" }}>
                     <div className="w-full flex-1 flex items-end relative">
                       {d.rating != null ? (
                         <div
-                          className="w-full rounded-t-md transition-all duration-500 ease-out bg-gradient-to-t from-yellow-500/80 to-yellow-300"
-                          style={{ height, minHeight: "8px" }}
+                          className="w-full rounded-t transition-colors bg-yellow-500/50 group-hover:bg-yellow-400"
+                          style={{ height, minHeight: "4px" }}
                         />
                       ) : (
-                        <div className="w-full bg-border rounded-t-md opacity-20" style={{ height: "4px" }} />
+                        <div className="w-full bg-text-primary/5 rounded-t" style={{ height: "2px" }} />
                       )}
                       {d.rating != null && (
-                        <div className="opacity-0 group-hover:opacity-100 absolute -top-10 left-1/2 -translate-x-1/2 bg-neutral-900 text-white text-[11px] font-medium py-1 px-2.5 rounded-lg whitespace-nowrap z-10 pointer-events-none transition-all duration-200 shadow-xl flex items-center gap-1">
+                        <div className="opacity-0 group-hover:opacity-100 absolute -top-7 left-1/2 -translate-x-1/2 bg-elevated text-text-primary text-[10px] font-medium py-0.5 px-2 rounded-lg whitespace-nowrap z-10 pointer-events-none transition-opacity border border-border shadow-lg">
                           {d.rating} ★
                         </div>
                       )}
                     </div>
-                    <span className="text-[11px] text-text-secondary font-medium tracking-wide uppercase">{d.date}</span>
+                    <span className="text-[10px] text-text-tertiary font-medium">{d.date}</span>
                   </div>
                 );
               })}
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

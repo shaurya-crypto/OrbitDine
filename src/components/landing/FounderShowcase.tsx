@@ -160,7 +160,7 @@ const DesktopFounderCard = ({
       >
         
         {/* Left Side: Image (65%) */}
-        <div className="w-[65%] h-full relative rounded-[24px] overflow-hidden bg-base group-hover:brightness-105 group-hover:contrast-105 transition-all duration-500">
+        <div className="w-[65%] h-full min-h-[500px] relative rounded-[24px] overflow-hidden bg-base group-hover:brightness-105 group-hover:contrast-105 transition-all duration-500">
           <Image
             src={isDark ? founder.darkImage : founder.lightImage}
             alt={founder.name}
@@ -295,7 +295,7 @@ const ProgressRail = ({ progress }: { progress: any }) => {
                 }}
               />
             </div>
-            <span className="font-mono text-xs uppercase tracking-widest whitespace-nowrap text-text-primary">
+            <span suppressHydrationWarning className="font-mono text-xs uppercase tracking-widest whitespace-nowrap text-text-primary">
               {step.label}
             </span>
           </motion.div>
@@ -442,6 +442,7 @@ export const FounderShowcase = () => {
                     src={safeIsDark ? selectedFounder.darkImage : selectedFounder.lightImage} 
                     alt={selectedFounder.name} 
                     fill 
+                    sizes="128px"
                     className="object-cover object-top" 
                   />
                 </div>

@@ -33,7 +33,7 @@ export function FeaturedCarousel({ title, items, badgeColor = "bg-accent", badge
             {/* Image */}
             <div className="relative h-32 w-full bg-zinc-100 dark:bg-zinc-800">
               {item.image ? (
-                <Image src={item.image} alt={item.name} fill className="object-cover" />
+                <Image src={item.image} alt={item.name} fill sizes="240px" className="object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-zinc-400 font-serif opacity-30">
                   OrbitDine

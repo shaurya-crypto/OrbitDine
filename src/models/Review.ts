@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import { softDeletePlugin, ISoftDeleted } from "@/lib/mongodb/softDeletePlugin";
 
-export interface IReview extends Document {
+export interface IReview extends Document, ISoftDeleted {
   restaurantId: mongoose.Types.ObjectId;
   sessionId?: mongoose.Types.ObjectId;
   customerId?: mongoose.Types.ObjectId;
@@ -49,6 +50,8 @@ const reviewSchema: Schema<IReview> = new Schema({
   isVerifiedDiner: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
+
+reviewSchema.plugin(softDeletePlugin);
 
 const ReviewModel: Model<IReview> = mongoose.models.Review || mongoose.model<IReview>("Review", reviewSchema);
 
