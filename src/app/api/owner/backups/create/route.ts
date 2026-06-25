@@ -40,7 +40,15 @@ export async function POST(req: NextRequest) {
     // Check if one is already pending/running
     const existing = await BackupJob.findOne({ restaurantId, status: { $in: ["pending", "running"] } });
     if (existing) {
-      return NextResponse.json({ error: "A backup is already in progress" }, { status: 429 });
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      if (existing.createdAt < oneHourAgo) {
+        // Mark the stuck job as failed
+        existing.status = "failed";
+        existing.failureReason = "Job timed out or server restarted";
+        await existing.save();
+      } else {
+        return NextResponse.json({ error: "A backup is already in progress" }, { status: 429 });
+      }
     }
 
     const backupId = `bkp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;

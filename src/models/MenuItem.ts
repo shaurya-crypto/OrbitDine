@@ -21,6 +21,14 @@ export interface IMenuItem extends Document, ISoftDeleted {
     fat?: number;
   };
   tags?: string[];
+  vectorEmbedding?: number[];
+  flavorProfile?: string[];
+  spiceLevel?: number;
+  seasonalityTags?: string[];
+  aiTags?: string[];
+  popularityScore?: number;
+  cogs?: number;
+  profitMargin?: number;
   isBestseller?: boolean;
   isRecommended?: boolean;
   chefSpecial?: boolean;
@@ -87,6 +95,21 @@ const MenuItemSchema = new Schema<IMenuItem>(
       fat: Number,
     },
     tags: [String],
+    vectorEmbedding: [Number],
+    flavorProfile: [String],
+    spiceLevel: {
+      type: Number,
+      min: 0,
+      max: 5,
+    },
+    seasonalityTags: [String],
+    aiTags: [String],
+    popularityScore: {
+      type: Number,
+      default: 0,
+    },
+    cogs: Number,
+    profitMargin: Number,
     isBestseller: {
       type: Boolean,
       default: false,

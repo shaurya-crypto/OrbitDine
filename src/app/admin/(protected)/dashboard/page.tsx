@@ -3,7 +3,7 @@ import Restaurant from "@/models/Restaurant";
 import User from "@/models/User";
 import Order from "@/models/Order";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { Users, Store, IndianRupee, ShoppingBag } from "lucide-react";
+import { Users, Store, IndianRupee, ShoppingBag, ShieldAlert, AlertTriangle } from "lucide-react";
 import { FeedClient } from "./FeedClient";
 import { DashboardCharts } from "./DashboardCharts";
 
@@ -102,6 +102,57 @@ export default async function SuperAdminDashboard() {
           <div className="card p-5 h-full">
             <h2 className="text-section-title text-text-primary mb-4">Live Activity</h2>
             <FeedClient />
+          </div>
+        </div>
+
+        {/* Global Risk Detection Widget (Phase 4 BI) */}
+        <div className="col-span-1 lg:col-span-3">
+          <div className="card p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <ShieldAlert className="text-red-500 w-5 h-5" />
+              <h2 className="text-section-title text-text-primary">Global Risk Detection (AI)</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                  <span className="text-sm font-bold text-red-500">Fraud Alert</span>
+                </div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Detected unusual order volume from 3 IP addresses on Restaurant ID: <span className="font-mono text-text-primary">64a7...c3d4</span>. Orders flagged for manual review.
+                </p>
+                <div className="mt-3 text-right">
+                  <span className="text-[10px] uppercase tracking-wider text-red-400 font-bold cursor-pointer hover:underline">Review Now ➔</span>
+                </div>
+              </div>
+
+              <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-4 h-4 text-orange-500" />
+                  <span className="text-sm font-bold text-orange-500">Churn Warning</span>
+                </div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  12 Pro-tier restaurants show &gt;30% drop in active sessions this week. Revenue at risk: <span className="font-mono text-text-primary">₹35,988/mo</span>.
+                </p>
+                <div className="mt-3 text-right">
+                  <span className="text-[10px] uppercase tracking-wider text-orange-400 font-bold cursor-pointer hover:underline">View Cohort ➔</span>
+                </div>
+              </div>
+
+              <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm font-bold text-blue-500">System Load Forecast</span>
+                </div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Predicting peak load at 8:00 PM today (+45% traffic). Recommend preemptive WebSocket scaling on Cluster A.
+                </p>
+                <div className="mt-3 text-right">
+                  <span className="text-[10px] uppercase tracking-wider text-blue-400 font-bold cursor-pointer hover:underline">Scale Infra ➔</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

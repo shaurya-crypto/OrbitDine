@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { SectionHeader } from "@/components/dashboard/ui/SectionHeader";
-import { Bell, Database, HardDriveDownload, ChevronRight } from "lucide-react";
+import { Bell, Database, HardDriveDownload, ChevronRight, CreditCard } from "lucide-react";
 
 export default function OwnerSettingsHub() {
   const settingsLinks = [
@@ -26,6 +26,13 @@ export default function OwnerSettingsHub() {
       icon: <Database size={24} className="text-purple-500" />,
       href: "/dashboard/owner/settings/backups",
       bgColor: "bg-purple-500/10"
+    },
+    {
+      title: "Payment Sandbox",
+      description: "Verify end-to-end payment workflows using Razorpay Test Mode.",
+      icon: <CreditCard size={24} className="text-blue-500" />,
+      href: "/dashboard/owner/test-payment",
+      bgColor: "bg-blue-500/10"
     }
   ];
 

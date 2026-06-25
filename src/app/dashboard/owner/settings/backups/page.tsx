@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Database, Download, RefreshCw, AlertTriangle, CheckCircle2, Copy, FileJson, Clock, Loader2, Trash2, ShieldCheck, PlayCircle, History } from "lucide-react";
+import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 interface BackupJob {
   _id: string;
@@ -13,6 +14,7 @@ interface BackupJob {
 }
 
 export default function OwnerBackupCenter() {
+  const { confirm } = useConfirm();
   const [jobs, setJobs] = useState<BackupJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -84,6 +86,27 @@ export default function OwnerBackupCenter() {
     } finally {
       setRestoring(false);
       setRestoreConfirmText("");
+    }
+  };
+
+  const handleDelete = async (jobId: string) => {
+    const confirmed = await confirm({
+      title: "Delete Backup",
+      message: "Are you sure you want to delete this backup? This action cannot be undone.",
+      confirmText: "Delete",
+      isDanger: true
+    });
+    if (!confirmed) return;
+    
+    try {
+      const res = await fetch(`/api/owner/backups/delete/${jobId}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchHistory();
+      } else {
+        alert("Failed to delete backup");
+      }
+    } catch (e) {
+      alert("Failed to delete backup");
     }
   };
 
@@ -185,7 +208,11 @@ export default function OwnerBackupCenter() {
                             </button>
                           </>
                         )}
-                        <button className="p-2 text-text-secondary hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <button 
+                          onClick={() => handleDelete(job._id)}
+                          className="p-2 text-text-secondary hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Backup"
+                        >
                           <Trash2 size={18} />
                         </button>
                       </div>

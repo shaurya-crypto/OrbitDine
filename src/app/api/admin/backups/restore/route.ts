@@ -24,12 +24,12 @@ export async function POST(req: NextRequest) {
       return new NextResponse(JSON.stringify({ error: "Forbidden" }), { status: 403 });
     }
 
-    const { snapshotId } = await req.json();
-    if (!snapshotId) return new NextResponse(JSON.stringify({ error: "Missing snapshotId" }), { status: 400 });
+    const { snapshotId: backupJobId } = await req.json();
+    if (!backupJobId) return new NextResponse(JSON.stringify({ error: "Missing backup ID" }), { status: 400 });
 
     await connectToDatabase();
 
-    const snapshot = await BackupSnapshot.findById(snapshotId);
+    const snapshot = await BackupSnapshot.findOne({ backupJobId });
     if (!snapshot) {
       return new NextResponse(JSON.stringify({ error: "Snapshot not found" }), { status: 404 });
     }

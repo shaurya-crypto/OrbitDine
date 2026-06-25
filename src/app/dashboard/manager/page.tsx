@@ -2,6 +2,7 @@
 
 import { useAuthStore } from "@/stores/authStore";
 import { ManagerCards } from "@/components/dashboard/manager/ManagerCards";
+import { KitchenPerformance } from "@/components/dashboard/manager/KitchenPerformance";
 import { RevenueCharts } from "@/components/dashboard/owner/RevenueCharts";
 import { SessionDrawer } from "@/components/dashboard/manager/SessionDrawer";
 import { useDashboardStore } from "@/stores/dashboardStore";
@@ -52,6 +53,9 @@ export default function ManagerPage() {
 
       {/* KPI Cards */}
       <ManagerCards restaurantId={restaurantId} />
+
+      {/* Kitchen Operations Section (Phase 4 BI) */}
+      <KitchenPerformance restaurantId={restaurantId} />
 
       {/* Analytics Section */}
       <div>

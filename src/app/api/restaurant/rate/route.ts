@@ -4,6 +4,7 @@ import connectToDatabase from "@/lib/mongodb/db";
 import Restaurant from "@/models/Restaurant";
 import ReviewModel from "@/models/Review";
 import { verifyAccessToken } from "@/lib/auth/jwt";
+import { AIFactory } from "@/lib/ai/AIFactory";
 
 export async function POST(req: NextRequest) {
   return withIdempotency(req, async () => {
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
     await restaurant.save();
     
     // Save the detailed review text
-    await ReviewModel.create({
+    const newReview = await ReviewModel.create({
       restaurantId,
       sessionId,
       customerId,
@@ -61,6 +62,25 @@ export async function POST(req: NextRequest) {
       ambienceRating,
       feedback: feedback ? feedback.trim() : "",
     });
+    
+    // Asynchronously perform Sentiment Analysis so we don't block the request
+    if (feedback) {
+      setTimeout(async () => {
+        try {
+          const aiProvider = AIFactory.getProvider();
+          const sentiment = await aiProvider.analyzeReview(feedback, rating);
+          
+          await ReviewModel.findByIdAndUpdate(newReview._id, {
+            sentimentScore: sentiment.sentimentScore,
+            sentimentLabel: sentiment.sentimentLabel,
+            keywords: sentiment.keywords,
+            analyzedAt: new Date()
+          });
+        } catch (e) {
+          console.error("Sentiment analysis failed:", e);
+        }
+      }, 0);
+    }
     
     return NextResponse.json({ message: "Rating submitted successfully" }, { status: 200 });
     } catch (error) {

@@ -39,6 +39,12 @@ export default function MenuManagementPage() {
     isNewArrival: false,
     limitedTimeOffer: false,
     tags: "",
+    cogs: "",
+    profitMargin: "",
+    flavorProfile: "",
+    spiceLevel: "0",
+    seasonalityTags: "",
+    aiTags: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
@@ -61,7 +67,8 @@ export default function MenuManagementPage() {
     setEditingItem(null);
     setFormData({ 
       name: "", description: "", price: "", categoryId: displayCategory || "", veg: true, available: true,
-      isBestseller: false, chefSpecial: false, isNewArrival: false, limitedTimeOffer: false, tags: ""
+      isBestseller: false, chefSpecial: false, isNewArrival: false, limitedTimeOffer: false, tags: "",
+      cogs: "", profitMargin: "", flavorProfile: "", spiceLevel: "0", seasonalityTags: "", aiTags: ""
     });
     setImageFile(null);
     setImagePreview("");
@@ -82,6 +89,12 @@ export default function MenuManagementPage() {
       isNewArrival: item.isNewArrival || false,
       limitedTimeOffer: item.limitedTimeOffer || false,
       tags: item.tags ? item.tags.join(", ") : "",
+      cogs: item.cogs ? item.cogs.toString() : "",
+      profitMargin: item.profitMargin ? item.profitMargin.toString() : "",
+      flavorProfile: item.flavorProfile ? item.flavorProfile.join(", ") : "",
+      spiceLevel: item.spiceLevel ? item.spiceLevel.toString() : "0",
+      seasonalityTags: item.seasonalityTags ? item.seasonalityTags.join(", ") : "",
+      aiTags: item.aiTags ? item.aiTags.join(", ") : "",
     });
     setImageFile(null);
     setImagePreview(item.image || "");
@@ -125,6 +138,12 @@ export default function MenuManagementPage() {
         ...formData,
         price: parseFloat(formData.price),
         tags: formData.tags ? formData.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
+        flavorProfile: formData.flavorProfile ? formData.flavorProfile.split(",").map(t => t.trim()).filter(Boolean) : [],
+        seasonalityTags: formData.seasonalityTags ? formData.seasonalityTags.split(",").map(t => t.trim()).filter(Boolean) : [],
+        aiTags: formData.aiTags ? formData.aiTags.split(",").map(t => t.trim()).filter(Boolean) : [],
+        spiceLevel: parseInt(formData.spiceLevel),
+        cogs: formData.cogs ? parseFloat(formData.cogs) : undefined,
+        profitMargin: formData.profitMargin ? parseFloat(formData.profitMargin) : undefined,
         image: finalImageUrl,
         restaurantId
       };
@@ -534,6 +553,40 @@ export default function MenuManagementPage() {
                         <span className="text-xs font-medium text-text-secondary">LTO ⏳</span>
                         <input type="checkbox" checked={formData.limitedTimeOffer} onChange={e => setFormData({...formData, limitedTimeOffer: e.target.checked})} className="w-4 h-4 rounded border-border bg-base text-red-500 focus:ring-red-500/50" />
                       </label>
+                    </div>
+
+                    {/* BI Data Section */}
+                    <div className="pt-4 mt-4 border-t border-border">
+                      <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent"></span> Business Intelligence
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-text-secondary mb-1.5">Cost Of Goods Sold (COGS ₹)</label>
+                          <input type="number" step="0.01" value={formData.cogs} onChange={e => setFormData({...formData, cogs: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="e.g. 120.00" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-text-secondary mb-1.5">Estimated Profit Margin (%)</label>
+                          <input type="number" step="0.1" value={formData.profitMargin} onChange={e => setFormData({...formData, profitMargin: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="e.g. 40" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-text-secondary mb-1.5">Flavor Profile (comma separated)</label>
+                          <input type="text" value={formData.flavorProfile} onChange={e => setFormData({...formData, flavorProfile: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="Sweet, Tangy, Umami" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-text-secondary mb-1.5">Spice Level (0-5)</label>
+                          <input type="number" min="0" max="5" value={formData.spiceLevel} onChange={e => setFormData({...formData, spiceLevel: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-text-secondary mb-1.5">Seasonal Availability</label>
+                          <input type="text" value={formData.seasonalityTags} onChange={e => setFormData({...formData, seasonalityTags: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="Summer, Winter, Monsoon" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-text-secondary mb-1.5">AI Tags</label>
+                          <input type="text" value={formData.aiTags} onChange={e => setFormData({...formData, aiTags: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="High Protein, Keto Friendly" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

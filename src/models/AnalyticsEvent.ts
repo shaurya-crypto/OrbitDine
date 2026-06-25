@@ -4,7 +4,7 @@ export interface IAnalyticsEvent extends Document {
   restaurantId?: mongoose.Types.ObjectId;
   sessionId?: string; // Links to the guest session
   customerId?: mongoose.Types.ObjectId; // Links to registered user if migrated
-  eventType: "item_view" | "item_click" | "add_to_cart" | "checkout" | "restaurant_view" | "restaurant_click" | "discovery_search" | "menu_open" | "cart_abandonment" | "follow" | "unfollow" | "favorite" | "unfavorite";
+  eventType: "item_view" | "item_click" | "add_to_cart" | "checkout" | "restaurant_view" | "restaurant_click" | "discovery_search" | "menu_open" | "cart_abandonment" | "follow" | "unfollow" | "favorite" | "unfavorite" | "filter_applied" | "review_created" | "promotion_clicked" | "promotion_viewed" | "coupon_applied" | "coupon_redeemed" | "search_result_clicked" | "table_qr_scanned" | "recommendation_clicked" | "recommendation_viewed";
   itemId?: mongoose.Types.ObjectId;
   metadata?: Record<string, any>;
   createdAt: Date;
@@ -29,7 +29,12 @@ const AnalyticsEventSchema = new Schema<IAnalyticsEvent>(
     },
     eventType: {
       type: String,
-      enum: ["item_view", "item_click", "add_to_cart", "checkout", "restaurant_view", "restaurant_click", "discovery_search", "menu_open", "cart_abandonment", "follow", "unfollow", "favorite", "unfavorite"],
+      enum: [
+        "item_view", "item_click", "add_to_cart", "checkout", "restaurant_view", "restaurant_click", 
+        "discovery_search", "menu_open", "cart_abandonment", "follow", "unfollow", "favorite", "unfavorite",
+        "filter_applied", "review_created", "promotion_clicked", "promotion_viewed", "coupon_applied",
+        "coupon_redeemed", "search_result_clicked", "table_qr_scanned", "recommendation_clicked", "recommendation_viewed"
+      ],
       required: true,
       index: true,
     },
@@ -44,6 +49,11 @@ const AnalyticsEventSchema = new Schema<IAnalyticsEvent>(
   },
   {
     timestamps: { createdAt: true, updatedAt: false }, // Events are immutable
+    timeseries: {
+      timeField: "createdAt",
+      metaField: "restaurantId",
+      granularity: "seconds"
+    }
   }
 );
 

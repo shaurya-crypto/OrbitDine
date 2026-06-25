@@ -16,6 +16,12 @@ export interface IUser extends Document, ISoftDeleted {
   recentlyViewedItems: mongoose.Types.ObjectId[];
   totalOrders: number;
   totalSpent: number;
+  lastOrderDate?: Date;
+  predictedChurnRisk?: number;
+  customerSegment?: string;
+  averageOrderValue?: number;
+  lifetimeValue?: number;
+  visitFrequency?: number;
   achievements: string[];
   isVerified: boolean;
   profileImage?: string;
@@ -93,6 +99,30 @@ const UserSchema = new Schema<IUser>(
       default: 0,
     },
     totalSpent: {
+      type: Number,
+      default: 0,
+    },
+    lastOrderDate: {
+      type: Date,
+    },
+    predictedChurnRisk: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
+    customerSegment: {
+      type: String,
+      enum: ["new_customer", "regular", "loyal", "vip", "discount_seeker", "churn_risk", "inactive"],
+    },
+    averageOrderValue: {
+      type: Number,
+      default: 0,
+    },
+    lifetimeValue: {
+      type: Number,
+      default: 0,
+    },
+    visitFrequency: {
       type: Number,
       default: 0,
     },

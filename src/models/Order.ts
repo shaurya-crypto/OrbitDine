@@ -23,6 +23,13 @@ export interface IOrder extends Document, ISoftDeleted {
     status: string;
     timestamp: Date;
   }>;
+  cancellationReason?: string;
+  cancelledAt?: Date;
+  preparationTimeMs?: number;
+  estimatedPrepTimeMs?: number;
+  actualPrepTimeMs?: number;
+  profitMargin?: number;
+  cogs?: number;
   notes?: string;
   servedAt?: Date;
   servedBy?: mongoose.Types.ObjectId;
@@ -86,6 +93,13 @@ const OrderSchema = new Schema<IOrder>(
         timestamp: { type: Date, default: Date.now },
       },
     ],
+    cancellationReason: { type: String },
+    cancelledAt: { type: Date },
+    preparationTimeMs: { type: Number },
+    estimatedPrepTimeMs: { type: Number },
+    actualPrepTimeMs: { type: Number },
+    profitMargin: { type: Number },
+    cogs: { type: Number },
     notes: { type: String },
     servedAt: { type: Date },
     servedBy: { type: Schema.Types.ObjectId, ref: "User" },

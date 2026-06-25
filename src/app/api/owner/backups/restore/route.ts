@@ -27,12 +27,12 @@ export async function POST(req: NextRequest) {
     const restaurantId = payload.restaurantId as string;
     if (!restaurantId) return new NextResponse(JSON.stringify({ error: "Missing restaurantId" }), { status: 400 });
 
-    const { snapshotId } = await req.json();
-    if (!snapshotId) return new NextResponse(JSON.stringify({ error: "Missing snapshotId" }), { status: 400 });
+    const { snapshotId: backupJobId } = await req.json();
+    if (!backupJobId) return new NextResponse(JSON.stringify({ error: "Missing backup ID" }), { status: 400 });
 
     await connectToDatabase();
 
-    const snapshot = await BackupSnapshot.findOne({ _id: snapshotId, restaurantId });
+    const snapshot = await BackupSnapshot.findOne({ backupJobId, restaurantId });
     if (!snapshot) {
       return new NextResponse(JSON.stringify({ error: "Snapshot not found or unauthorized" }), { status: 404 });
     }

@@ -7,7 +7,12 @@ import MenuItem from "@/models/MenuItem";
 import Review from "@/models/Review";
 import AnalyticsEvent from "@/models/AnalyticsEvent";
 import User from "@/models/User";
+import CustomerCohort from "@/models/CustomerCohort";
+import ForecastMetric from "@/models/ForecastMetric";
 import { verifyAccessToken } from "@/lib/auth/jwt";
+import { calculateRestaurantHealth } from "@/lib/bi/RestaurantHealthService";
+import { MenuIntelligenceService } from "@/lib/bi/MenuIntelligenceService";
+import { AIFactory } from "@/lib/ai/AIFactory";
 import mongoose from "mongoose";
 
 export async function GET(req: NextRequest) {
@@ -177,11 +182,25 @@ export async function GET(req: NextRequest) {
         orders: d.orders
       }));
 
+      // Fetch forecast for UI (next 7 days)
+      const forecastData = await ForecastMetric.find({ restaurantId: restaurantObjId })
+        .sort({ date: 1 })
+        .limit(7);
+
+      // We map the future data to append it to the chartData or pass it separately
+      const upcomingForecasts = forecastData.map(f => ({
+        date: f.date,
+        predictedRevenue: f.predictedRevenue,
+        predictedOrders: f.predictedOrders,
+        confidence: f.confidence
+      }));
+
       return NextResponse.json({
         revenuePeriod,
         prevRevenuePeriod,
         growthPct: growthPct.toFixed(1),
-        chartData
+        chartData,
+        upcomingForecasts // new!
       }, { status: 200 });
     }
 
@@ -216,32 +235,20 @@ export async function GET(req: NextRequest) {
       }, { status: 200 });
     }
 
-    // --- 3. MENU ANALYTICS ---
+    // --- 3. MENU INTELLIGENCE ---
     if (section === "menu") {
-      const itemAggregation = await Order.aggregate([
-        { $match: { restaurantId: restaurantObjId, createdAt: { $gte: startDate }, status: { $ne: "cancelled" } } },
-        { $unwind: "$items" },
-        { $group: { 
-            _id: "$items.name", 
-            totalSold: { $sum: "$items.quantity" }, 
-            revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } } 
-        }},
-        { $sort: { totalSold: -1 } }
-      ]);
-
-      const topSellers = itemAggregation.slice(0, 10);
-      const worstSellers = [...itemAggregation].sort((a,b) => a.totalSold - b.totalSold).slice(0, 10);
+      const menuIntel = await MenuIntelligenceService.calculatePopularityScores(restaurantId);
 
       return NextResponse.json({
-        topSellers,
-        worstSellers,
-        allStats: itemAggregation
+        topSellers: menuIntel.bestSellers,
+        worstSellers: menuIntel.slowMovers,
+        hiddenGems: menuIntel.hiddenGems,
+        trending: menuIntel.trending
       }, { status: 200 });
     }
 
-    // --- 4. CUSTOMER ANALYTICS ---
+    // --- 4. CUSTOMER INTEL ---
     if (section === "customers") {
-      // For now we look at unique sessions vs unique registered users
       const sessions = await OrderSession.aggregate([
         { $match: { restaurantId: restaurantObjId, createdAt: { $gte: startDate } } },
         { $group: { _id: "$userId", count: { $sum: 1 }, totalSpend: { $sum: { $sum: "$cart.itemTotal" } } } }
@@ -260,31 +267,97 @@ export async function GET(req: NextRequest) {
         }
       });
 
+      // Fetch actual User objects linked to this restaurant (assuming we query by them having orders or saved)
+      const allUsers = await User.find({
+        $or: [
+          { savedRestaurants: restaurantId },
+          { followingRestaurants: restaurantId }
+        ]
+      });
+
+      let totalLtv = 0;
+      let totalChurnRisk = 0;
+      const segments = { vip: 0, loyal: 0, regular: 0, churn_risk: 0, inactive: 0, new_customer: 0 };
+      
+      allUsers.forEach(u => {
+        totalLtv += u.lifetimeValue || 0;
+        totalChurnRisk += u.predictedChurnRisk || 0;
+        const seg = u.customerSegment || "new_customer";
+        if (segments[seg as keyof typeof segments] !== undefined) {
+          segments[seg as keyof typeof segments]++;
+        }
+      });
+
+      const avgLtv = allUsers.length > 0 ? totalLtv / allUsers.length : 0;
+      const avgChurnRisk = allUsers.length > 0 ? totalChurnRisk / allUsers.length : 0;
+
+      // Calculate percentage distribution
+      const segmentDistribution = {
+        vip: allUsers.length > 0 ? Math.round((segments.vip / allUsers.length) * 100) : 0,
+        loyal: allUsers.length > 0 ? Math.round((segments.loyal / allUsers.length) * 100) : 0,
+        regular: allUsers.length > 0 ? Math.round((segments.regular / allUsers.length) * 100) : 0,
+        at_risk: allUsers.length > 0 ? Math.round(((segments.churn_risk + segments.inactive) / allUsers.length) * 100) : 0,
+      };
+
+      // Fetch Cohorts
+      const cohorts = await CustomerCohort.find({ restaurantId: restaurantObjId }).sort({ cohortMonth: -1 }).limit(6);
+
       return NextResponse.json({
         totalCustomers: sessions.length,
         returningCustomers,
         newCustomers: sessions.length - returningCustomers,
         repeatVisitRate: sessions.length > 0 ? ((returningCustomers / sessions.length) * 100).toFixed(1) : 0,
         registeredVisits,
-        guestVisits
+        guestVisits,
+        avgLtv,
+        avgChurnRisk: Math.round(avgChurnRisk),
+        segmentDistribution,
+        cohorts
       }, { status: 200 });
     }
 
-    // --- 5. FEEDBACK ANALYTICS ---
+    // --- 5. REVIEW INTEL ---
     if (section === "feedback") {
       const reviews = await Review.find({ restaurantId: restaurantObjId, createdAt: { $gte: startDate } });
       const count = reviews.length;
       let sum = 0;
+      let totalSentiment = 0;
+      let sentimentCount = 0;
       const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      const keywordMap: Record<string, { count: number, type: 'positive' | 'negative' | 'neutral' }> = {};
       
       reviews.forEach(r => {
         sum += r.rating;
         distribution[r.rating as keyof typeof distribution]++;
+        
+        if (r.sentimentScore !== undefined) {
+          totalSentiment += r.sentimentScore;
+          sentimentCount++;
+        }
+
+        if (r.keywords && Array.isArray(r.keywords)) {
+          r.keywords.forEach((kw: string) => {
+            if (!keywordMap[kw]) {
+              // rough guess on keyword sentiment based on review rating
+              keywordMap[kw] = { count: 0, type: r.rating >= 4 ? 'positive' : (r.rating <= 2 ? 'negative' : 'neutral') };
+            }
+            keywordMap[kw].count++;
+          });
+        }
       });
 
       const avgRating = count > 0 ? (sum / count).toFixed(1) : 0;
       const positiveReviews = distribution[4] + distribution[5];
       const negativeReviews = distribution[1] + distribution[2];
+      
+      // Convert -1.0 -> 1.0 to 0 -> 100
+      const rawAvgSentiment = sentimentCount > 0 ? (totalSentiment / sentimentCount) : 0;
+      const globalSentimentScore = Math.round((rawAvgSentiment + 1) * 50); 
+      
+      const keywords = Object.entries(keywordMap)
+        .map(([text, data]) => ({ text, ...data }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 15);
 
       const reviewTrend = await Review.aggregate([
         { $match: { restaurantId: restaurantObjId, createdAt: { $gte: startDate } } },
@@ -298,6 +371,8 @@ export async function GET(req: NextRequest) {
         distribution,
         positiveReviews,
         negativeReviews,
+        globalSentimentScore,
+        keywords,
         reviewTrend
       }, { status: 200 });
     }
@@ -376,7 +451,7 @@ export async function GET(req: NextRequest) {
       }, { status: 200 });
     }
 
-    // --- 9. OPERATIONAL PERFORMANCE ---
+    // --- 9. OPS INTEL ---
     if (section === "operational") {
       const orders = await Order.find({ restaurantId: restaurantObjId, createdAt: { $gte: startDate } });
       let prepTimeTotalMs = 0;
@@ -386,24 +461,43 @@ export async function GET(req: NextRequest) {
       let serveTimeCount = 0;
 
       orders.forEach(o => {
-        const received = o.statusHistory.find((h: any) => h.status === "received");
-        const ready = o.statusHistory.find((h: any) => h.status === "ready");
-        const served = o.statusHistory.find((h: any) => h.status === "served");
+        const received = o.statusHistory?.find((h: any) => h.status === "received");
+        const ready = o.statusHistory?.find((h: any) => h.status === "ready");
+        const served = o.statusHistory?.find((h: any) => h.status === "served");
 
         if (received && ready) {
           prepTimeTotalMs += ready.timestamp.getTime() - received.timestamp.getTime();
           prepTimeCount++;
+        } else if (o.actualPrepTimeMs) {
+          // Fallback to explicit field if it exists
+          prepTimeTotalMs += o.actualPrepTimeMs;
+          prepTimeCount++;
         }
+        
         if (ready && served) {
           serveTimeTotalMs += served.timestamp.getTime() - ready.timestamp.getTime();
           serveTimeCount++;
         }
       });
 
+      // Calculate health using our BI service
+      const healthResult = await calculateRestaurantHealth(restaurantId);
+
       return NextResponse.json({
         avgPrepTimeMins: prepTimeCount > 0 ? Math.round((prepTimeTotalMs / prepTimeCount) / 60000) : 0,
         avgServeTimeMins: serveTimeCount > 0 ? Math.round((serveTimeTotalMs / serveTimeCount) / 60000) : 0,
-        totalOrdersProcessed: orders.length
+        totalOrdersProcessed: orders.length,
+        health: healthResult
+      }, { status: 200 });
+    }
+
+    // --- 10. AI INSIGHTS ---
+    if (section === "ai_insights") {
+      const aiProvider = AIFactory.getProvider();
+      const recommendations = await aiProvider.generateRecommendations(restaurantId);
+      
+      return NextResponse.json({
+        recommendations
       }, { status: 200 });
     }
 

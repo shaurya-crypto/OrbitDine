@@ -21,14 +21,29 @@ interface RestoreJob {
 export default function AdminRecoveryCenter() {
   const [jobs, setJobs] = useState<RestoreJob[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeCount, setActiveCount] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
 
-  // We are keeping it simple for the implementation.
-  // In a real scenario, this would have search, pagination, and a modal to trigger restore.
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch("/api/admin/backups/restore/history");
+      if (res.ok) {
+        const data = await res.json();
+        setJobs(data.jobs || []);
+        setActiveCount(data.activeCount || 0);
+        setCompletedCount(data.completedCount || 0);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // In a full implementation, you'd fetch from /api/admin/backups/restore/history
-    // For now, we simulate an empty state or fetch if endpoint exists.
-    setLoading(false);
+    fetchHistory();
+    const interval = setInterval(fetchHistory, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -49,7 +64,7 @@ export default function AdminRecoveryCenter() {
           </div>
           <div>
             <p className="text-sm font-medium text-text-secondary">Active Restores</p>
-            <p className="text-2xl font-bold text-text-primary">0</p>
+            <p className="text-2xl font-bold text-text-primary">{activeCount}</p>
           </div>
         </GlassPanel>
         <GlassPanel className="p-6 flex items-center gap-4">
@@ -58,7 +73,7 @@ export default function AdminRecoveryCenter() {
           </div>
           <div>
             <p className="text-sm font-medium text-text-secondary">Completed Restores</p>
-            <p className="text-2xl font-bold text-text-primary">0</p>
+            <p className="text-2xl font-bold text-text-primary">{completedCount}</p>
           </div>
         </GlassPanel>
       </div>

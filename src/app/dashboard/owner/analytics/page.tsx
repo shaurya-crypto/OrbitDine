@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 
 type TimeRange = 'today' | 'week' | 'month' | 'year' | 'all';
-type Section = 'revenue' | 'orders' | 'menu' | 'customers' | 'feedback' | 'discovery' | 'tables' | 'time' | 'operational';
+type Section = 'revenue' | 'orders' | 'menu' | 'customers' | 'feedback' | 'discovery' | 'tables' | 'time' | 'operational' | 'ai_insights';
 
 export default function AnalyticsPage() {
   const { restaurantId } = useAuthStore();
@@ -44,14 +44,15 @@ export default function AnalyticsPage() {
   if (!restaurantId) return <div className="p-8 bg-base min-h-screen text-red-500">Error: No Restaurant ID linked to your account.</div>;
 
   const tabs: { id: Section, label: string }[] = [
-    { id: 'revenue', label: 'Revenue' },
+    { id: 'revenue', label: 'Revenue Intel' },
+    { id: 'customers', label: 'Customer Intel' },
+    { id: 'feedback', label: 'Feedback & Reviews' },
+    { id: 'operational', label: 'Kitchen & Operations' },
+    { id: 'ai_insights', label: 'AI Insights' },
     { id: 'orders', label: 'Orders' },
     { id: 'menu', label: 'Menu Items' },
-    { id: 'customers', label: 'Customers' },
-    { id: 'feedback', label: 'Feedback' },
     { id: 'tables', label: 'Tables' },
     { id: 'time', label: 'Time Insights' },
-    { id: 'operational', label: 'Operations' },
     { id: 'discovery', label: 'Discovery' },
   ];
 
@@ -122,15 +123,16 @@ export default function AnalyticsPage() {
 
         {!isLoading && data && (
           <div className="animate-in fade-in zoom-in-95 duration-500">
-            {activeSection === 'revenue' && <RevenueSection data={data} />}
-            {activeSection === 'orders' && <OrdersSection data={data} />}
-            {activeSection === 'menu' && <MenuSection data={data} />}
-            {activeSection === 'customers' && <CustomersSection data={data} />}
-            {activeSection === 'feedback' && <FeedbackSection data={data} />}
-            {activeSection === 'tables' && <TablesSection data={data} />}
-            {activeSection === 'time' && <TimeSection data={data} />}
-            {activeSection === 'operational' && <OperationalSection data={data} />}
-            {activeSection === 'discovery' && <DiscoverySection data={data} />}
+            { activeSection === 'revenue' && <RevenueSection data={data} /> }
+            { activeSection === 'orders' && <OrdersSection data={data} /> }
+            { activeSection === 'menu' && <MenuSection data={data} /> }
+            { activeSection === 'customers' && <CustomersSection data={data} /> }
+            { activeSection === 'feedback' && <FeedbackSection data={data} /> }
+            { activeSection === 'tables' && <TablesSection data={data} /> }
+            { activeSection === 'time' && <TimeSection data={data} /> }
+            { activeSection === 'operational' && <OperationalSection data={data} /> }
+            { activeSection === 'discovery' && <DiscoverySection data={data} /> }
+            { activeSection === 'ai_insights' && <AIInsightsSection data={data} /> }
           </div>
         )}
       </div>
@@ -144,11 +146,27 @@ const COLORS = ['#F97316', '#3B82F6', '#10B981', '#8B5CF6', '#EC4899', '#EAB308'
 
 function RevenueSection({ data }: { data: any }) {
   const isPositive = parseFloat(data.growthPct) >= 0;
+  
+  // Combine historical and forecast data for the chart
+  const mergedChartData = [...(data.chartData || [])];
+  if (data.upcomingForecasts) {
+    data.upcomingForecasts.forEach((f: any) => {
+      mergedChartData.push({
+        date: f.date,
+        predictedRevenue: f.predictedRevenue,
+        predictedOrders: f.predictedOrders
+      });
+    });
+  }
+
+  const confidenceScore = data.upcomingForecasts?.length > 0 ? data.upcomingForecasts[0].confidence : 0;
+
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <MetricCard title="Total Revenue" value={`₹${data.revenuePeriod.toFixed(2)}`} />
-        <MetricCard title="Previous Period" value={`₹${data.prevRevenuePeriod.toFixed(2)}`} />
+        <MetricCard title="Estimated Profit" value={`₹${((data.revenuePeriod || 0) * 0.4).toFixed(2)}`} valueColor="text-green-500" />
+        <MetricCard title="Est. COGS" value={`₹${((data.revenuePeriod || 0) * 0.35).toFixed(2)}`} valueColor="text-orange-500" />
         <MetricCard 
           title="Growth Rate" 
           value={`${isPositive ? '+' : ''}${data.growthPct}%`} 
@@ -157,11 +175,12 @@ function RevenueSection({ data }: { data: any }) {
         />
       </div>
 
-      <div>
-        <h3 className="text-lg font-medium mb-4">Revenue Trend</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <h3 className="text-lg font-medium mb-4">Revenue & Forecast Trend</h3>
         <div className="w-full">
           <ResponsiveContainer width="100%" height={350}>
-          <AreaChart data={data.chartData}>
+          <AreaChart data={mergedChartData}>
             <defs>
               <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#F97316" stopOpacity={0.3}/>
@@ -176,8 +195,34 @@ function RevenueSection({ data }: { data: any }) {
               itemStyle={{ color: '#fff' }}
             />
             <Area type="monotone" dataKey="revenue" stroke="#F97316" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+            <Area type="monotone" dataKey="predictedRevenue" stroke="#3B82F6" strokeWidth={2} strokeDasharray="5 5" fill="none" />
           </AreaChart>
         </ResponsiveContainer>
+        </div>
+        </div>
+        <div className="bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl p-6">
+          <h3 className="text-lg font-medium mb-4">Next 7 Days Forecast</h3>
+          <div className="space-y-4 w-full relative">
+            {data.upcomingForecasts && data.upcomingForecasts.map((forecast: any, idx: number) => {
+               const dayName = new Date(forecast.date).toLocaleDateString('en-US', { weekday: 'long' });
+               const isUp = idx > 0 && forecast.predictedRevenue > data.upcomingForecasts[idx - 1].predictedRevenue;
+               return (
+                 <div key={idx} className="flex justify-between items-center pb-2 border-b border-border/50">
+                   <span className="text-text-secondary">{idx === 0 ? "Tomorrow" : dayName}</span>
+                   <span className="text-accent font-bold">
+                     ~₹{forecast.predictedRevenue.toLocaleString()} 
+                     {isUp && <TrendingUp size={14} className="inline text-green-500 ml-1"/>}
+                   </span>
+                 </div>
+               );
+            })}
+            {(!data.upcomingForecasts || data.upcomingForecasts.length === 0) && (
+              <p className="text-text-secondary text-sm">No forecast data generated yet. Nightly CRON required.</p>
+            )}
+            <div className="mt-6 pt-4 border-t border-border">
+              <p className="text-xs text-text-secondary">Confidence Score: <span className="text-green-500 font-bold">{confidenceScore}%</span></p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -224,9 +269,9 @@ function OrdersSection({ data }: { data: any }) {
 
 function MenuSection({ data }: { data: any }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
       <div>
-        <h3 className="text-lg font-medium mb-4 text-green-500">Top 10 Bestsellers</h3>
+        <h3 className="text-lg font-medium mb-4 text-green-500">Top Bestsellers</h3>
         <div className="space-y-3">
           {data.topSellers.map((item: any, i: number) => (
             <div key={item._id} className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-900 border border-border p-3 rounded-xl">
@@ -254,7 +299,36 @@ function MenuSection({ data }: { data: any }) {
               </div>
             </div>
           ))}
-          {data.worstSellers.length === 0 && <p className="text-text-secondary text-sm">No sales data in this period.</p>}
+          {(!data.worstSellers || data.worstSellers.length === 0) && <p className="text-text-secondary text-sm">No sales data in this period.</p>}
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-medium mb-4 text-purple-500">Trending Items</h3>
+        <div className="space-y-3">
+          {data.trending && data.trending.map((item: any, i: number) => (
+            <div key={item._id} className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-900 border border-border p-3 rounded-xl">
+              <span className="font-medium text-text-primary">{item._id}</span>
+              <div className="text-right">
+                <div className="text-sm text-purple-500 font-medium">Score: {item.popularityScore.toFixed(0)}</div>
+              </div>
+            </div>
+          ))}
+          {(!data.trending || data.trending.length === 0) && <p className="text-text-secondary text-sm">Not enough event data yet.</p>}
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-medium mb-4 text-blue-500">Hidden Gems</h3>
+        <p className="text-xs text-text-secondary mb-2">High conversion, low visibility</p>
+        <div className="space-y-3">
+          {data.hiddenGems && data.hiddenGems.map((item: any, i: number) => (
+            <div key={item._id} className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-900 border border-border p-3 rounded-xl">
+              <span className="font-medium text-text-primary">{item._id}</span>
+              <div className="text-right">
+                <div className="text-sm text-blue-500 font-medium">{item.conversionRate.toFixed(1)}% Conv</div>
+              </div>
+            </div>
+          ))}
+          {(!data.hiddenGems || data.hiddenGems.length === 0) && <p className="text-text-secondary text-sm">No hidden gems detected.</p>}
         </div>
       </div>
     </div>
@@ -264,11 +338,79 @@ function MenuSection({ data }: { data: any }) {
 function CustomersSection({ data }: { data: any }) {
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <MetricCard title="Total Customers" value={data.totalCustomers} />
-        <MetricCard title="New Customers" value={data.newCustomers} />
-        <MetricCard title="Returning Customers" value={data.returningCustomers} />
-        <MetricCard title="Repeat Visit Rate" value={`${data.repeatVisitRate}%`} valueColor="text-blue-500" />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+        <MetricCard title="Total Customers" value={data.totalCustomers || 0} />
+        <MetricCard title="New Customers" value={data.newCustomers || 0} />
+        <MetricCard title="Avg LTV" value={`₹${(data.avgLtv || 0).toFixed(2)}`} />
+        <MetricCard title="Churn Risk" value={`${data.avgChurnRisk || 0}%`} valueColor={data.avgChurnRisk > 20 ? "text-red-500" : "text-orange-500"} />
+        <MetricCard title="Repeat Visit Rate" value={`${data.repeatVisitRate || 0}%`} valueColor="text-blue-500" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
+          <h3 className="text-lg font-medium mb-4">Customer Segments</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-text-primary">VIPs</span>
+              <div className="w-1/2 h-2 bg-surface rounded-full overflow-hidden">
+                <div className="h-full bg-purple-500" style={{ width: `${data.segmentDistribution?.vip || 0}%` }}></div>
+              </div>
+              <span className="text-sm">{data.segmentDistribution?.vip || 0}%</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-text-primary">Loyal</span>
+              <div className="w-1/2 h-2 bg-surface rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500" style={{ width: `${data.segmentDistribution?.loyal || 0}%` }}></div>
+              </div>
+              <span className="text-sm">{data.segmentDistribution?.loyal || 0}%</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-text-primary">Regulars</span>
+              <div className="w-1/2 h-2 bg-surface rounded-full overflow-hidden">
+                <div className="h-full bg-green-500" style={{ width: `${data.segmentDistribution?.regular || 0}%` }}></div>
+              </div>
+              <span className="text-sm">{data.segmentDistribution?.regular || 0}%</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-text-primary">At Risk</span>
+              <div className="w-1/2 h-2 bg-surface rounded-full overflow-hidden">
+                <div className="h-full bg-red-500" style={{ width: `${data.segmentDistribution?.at_risk || 0}%` }}></div>
+              </div>
+              <span className="text-sm">{data.segmentDistribution?.at_risk || 0}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
+          <h3 className="text-lg font-medium mb-4">Retention Cohorts (30-60-90)</h3>
+          <div className="w-full relative">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-surface text-text-secondary border-b border-border sticky top-0">
+                <tr>
+                  <th className="py-2 px-2">Cohort Month</th>
+                  <th className="py-2 px-2">Size</th>
+                  <th className="py-2 px-2">Day 30</th>
+                  <th className="py-2 px-2">Day 60</th>
+                  <th className="py-2 px-2">Day 90</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {data.cohorts && data.cohorts.map((c: any) => (
+                  <tr key={c._id}>
+                    <td className="py-2 px-2 font-medium">{c.cohortMonth}</td>
+                    <td className="py-2 px-2">{c.cohortSize}</td>
+                    <td className="py-2 px-2 text-green-500 bg-green-500/5">{c.day30RetentionPct}%</td>
+                    <td className="py-2 px-2 text-green-500 bg-green-500/5">{c.day60RetentionPct}%</td>
+                    <td className="py-2 px-2 text-green-500 bg-green-500/5">{c.day90RetentionPct}%</td>
+                  </tr>
+                ))}
+                {(!data.cohorts || data.cohorts.length === 0) && (
+                  <tr><td colSpan={5} className="py-4 text-center text-text-secondary">No cohort data yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
       
       <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
@@ -313,7 +455,7 @@ function FeedbackSection({ data }: { data: any }) {
 
   const chartData = [1,2,3,4,5].map(stars => ({
     name: `${stars} Star`,
-    count: data.distribution[stars] || 0
+    count: data.distribution?.[stars] || 0
   }));
 
   return (
@@ -325,30 +467,56 @@ function FeedbackSection({ data }: { data: any }) {
         <MetricCard title="Negative (1-2★)" value={data.negativeReviews} valueColor="text-red-500" />
       </div>
 
-      <div>
-        <h3 className="text-lg font-medium mb-4">Rating Distribution</h3>
-        <div className="w-full">
-          <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData} layout="vertical" margin={{ left: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#333" />
-            <XAxis type="number" stroke="#888" fontSize={12} />
-            <YAxis dataKey="name" type="category" stroke="#888" fontSize={12} />
-            <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
-            <Bar dataKey="count" fill="#F97316" radius={[0, 4, 4, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div>
+          <h3 className="text-lg font-medium mb-4">Rating Distribution</h3>
+          <div className="w-full">
+            <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData} layout="vertical" margin={{ left: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#333" />
+              <XAxis type="number" stroke="#888" fontSize={12} />
+              <YAxis dataKey="name" type="category" stroke="#888" fontSize={12} />
+              <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+              <Bar dataKey="count" fill="#F97316" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          </div>
+        </div>
+        
+        <div>
+          <h3 className="text-lg font-medium mb-4">Sentiment & Keyword Cloud</h3>
+          <div className="bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl p-6 h-[300px] flex flex-col justify-between">
+            <div className="flex justify-between items-center mb-4">
+               <span className="text-text-primary font-medium">Global Sentiment Score</span>
+               <span className="text-green-500 font-bold text-xl">{data.globalSentimentScore || 0}/100</span>
+            </div>
+            <div className="flex flex-wrap gap-2 content-start flex-1 mt-4 w-full relative">
+               {data.keywords && data.keywords.map((kw: any) => (
+                 <span key={kw.text} className={`px-3 py-1 border rounded-full ${
+                   kw.type === 'positive' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 
+                   kw.type === 'negative' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 
+                   'bg-zinc-100 dark:bg-zinc-800 text-text-secondary border-border'
+                 } ${kw.count > 10 ? 'text-xl font-bold' : kw.count > 5 ? 'text-lg' : 'text-sm'}`}>
+                   {kw.text}
+                 </span>
+               ))}
+               {(!data.keywords || data.keywords.length === 0) && (
+                 <span className="text-sm text-text-secondary">No keyword data extracted yet.</span>
+               )}
+            </div>
+          </div>
         </div>
       </div>
 
       <div>
         <h3 className="text-lg font-medium mb-4">Customer Reviews</h3>
-        <div className="bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl overflow-hidden">
+        <div className="bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
           {loadingReviews ? (
             <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-accent" /></div>
           ) : reviews.length === 0 ? (
             <div className="p-8 text-center text-text-secondary">No text reviews found.</div>
           ) : (
-            <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
+            <div className="divide-y divide-border w-full relative">
               {reviews.map((r: any) => (
                 <div key={r._id} className="p-5 hover:bg-surface transition-colors">
                   <div className="flex justify-between items-start mb-2">
@@ -405,7 +573,7 @@ function TimeSection({ data }: { data: any }) {
       <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
         <h3 className="text-lg font-medium mb-4">Time Heatmap Data</h3>
         <p className="text-text-secondary text-sm mb-4">Raw grouping of orders by day of week and hour.</p>
-        <div className="max-h-64 overflow-y-auto border border-border rounded-lg bg-surface">
+        <div className="w-full relative border border-border rounded-lg bg-surface">
           <table className="w-full text-sm text-left">
             <thead className="bg-zinc-100 dark:bg-zinc-950 text-text-secondary border-b border-border sticky top-0">
               <tr>
@@ -433,29 +601,55 @@ function TimeSection({ data }: { data: any }) {
 function OperationalSection({ data }: { data: any }) {
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <MetricCard title="Orders Analyzed" value={data.totalOrdersProcessed} />
         <MetricCard title="Avg Prep Time" value={`${data.avgPrepTimeMins} mins`} valueColor="text-orange-500" />
         <MetricCard title="Avg Serve Time" value={`${data.avgServeTimeMins} mins`} valueColor="text-blue-500" />
+        <div className="p-6 bg-accent/10 border border-accent/20 rounded-2xl flex flex-col justify-between h-32 transition-transform hover:scale-[1.02]">
+          <div className="flex justify-between items-start">
+            <span className="text-sm font-medium text-accent">Health Score</span>
+            <span className="text-2xl font-bold text-accent">{data.health?.grade || 'N/A'}</span>
+          </div>
+          <div className="text-3xl font-bold tracking-tight text-accent">{data.health?.score || 0}<span className="text-lg opacity-50">/100</span></div>
+        </div>
       </div>
       
-      <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
-        <h3 className="text-lg font-medium mb-4">Efficiency Funnel</h3>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-32 text-sm font-medium text-text-secondary text-right">Received ➔ Ready</div>
-            <div className="flex-1 h-6 bg-surface rounded-full overflow-hidden border border-border">
-              <div className="h-full bg-orange-500 rounded-full" style={{ width: `${Math.min(100, (data.avgPrepTimeMins/60)*100)}%` }}></div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
+          <h3 className="text-lg font-medium mb-4">Efficiency Funnel</h3>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-32 text-sm font-medium text-text-secondary text-right">Received ➔ Ready</div>
+              <div className="flex-1 h-6 bg-surface rounded-full overflow-hidden border border-border">
+                <div className="h-full bg-orange-500 rounded-full" style={{ width: `${Math.min(100, (data.avgPrepTimeMins/60)*100)}%` }}></div>
+              </div>
+              <div className="w-16 text-sm font-bold">{data.avgPrepTimeMins}m</div>
             </div>
-            <div className="w-16 text-sm font-bold">{data.avgPrepTimeMins}m</div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-32 text-sm font-medium text-text-secondary text-right">Ready ➔ Served</div>
-            <div className="flex-1 h-6 bg-surface rounded-full overflow-hidden border border-border">
-              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, (data.avgServeTimeMins/30)*100)}%` }}></div>
+            <div className="flex items-center gap-4">
+              <div className="w-32 text-sm font-medium text-text-secondary text-right">Ready ➔ Served</div>
+              <div className="flex-1 h-6 bg-surface rounded-full overflow-hidden border border-border">
+                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, (data.avgServeTimeMins/30)*100)}%` }}></div>
+              </div>
+              <div className="w-16 text-sm font-bold">{data.avgServeTimeMins}m</div>
             </div>
-            <div className="w-16 text-sm font-bold">{data.avgServeTimeMins}m</div>
           </div>
+        </div>
+
+        <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
+           <h3 className="text-lg font-medium mb-4">Operations Alerts</h3>
+           <ul className="space-y-3 w-full relative">
+             {data.health?.insights?.map((insight: any, i: number) => (
+               <li key={i} className="flex gap-2 items-start text-sm text-text-primary">
+                  <span className={`mt-0.5 ${insight.type === 'negative' ? 'text-red-500' : insight.type === 'positive' ? 'text-green-500' : 'text-orange-500'}`}>
+                    {insight.type === 'negative' ? '⚠️' : insight.type === 'positive' ? '✅' : '⏱️'}
+                  </span> 
+                  <span>{insight.message}</span>
+               </li>
+             ))}
+             {(!data.health?.insights || data.health?.insights.length === 0) && (
+               <li className="text-sm text-text-secondary">No current alerts.</li>
+             )}
+           </ul>
         </div>
       </div>
     </div>
@@ -477,6 +671,52 @@ function DiscoverySection({ data }: { data: any }) {
   );
 }
 
+
+function AIInsightsSection({ data }: { data: any }) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div>
+          <h2 className="text-xl font-serif">Smart Recommendations</h2>
+          <p className="text-sm text-text-secondary">AI-generated operational insights</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {data.recommendations && data.recommendations.map((rec: any, idx: number) => {
+          let colorClass = "bg-blue-500/5 border-blue-500/20 text-blue-500";
+          let btnClass = "bg-blue-500 hover:bg-blue-600";
+          
+          if (rec.type === "negative" || rec.severity === "high") {
+            colorClass = "bg-red-500/5 border-red-500/20 text-red-500";
+            btnClass = "bg-red-500 hover:bg-red-600";
+          } else if (rec.type === "positive") {
+            colorClass = "bg-green-500/5 border-green-500/20 text-green-500";
+            btnClass = "bg-green-500 hover:bg-green-600";
+          }
+
+          return (
+            <div key={idx} className={`p-6 border rounded-2xl ${colorClass.split(' ')[0]} ${colorClass.split(' ')[1]}`}>
+              <h3 className={`font-bold mb-2 ${colorClass.split(' ')[2]}`}>{rec.title}</h3>
+              <p className="text-text-primary text-sm leading-relaxed mb-4">
+                {rec.explanation}
+              </p>
+              <button className={`text-xs text-white px-4 py-2 rounded-lg font-medium transition-colors ${btnClass}`}>
+                {rec.recommendedAction}
+              </button>
+            </div>
+          );
+        })}
+
+        {(!data.recommendations || data.recommendations.length === 0) && (
+          <div className="col-span-full p-8 text-center text-text-secondary border border-border rounded-2xl">
+            No active recommendations at this time.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // --- GENERIC UI COMPONENTS ---
 

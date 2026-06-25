@@ -15,7 +15,10 @@ export interface IReview extends Document, ISoftDeleted {
   visitDate?: Date;
   orderReference?: string;
   sentimentScore?: number;
+  sentimentLabel?: "positive" | "neutral" | "negative";
   extractedKeywords?: string[];
+  keywords?: string[];
+  analyzedAt?: Date;
   moderationStatus: "pending" | "approved" | "rejected";
   flagged: boolean;
   flaggedReason?: string;
@@ -40,7 +43,10 @@ const reviewSchema: Schema<IReview> = new Schema({
   visitDate: { type: Date },
   orderReference: { type: String },
   sentimentScore: { type: Number },
+  sentimentLabel: { type: String, enum: ["positive", "neutral", "negative"] },
   extractedKeywords: [{ type: String }],
+  keywords: [{ type: String }],
+  analyzedAt: { type: Date },
   moderationStatus: { type: String, enum: ["pending", "approved", "rejected"], default: "approved" },
   flagged: { type: Boolean, default: false },
   flaggedReason: { type: String },
