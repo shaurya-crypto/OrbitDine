@@ -5,15 +5,26 @@ import { useAuthStore } from "@/stores/authStore";
 import { 
   Search, MapPin, Star, Clock, Utensils, Heart, ChevronRight, 
   Home, User, MoreHorizontal, Settings, LogOut, Receipt, Award, 
-  TrendingUp, MessageSquare, Users, ShieldAlert
+  TrendingUp, MessageSquare, ShieldAlert, Sparkles, TrendingDown
 } from "lucide-react";
 import { useLogout } from "@/hooks/useLogout";
 import Link from "next/link";
 import Image from "next/image";
-
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useToast } from "@/components/ui/ToastProvider";
 import { FloatingInput } from "@/components/ui/FloatingInput";
+import { EmptyState } from "@/components/dashboard/ui/EmptyState";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar
+} from "recharts";
 
 export default function CustomerDashboardPage() {
   const { name, roles } = useAuthStore();
@@ -83,7 +94,11 @@ export default function CustomerDashboardPage() {
     );
   }
 
-  const { profile, recentOrders, savedRestaurants, favoriteItems, recentReviews } = dashboardData;
+  const { 
+    profile, recentOrders, savedRestaurants, favoriteItems, recentReviews,
+    monthlySpendingChart, favoriteHoursChart, favoriteRestaurant, favoriteItem,
+    loyaltyProgress, achievements, recommendations
+  } = dashboardData;
 
   const handleDeleteAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,13 +124,20 @@ export default function CustomerDashboardPage() {
   return (
     <div className="pb-24 md:pb-8 max-w-7xl mx-auto space-y-8 animate-fade-in relative min-h-screen p-4 md:p-8 bg-base">
       
-      {/* Header Section - Sticky and Mobile Optimized */}
+      {/* Header Section */}
       <div className="sticky top-0 z-[60] bg-base/80 backdrop-blur-xl border-b border-border/50 -mx-4 px-4 py-4 mb-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 flex items-center justify-between shadow-sm">
         <div>
-          <p className="text-text-secondary font-medium mb-0.5 tracking-wide uppercase text-xs md:text-sm">Welcome back,</p>
-          <h1 className="text-2xl md:text-4xl font-serif text-text-primary tracking-tight">
-            {profile.fullName.split(" ")[0]} <span className="text-accent">!</span>
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-4xl font-serif text-text-primary tracking-tight">
+              {profile.fullName.split(" ")[0]} <span className="text-accent">!</span>
+            </h1>
+            {profile.customerSegment === "vip" && (
+              <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-xs font-bold uppercase tracking-wider hidden sm:inline-block">VIP</span>
+            )}
+          </div>
+          <p className="text-text-secondary font-medium mt-1 tracking-wide text-xs md:text-sm capitalize flex items-center gap-2">
+            {profile.rewardTier} Member • {loyaltyProgress.currentPoints} Points
+          </p>
         </div>
         <div className="flex-shrink-0 z-[60] flex items-center gap-2 md:gap-3">
           <Link href="/explore" className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-text-primary text-base text-xs md:text-sm font-medium rounded-full hover:scale-105 transition-transform">
@@ -154,87 +176,134 @@ export default function CustomerDashboardPage() {
       
       {activeTab === "overview" && (
         <div className="space-y-8">
+          
+          {/* AI Recommendations (Dynamic from Engine) */}
+          {recommendations?.length > 0 && (
+            <div className="card p-6 bg-accent-soft border-accent/20">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="text-accent w-5 h-5" />
+                <h2 className="text-lg font-serif text-text-primary">Insights for you</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recommendations.slice(0, 3).map((rec: any, idx: number) => (
+                  <div key={idx} className="bg-surface/50 border border-border/50 p-4 rounded-2xl flex items-start gap-3">
+                    <span className="text-2xl">{rec.icon}</span>
+                    <p className="text-sm text-text-primary leading-relaxed font-medium">{rec.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Profile Summary Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center text-accent mb-2"><Receipt size={20} /></div>
               <p className="text-caption text-text-secondary">Total Orders</p>
               <h3 className="text-metric-value text-text-primary">{profile.totalOrders}</h3>
             </div>
             
             <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center text-accent mb-2"><TrendingUp size={20} /></div>
               <p className="text-caption text-text-secondary">Total Spent</p>
               <h3 className="text-metric-value text-text-primary">₹{profile.totalSpent.toFixed(2)}</h3>
             </div>
 
             <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center text-accent mb-2"><MapPin size={20} /></div>
               <p className="text-caption text-text-secondary">Places Visited</p>
               <h3 className="text-metric-value text-text-primary">{profile.restaurantsVisited}</h3>
             </div>
 
             <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center text-accent mb-2"><Award size={20} /></div>
-              <p className="text-caption text-text-secondary">Loyalty Progress</p>
-              <h3 className="text-metric-value text-text-primary">Level 1</h3>
+              <p className="text-caption text-text-secondary">Loyalty Points</p>
+              <h3 className="text-metric-value text-text-primary">{loyaltyProgress.currentPoints}</h3>
+              {loyaltyProgress.nextThreshold && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-surface">
+                  <div className="h-full bg-accent" style={{ width: `${loyaltyProgress.progressPercent}%` }} />
+                </div>
+              )}
+            </div>
+
+            {/* NEW ADDITIONS */}
+            <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 mb-2"><TrendingUp size={20} /></div>
+              <p className="text-caption text-text-secondary">Avg Order Value</p>
+              <h3 className="text-metric-value text-text-primary">₹{(profile.averageOrderValue || 0).toFixed(2)}</h3>
+            </div>
+
+            <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-2"><Clock size={20} /></div>
+              <p className="text-caption text-text-secondary">Visit Frequency</p>
+              <h3 className="text-metric-value text-text-primary">{profile.visitFrequency || 0} times</h3>
+            </div>
+
+            <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 mb-2"><User size={20} /></div>
+              <p className="text-caption text-text-secondary">Your Status</p>
+              <h3 className="text-metric-value text-text-primary capitalize">{profile.customerSegment?.replace('_', ' ') || 'New'}</h3>
+            </div>
+
+            <div className="card p-5 flex flex-col gap-2 relative overflow-hidden group">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 mb-2"><Star size={20} /></div>
+              <p className="text-caption text-text-secondary">Member Since</p>
+              <h3 className="text-lg font-bold text-text-primary mt-1">
+                {profile.memberSince ? new Date(profile.memberSince).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : 'Recently'}
+              </h3>
             </div>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8">
-            {/* Recent Orders Snippet */}
-            <div>
-              <div className="flex justify-between items-end mb-4">
-                <h2 className="text-xl font-serif text-text-primary">Recent Orders</h2>
-                <button onClick={() => setActiveTab("history")} className="text-sm text-accent hover:underline">View All</button>
-              </div>
-              <div className="space-y-4">
-                {recentOrders.slice(0, 3).map((order: any) => (
-                  <div key={order.sessionId} className="card p-4 flex items-center gap-4 hover:border-accent/30 transition-colors">
-                    <div className="w-12 h-12 rounded-xl bg-surface border border-border flex items-center justify-center overflow-hidden">
-                      {order.restaurant?.image ? (
-                        <img src={order.restaurant.image} className="w-full h-full object-cover" alt="" />
-                      ) : (
-                        <Utensils className="text-text-secondary" size={20} />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-text-primary truncate">{order.restaurant?.name || "Unknown Restaurant"}</h4>
-                      <p className="text-xs text-text-secondary mt-1">{new Date(order.date).toLocaleDateString()} • {order.itemsCount} items</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-text-primary">₹{order.total.toFixed(2)}</p>
-                      <Link href={`/menu/${order.restaurant?.id}`} className="text-xs text-accent mt-1 inline-block font-medium hover:underline">Reorder</Link>
-                    </div>
+            
+            {/* Spending Chart */}
+            <div className="card p-6">
+              <h3 className="text-lg font-serif text-text-primary mb-6">Spending Overview</h3>
+              {monthlySpendingChart && monthlySpendingChart.length > 0 ? (
+                <div className="h-[250px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={monthlySpendingChart}>
+                      <defs>
+                        <linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="var(--accent)" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                      <XAxis dataKey="month" stroke="var(--text-tertiary)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => val.split("-")[1]} />
+                      <YAxis stroke="var(--text-tertiary)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', borderRadius: '12px' }}
+                        itemStyle={{ color: 'var(--text-primary)' }}
+                        formatter={(value: any) => [`₹${value}`, 'Spent']}
+                      />
+                      <Area type="monotone" dataKey="amount" stroke="var(--accent)" strokeWidth={2} fillOpacity={1} fill="url(#colorSpend)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <EmptyState icon={TrendingDown} title="No Data Yet" description="Your spending trends will appear here once you start ordering." compact />
+              )}
+            </div>
+
+            {/* Achievements Snippet */}
+            <div className="card p-6">
+              <h2 className="text-lg font-serif text-text-primary mb-4">Your Achievements</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {achievements.filter((a:any) => a.unlocked).slice(0, 4).map((achievement: any) => (
+                  <div key={achievement.id} className="bg-surface border border-accent/20 p-4 rounded-2xl text-center">
+                    <p className="text-2xl mb-2">{achievement.label.split(" ").pop()}</p>
+                    <p className="text-sm font-medium text-text-primary">{achievement.label.replace(/ [^ ]+$/, '')}</p>
                   </div>
                 ))}
-                {recentOrders.length === 0 && (
-                  <div className="p-8 text-center border border-dashed border-border rounded-2xl">
-                    <p className="text-text-secondary">No orders yet.</p>
+                {achievements.filter((a:any) => a.unlocked).length === 0 && (
+                  <div className="col-span-full">
+                    <EmptyState icon={Award} title="No achievements yet" description="Place your first order to start unlocking badges!" compact />
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Loyalty / Achievements Snippet */}
-            <div>
-              <h2 className="text-xl font-serif text-text-primary mb-4">Achievements</h2>
-              <div className="card p-6 text-center border-dashed border-border relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent z-0"></div>
-                <div className="relative z-10">
-                  <Award size={48} className="mx-auto text-accent mb-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-                  <h3 className="text-card-title text-text-primary mb-2">Foodie Starter</h3>
-                  <p className="text-caption text-text-secondary max-w-xs mx-auto">Complete 5 more orders to unlock your next tier and earn exclusive rewards.</p>
-                  <div className="w-full bg-surface border border-border h-2 rounded-full mt-6 overflow-hidden">
-                    <div className="bg-accent h-full w-1/4 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
       )}
@@ -276,9 +345,13 @@ export default function CustomerDashboardPage() {
               </div>
             ))}
             {recentOrders.length === 0 && (
-              <div className="col-span-full py-20 text-center">
-                <Receipt className="w-16 h-16 text-text-secondary mx-auto mb-4 opacity-50" />
-                <h3 className="text-xl font-medium text-text-primary">No history yet</h3>
+              <div className="col-span-full">
+                <EmptyState 
+                  icon={Receipt} 
+                  title="No order history" 
+                  description="You haven't placed any orders yet. Discover a restaurant nearby and get started." 
+                  primaryAction={{ label: "Find Restaurants", onClick: () => window.location.href="/explore" }}
+                />
               </div>
             )}
           </div>
@@ -311,8 +384,12 @@ export default function CustomerDashboardPage() {
                 </Link>
               ))}
               {savedRestaurants.length === 0 && (
-                <div className="col-span-full p-10 text-center border border-dashed border-border rounded-3xl">
-                  <p className="text-text-secondary">You haven't saved any restaurants yet.</p>
+                <div className="col-span-full">
+                  <EmptyState 
+                    icon={Heart} 
+                    title="No saved restaurants" 
+                    description="Tap the heart icon on any restaurant page to save it for quick access later." 
+                  />
                 </div>
               )}
             </div>
@@ -333,8 +410,13 @@ export default function CustomerDashboardPage() {
                 </div>
               ))}
               {favoriteItems.length === 0 && (
-                <div className="col-span-full p-10 text-center border border-dashed border-border rounded-3xl">
-                  <p className="text-text-secondary">Order items to add them to your favorites.</p>
+                <div className="col-span-full">
+                  <EmptyState 
+                    icon={Star} 
+                    title="No favorite items" 
+                    description="Items you order frequently will automatically appear here." 
+                    compact
+                  />
                 </div>
               )}
             </div>
@@ -366,10 +448,11 @@ export default function CustomerDashboardPage() {
               </div>
             ))}
             {recentReviews.length === 0 && (
-              <div className="p-16 text-center border border-dashed border-border rounded-3xl">
-                <MessageSquare className="w-12 h-12 text-text-secondary mx-auto mb-4 opacity-50" />
-                <p className="text-text-secondary">You haven't submitted any ratings yet.</p>
-              </div>
+              <EmptyState 
+                icon={MessageSquare} 
+                title="No ratings submitted" 
+                description="After your next order, you'll be asked to rate your experience." 
+              />
             )}
           </div>
         </div>

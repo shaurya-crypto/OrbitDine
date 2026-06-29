@@ -6,8 +6,8 @@ import TableModel from "@/models/Table";
 import OrderSessionModel from "@/models/OrderSession";
 import { eventBus } from "@/lib/services/eventBus";
 import { pusherServer } from "@/lib/pusher/server";
-import BillModel from "@/models/Bill";
-import UserModel from "@/models/User";
+import { syncAfterSessionClose } from "@/lib/services/UserSyncService";
+import AnalyticsEvent from "@/models/AnalyticsEvent";
 
 const closeSchema = z.object({
   sessionId: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
@@ -62,22 +62,9 @@ export async function POST(req: Request) {
       orderSession.endedAt = new Date();
       await orderSession.save({ session: dbSession });
 
-      // 2.5 Update User Stats
-      if (orderSession.userId) {
-        const user = await UserModel.findById(orderSession.userId).session(dbSession);
-        if (user) {
-          const bill = await BillModel.findOne({ sessionId: orderSession._id }).session(dbSession);
-          const amount = bill ? bill.grandTotal : 0;
-          user.totalOrders = (user.totalOrders || 0) + 1;
-          user.totalSpent = (user.totalSpent || 0) + amount;
-          await user.save({ session: dbSession });
-        }
-      }
-
       // 3. Update Table Status
       const table = await TableModel.findById(orderSession.tableId).session(dbSession);
       if (table) {
-        // Unlink session and reset table to available
         table.activeSessionId = undefined;
         table.status = "available";
         await table.save({ session: dbSession });
@@ -87,7 +74,22 @@ export async function POST(req: Request) {
       await dbSession.commitTransaction();
       dbSession.endSession();
 
-      // 5. Broadcast Real-Time Event for Restaurant Dashboard
+      // 5. Sync ALL user statistics from source-of-truth (outside transaction, idempotent)
+      if (orderSession.userId) {
+        syncAfterSessionClose(orderSession.userId).catch(err => {
+          console.error("UserSyncService error (non-blocking):", err);
+        });
+
+        // Track analytics event
+        AnalyticsEvent.create({
+          restaurantId: orderSession.restaurantId,
+          customerId: orderSession.userId,
+          eventType: "checkout" as any,
+          metadata: { sessionId, tableId: orderSession.tableId?.toString() }
+        }).catch(() => {});
+      }
+
+      // 6. Broadcast Real-Time Event for Restaurant Dashboard
       eventBus.emitTableStatusChanged({
         tableId: orderSession.tableId.toString(),
         restaurantId: orderSession.restaurantId.toString(),
@@ -95,7 +97,7 @@ export async function POST(req: Request) {
         timestamp: new Date(),
       });
 
-      // 6. Broadcast to the specific customer session
+      // 7. Broadcast to the specific customer session
       await pusherServer.trigger(`private-session-${sessionId}`, "session_completed", { 
         restaurantId: orderSession.restaurantId.toString() 
       });
@@ -113,11 +115,10 @@ export async function POST(req: Request) {
         dbSession.endSession();
       }
       
-      // Retry on transient transaction errors (WriteConflicts)
       if (error.hasErrorLabel && error.hasErrorLabel("TransientTransactionError") && retries > 1) {
         retries--;
         console.warn(`TransientTransactionError in close session, retrying... (${retries} retries left)`);
-        await new Promise(res => setTimeout(res, 200)); // Small backoff before retry
+        await new Promise(res => setTimeout(res, 200));
         continue;
       }
 

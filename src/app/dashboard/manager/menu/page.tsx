@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useRealtimeMenu } from "@/hooks/useRealtimeMenu";
-import { Plus, Image as ImageIcon, Trash2, Edit2, Loader2, Search, AlertTriangle } from "lucide-react";
+import { Plus, Image as ImageIcon, Trash2, Edit2, Loader2, Search, AlertTriangle, Camera } from "lucide-react";
 import { apiClient as axios } from "@/services/apiClient";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -45,10 +45,26 @@ export default function MenuManagementPage() {
     spiceLevel: "0",
     seasonalityTags: "",
     aiTags: "",
+    priceHikeActive: false,
+    priceHikeNewPrice: "",
+    priceHikeStartTime: "",
+    priceHikeEndTime: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Prevent background scrolling when any modal is open
+  useEffect(() => {
+    if (isModalOpen || categoryModal.isOpen || deleteModal.isOpen || messageModal.isOpen || clearAllModal.isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isModalOpen, categoryModal.isOpen, deleteModal.isOpen, messageModal.isOpen, clearAllModal.isOpen]);
 
   if (isLoading || !menuData) return <div className="p-8 text-text-primary flex justify-center"><Loader2 className="animate-spin text-accent" /></div>;
 
@@ -68,7 +84,8 @@ export default function MenuManagementPage() {
     setFormData({ 
       name: "", description: "", price: "", categoryId: displayCategory || "", veg: true, available: true,
       isBestseller: false, chefSpecial: false, isNewArrival: false, limitedTimeOffer: false, tags: "",
-      cogs: "", profitMargin: "", flavorProfile: "", spiceLevel: "0", seasonalityTags: "", aiTags: ""
+      cogs: "", profitMargin: "", flavorProfile: "", spiceLevel: "0", seasonalityTags: "", aiTags: "",
+      priceHikeActive: false, priceHikeNewPrice: "", priceHikeStartTime: "", priceHikeEndTime: ""
     });
     setImageFile(null);
     setImagePreview("");
@@ -95,6 +112,10 @@ export default function MenuManagementPage() {
       spiceLevel: item.spiceLevel ? item.spiceLevel.toString() : "0",
       seasonalityTags: item.seasonalityTags ? item.seasonalityTags.join(", ") : "",
       aiTags: item.aiTags ? item.aiTags.join(", ") : "",
+      priceHikeActive: item.priceHike?.active || false,
+      priceHikeNewPrice: item.priceHike?.newPrice ? item.priceHike.newPrice.toString() : "",
+      priceHikeStartTime: item.priceHike?.startTime ? new Date(item.priceHike.startTime).toISOString().slice(0, 16) : "",
+      priceHikeEndTime: item.priceHike?.endTime ? new Date(item.priceHike.endTime).toISOString().slice(0, 16) : "",
     });
     setImageFile(null);
     setImagePreview(item.image || "");
@@ -144,6 +165,12 @@ export default function MenuManagementPage() {
         spiceLevel: parseInt(formData.spiceLevel),
         cogs: formData.cogs ? parseFloat(formData.cogs) : undefined,
         profitMargin: formData.profitMargin ? parseFloat(formData.profitMargin) : undefined,
+        priceHike: {
+          active: formData.priceHikeActive,
+          newPrice: formData.priceHikeNewPrice ? parseFloat(formData.priceHikeNewPrice) : undefined,
+          startTime: formData.priceHikeStartTime ? new Date(formData.priceHikeStartTime) : undefined,
+          endTime: formData.priceHikeEndTime ? new Date(formData.priceHikeEndTime) : undefined,
+        },
         image: finalImageUrl,
         restaurantId
       };
@@ -466,12 +493,18 @@ export default function MenuManagementPage() {
 
       {/* Add/Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
-          <div className="bg-surface border border-border rounded-none sm:rounded-3xl w-full max-w-2xl min-h-screen sm:min-h-0 shadow-2xl relative">
-            <div className="p-6 md:p-8">
-              <h2 className="text-2xl font-serif text-text-primary mb-6">{editingItem ? 'Edit Menu Item' : 'Add New Item'}</h2>
-              
-              <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="fixed inset-0 z-50 bg-surface sm:bg-black/60 sm:backdrop-blur-sm flex items-center justify-center sm:p-4">
+          <div className="bg-surface w-full h-full sm:h-auto sm:max-h-[90dvh] sm:w-[95vw] md:max-w-3xl sm:rounded-3xl shadow-2xl flex flex-col relative overflow-hidden">
+            
+            {/* Header */}
+            <div className="p-4 sm:p-6 md:p-8 border-b border-border flex-shrink-0 flex justify-between items-center bg-surface z-10">
+              <h2 className="text-xl sm:text-2xl font-serif text-text-primary">{editingItem ? 'Edit Menu Item' : 'Add New Item'}</h2>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="p-2 bg-base hover:bg-hover rounded-xl text-text-secondary transition-colors">✕</button>
+            </div>
+            
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
+              <form id="menu-form" onSubmit={handleSubmit} className="space-y-6">
                 <div className="flex flex-col md:flex-row gap-6">
                   {/* Image Upload Area */}
                   <div className="w-full md:w-1/3 space-y-4">
@@ -481,17 +514,34 @@ export default function MenuManagementPage() {
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-text-secondary gap-2">
                           <ImageIcon size={32} />
-                          <span className="text-xs font-medium">Upload Image</span>
+                          <span className="text-xs font-medium">No Photo</span>
                         </div>
                       )}
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleImageChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
                     </div>
-                    <p className="text-[10px] text-text-secondary text-center">Supported: JPG, PNG, WEBP (Max 5MB)</p>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1 bg-surface border border-border rounded-xl p-3 flex flex-col items-center justify-center hover:bg-hover transition-colors">
+                        <ImageIcon size={20} className="text-text-secondary mb-1" />
+                        <span className="text-[10px] uppercase font-bold text-text-secondary tracking-wider mt-1">Upload</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleImageChange}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                      <div className="relative flex-1 bg-surface border border-border rounded-xl p-3 flex flex-col items-center justify-center hover:bg-hover transition-colors">
+                        <Camera size={20} className="text-text-secondary mb-1" />
+                        <span className="text-[10px] uppercase font-bold text-text-secondary tracking-wider mt-1">Camera</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="environment"
+                          onChange={handleImageChange}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-text-secondary text-center pt-1">Supported: JPG, PNG, WEBP (Max 5MB)</p>
                   </div>
 
                   {/* Form Fields */}
@@ -564,11 +614,11 @@ export default function MenuManagementPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-medium text-text-secondary mb-1.5">Cost Of Goods Sold (COGS ₹)</label>
-                          <input type="number" step="0.01" value={formData.cogs} onChange={e => setFormData({...formData, cogs: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="e.g. 120.00" />
+                          <input type="number" step="0.01" value={formData.cogs} onChange={e => setFormData({...formData, cogs: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder={formData.price ? `e.g. ${(parseFloat(formData.price) * 0.35).toFixed(2)} (35% est.)` : "e.g. 120.00"} />
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-text-secondary mb-1.5">Estimated Profit Margin (%)</label>
-                          <input type="number" step="0.1" value={formData.profitMargin} onChange={e => setFormData({...formData, profitMargin: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder="e.g. 40" />
+                          <input type="number" step="0.1" value={formData.profitMargin} onChange={e => setFormData({...formData, profitMargin: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-accent/50 focus:outline-none" placeholder={formData.price && formData.cogs ? `e.g. ${(((parseFloat(formData.price) - parseFloat(formData.cogs)) / parseFloat(formData.price)) * 100).toFixed(1)}%` : "e.g. 65%"} />
                         </div>
                         <div>
                           <label className="block text-xs font-medium text-text-secondary mb-1.5">Flavor Profile (comma separated)</label>
@@ -588,18 +638,53 @@ export default function MenuManagementPage() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Surge Pricing / Price Hike Section */}
+                    <div className="pt-4 mt-4 border-t border-border">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+                          <span className="text-red-500">📈</span> Surge Pricing / Scheduled Hike
+                        </h3>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" checked={formData.priceHikeActive} onChange={e => setFormData({...formData, priceHikeActive: e.target.checked})} className="w-4 h-4 rounded border-border bg-base text-red-500 focus:ring-red-500/50" />
+                          <span className="text-xs text-text-secondary">Enable</span>
+                        </label>
+                      </div>
+                      
+                      {formData.priceHikeActive && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-red-500/5 p-4 rounded-xl border border-red-500/10">
+                          <div>
+                            <label className="block text-xs font-medium text-text-secondary mb-1.5">Surge Price (₹)</label>
+                            <input required={formData.priceHikeActive} type="number" step="0.01" value={formData.priceHikeNewPrice} onChange={e => setFormData({...formData, priceHikeNewPrice: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-red-500/50 focus:outline-none" placeholder="349.00" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-text-secondary mb-1.5">Start Time</label>
+                            <input required={formData.priceHikeActive} type="datetime-local" value={formData.priceHikeStartTime} onChange={e => setFormData({...formData, priceHikeStartTime: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-red-500/50 focus:outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-text-secondary mb-1.5">End Time</label>
+                            <input required={formData.priceHikeActive} type="datetime-local" value={formData.priceHikeEndTime} onChange={e => setFormData({...formData, priceHikeEndTime: e.target.value})} className="w-full bg-base border border-border rounded-xl px-4 py-2.5 text-text-primary focus:ring-2 focus:ring-red-500/50 focus:outline-none" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-6 border-t border-border">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl font-medium text-text-secondary hover:text-text-primary transition-colors">
-                    Cancel
-                  </button>
-                  <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 bg-accent hover:bg-accent/90 text-white rounded-xl font-medium flex items-center gap-2 transition-colors disabled:opacity-50">
-                    {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : 'Save Item'}
-                  </button>
+                <div className="hidden sm:flex justify-end gap-3 pt-6 border-t border-border">
+                  {/* Kept just for spacing if needed, but the real footer is fixed below */}
                 </div>
               </form>
+            </div>
+            
+            {/* Footer */}
+            <div className="p-4 sm:p-6 md:p-8 border-t border-border flex-shrink-0 bg-surface flex justify-end gap-3 z-10">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-xl font-medium text-text-secondary hover:text-text-primary transition-colors">
+                Cancel
+              </button>
+              <button type="submit" form="menu-form" disabled={isSubmitting} className="px-6 py-2.5 bg-accent hover:bg-accent/90 text-white rounded-xl font-medium flex items-center gap-2 transition-colors disabled:opacity-50">
+                {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : 'Save Item'}
+              </button>
             </div>
           </div>
         </div>

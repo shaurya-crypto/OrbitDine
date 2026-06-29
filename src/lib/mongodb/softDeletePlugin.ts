@@ -60,10 +60,21 @@ export function softDeletePlugin(schema: Schema) {
   // Aggregate Interception
   schema.pre("aggregate", function (this: any) {
     const pipeline = this.pipeline();
-    // Insert a match stage at the very beginning to filter out deleted documents
-    if (pipeline.length > 0 && pipeline[0].$match) {
-      if (pipeline[0].$match.deletedAt === undefined) {
-        pipeline[0].$match.deletedAt = null;
+    if (pipeline.length > 0) {
+      if (pipeline[0].$geoNear) {
+        // $geoNear must remain the first stage. Inject deletedAt filter into its internal query.
+        if (!pipeline[0].$geoNear.query) {
+          pipeline[0].$geoNear.query = {};
+        }
+        if (pipeline[0].$geoNear.query.deletedAt === undefined) {
+          pipeline[0].$geoNear.query.deletedAt = null;
+        }
+      } else if (pipeline[0].$match) {
+        if (pipeline[0].$match.deletedAt === undefined) {
+          pipeline[0].$match.deletedAt = null;
+        }
+      } else {
+        pipeline.unshift({ $match: { deletedAt: null } });
       }
     } else {
       pipeline.unshift({ $match: { deletedAt: null } });

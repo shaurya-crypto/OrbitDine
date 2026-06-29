@@ -12,6 +12,8 @@ import { CategoryTabs } from "@/components/customer/CategoryTabs";
 import { MenuItemCard } from "@/components/customer/MenuItemCard";
 import { FloatingCartButton } from "@/components/customer/FloatingCartButton";
 import { Loader } from "@/components/ui/Loader";
+import { useCart } from "@/hooks/useCart";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function MenuPage() {
   const params = useParams();
@@ -47,22 +49,58 @@ export default function MenuPage() {
     return data.menu.flatMap((cat: any) => cat.items);
   }, [data]);
 
+  const { data: cartData, addToCart } = useCart(sessionId);
+  const toast = useToast();
+
+  const handleFeaturedAddToCart = async (item: any) => {
+    if (!sessionId) {
+      toast.error("Please scan a table QR code to order");
+      return;
+    }
+    const cartItem = cartData?.cart?.find((ci: any) => ci.menuItemId === item.id);
+    if (cartItem) {
+      toast.success("Item already in cart. Use the menu to add more.");
+      return;
+    }
+    await addToCart({
+      sessionId,
+      menuItemId: item.id,
+      quantity: 1,
+    });
+    toast.success(`Added ${item.name} to cart!`);
+  };
+
   // Filter items based on search and active category
   const filteredMenu = useMemo(() => {
     if (!data?.menu) return [];
     
     const query = searchQuery.toLowerCase().trim();
+    // Simple AI mode heuristic: query implies multiple words or descriptive terms
+    const isAiQuery = query.length > 5 && query.split(' ').length > 1;
+    const keywords = query.split(' ').filter(k => k.length > 2);
     
     return data.menu.map((category: any) => {
       const items = category.items.filter((item: any) => {
-        const matchesSearch = !query || 
-          item.name.toLowerCase().includes(query) || 
-          (item.description && item.description.toLowerCase().includes(query)) ||
-          (item.ingredients && item.ingredients.some((i: string) => i.toLowerCase().includes(query))) ||
-          (item.dietaryTags && item.dietaryTags.some((d: string) => d.toLowerCase().includes(query))) ||
-          category.name.toLowerCase().includes(query);
-          
-        return matchesSearch;
+        if (!query) return true;
+        
+        const searchStr = [
+          item.name, 
+          item.description, 
+          ...(item.ingredients || []), 
+          ...(item.tags || []), 
+          ...(item.dietaryTags || []), 
+          ...(item.flavorProfile || []), 
+          ...(item.aiTags || []), 
+          category.name
+        ].filter(Boolean).join(' ').toLowerCase();
+        
+        if (isAiQuery && keywords.length > 0) {
+          // AI Semantic matching: match any keyword (OR logic) for fuzzy suggestions
+          return keywords.some(k => searchStr.includes(k));
+        } else {
+          // Exact substring match (AND logic)
+          return searchStr.includes(query);
+        }
       });
       return { ...category, items };
     }).filter((cat: any) => cat.items.length > 0);
@@ -112,28 +150,28 @@ export default function MenuPage() {
             items={ltos} 
             badgeText="LTO" 
             badgeColor="bg-red-500" 
-            onAddToCart={() => {}}
+            onAddToCart={handleFeaturedAddToCart}
           />
           <FeaturedCarousel 
             title="Chef Specials 👨‍🍳" 
             items={chefSpecials} 
             badgeText="Special" 
             badgeColor="bg-purple-500" 
-            onAddToCart={() => {}}
+            onAddToCart={handleFeaturedAddToCart}
           />
           <FeaturedCarousel 
             title="Best Sellers 🏆" 
             items={bestsellers} 
             badgeText="Bestseller" 
             badgeColor="bg-orange-500" 
-            onAddToCart={() => {}}
+            onAddToCart={handleFeaturedAddToCart}
           />
           <FeaturedCarousel 
             title="Today's Popular Items 🔥" 
-            items={newArrivals} // Map new arrivals or highly viewed items here
+            items={newArrivals}
             badgeText="Popular" 
             badgeColor="bg-blue-500" 
-            onAddToCart={() => {}}
+            onAddToCart={handleFeaturedAddToCart}
           />
         </div>
       )}

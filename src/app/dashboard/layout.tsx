@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/dashboard/layout/Sidebar";
 import { useAuthStore, Role } from "@/stores/authStore";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { realtimeService, ConnectionState } from "@/services/realtimeService";
 import { useQueryClient } from "@tanstack/react-query";
 import { Wifi, WifiOff, RefreshCw, ShieldAlert, Menu, Search } from "lucide-react";
@@ -227,28 +228,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <header className="hidden md:flex items-center justify-between px-6 py-3 border-b border-border bg-surface/80 backdrop-blur-lg sticky top-0 z-30">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1 text-[13px]" aria-label="Breadcrumb">
-              <span className="text-text-tertiary">Dashboard</span>
-              {breadcrumbSegments.map((seg, i) => (
-                <span key={i} className="flex items-center gap-1">
-                  <span className="text-text-tertiary">/</span>
-                  <span className={i === breadcrumbSegments.length - 1 ? "text-text-primary font-medium" : "text-text-tertiary"}>
-                    {breadcrumbLabels[seg] || seg}
+              <Link href="/dashboard" className="text-text-tertiary hover:text-text-primary transition-colors">Dashboard</Link>
+              {breadcrumbSegments.map((seg, i) => {
+                const path = `/dashboard/${breadcrumbSegments.slice(0, i + 1).join("/")}`;
+                const isLast = i === breadcrumbSegments.length - 1;
+                return (
+                  <span key={i} className="flex items-center gap-1">
+                    <span className="text-text-tertiary">/</span>
+                    {isLast ? (
+                      <span className="text-text-primary font-medium">{breadcrumbLabels[seg] || seg}</span>
+                    ) : (
+                      <Link href={path} className="text-text-tertiary hover:text-text-primary transition-colors">
+                        {breadcrumbLabels[seg] || seg}
+                      </Link>
+                    )}
                   </span>
-                </span>
-              ))}
+                );
+              })}
             </nav>
 
             {/* Right Controls */}
             <div className="flex items-center gap-2">
-              {/* Sync Status */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium" title={`Status: ${connState}`}>
-                {connState === "connected" ? (
-                  <><Wifi size={12} className="text-emerald-500" /><span className="text-text-tertiary">Live</span></>
-                ) : (
-                  <><WifiOff size={12} className="text-text-tertiary" /><span className="text-text-tertiary">Offline</span></>
-                )}
-              </div>
-
               <button
                 onClick={() => setShowBroadcastModal(true)}
                 className="p-2 text-text-secondary hover:text-text-primary hover:bg-hover rounded-xl transition-colors"

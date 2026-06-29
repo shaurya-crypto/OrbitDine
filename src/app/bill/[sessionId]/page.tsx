@@ -7,14 +7,13 @@ import { generateBill } from "@/services/billService";
 import { Loader } from "@/components/ui/Loader";
 import { Receipt, CheckCircle2, Star, Send, BellRing } from "lucide-react";
 import axios from "axios";
-
 import { useToast } from "@/components/ui/ToastProvider";
 import { FeedbackCard } from "@/components/customer/FeedbackCard";
 
 export default function BillPage() {
   const router = useRouter();
   const { sessionId: paramSessionId } = useParams();
-  const { sessionId, clearSession } = useSessionStore();
+  const { sessionId, clearSession, _hasHydrated } = useSessionStore();
   const [bill, setBill] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRequestingBill, setIsRequestingBill] = useState(false);
@@ -23,10 +22,12 @@ export default function BillPage() {
   const toast = useToast();
 
   useEffect(() => {
-    if (!sessionId || sessionId !== paramSessionId) {
+    if (_hasHydrated && (!sessionId || sessionId !== paramSessionId)) {
       router.push("/");
       return;
     }
+    
+    if (!_hasHydrated) return;
 
     async function fetchBill() {
       try {
@@ -44,7 +45,7 @@ export default function BillPage() {
     }
 
     fetchBill();
-  }, [sessionId, paramSessionId, router, toast]);
+  }, [sessionId, paramSessionId, _hasHydrated, router, toast]);
 
   const handleRequestBillClick = async () => {
     setIsRequestingBill(true);

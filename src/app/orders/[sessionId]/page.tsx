@@ -14,7 +14,7 @@ import { FeedbackCard } from "@/components/customer/FeedbackCard";
 export default function OrdersPage() {
   const router = useRouter();
   const { sessionId: paramSessionId } = useParams();
-  const { sessionId, restaurantId } = useSessionStore();
+  const { sessionId, restaurantId, _hasHydrated } = useSessionStore();
   const { data, isLoading } = useOrderTracking(sessionId);
   const [isRequestingBill, setIsRequestingBill] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -24,10 +24,10 @@ export default function OrdersPage() {
 
   useEffect(() => {
     // If param doesn't match session, user shouldn't be here
-    if (!sessionId || sessionId !== paramSessionId) {
+    if (_hasHydrated && (!sessionId || sessionId !== paramSessionId)) {
       router.push("/");
     }
-  }, [sessionId, paramSessionId, router]);
+  }, [sessionId, paramSessionId, _hasHydrated, router]);
 
   const handleRequestBill = async () => {
     if (!sessionId) return;

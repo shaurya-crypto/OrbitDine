@@ -42,6 +42,24 @@ export default function OwnerExportsPage() {
       title: "Menu Items",
       description: "Export your entire menu catalog with pricing and availability.",
       icon: <HardDriveDownload className="text-orange-500" size={24} />
+    },
+    {
+      id: "customers",
+      title: "Customer Profiles",
+      description: "Export loyalty data, predicted churn, and LTV metrics for users.",
+      icon: <HardDriveDownload className="text-purple-500" size={24} />
+    },
+    {
+      id: "sessions",
+      title: "Table Sessions",
+      description: "Export table QR sessions with order counts and totals.",
+      icon: <HardDriveDownload className="text-pink-500" size={24} />
+    },
+    {
+      id: "analytics",
+      title: "Analytics Events",
+      description: "Export raw click, view, and engagement events for custom BI.",
+      icon: <HardDriveDownload className="text-indigo-500" size={24} />
     }
   ];
 

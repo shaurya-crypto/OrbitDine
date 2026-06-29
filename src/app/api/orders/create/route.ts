@@ -8,6 +8,7 @@ import OrderModel from "@/models/Order";
 import RestaurantModel from "@/models/Restaurant";
 import TableModel from "@/models/Table";
 import UserModel from "@/models/User";
+import MenuItemModel from "@/models/MenuItem";
 import { calculateCartTotals } from "@/lib/services/cartService";
 import { eventBus } from "@/lib/services/eventBus";
 import crypto from "crypto";
@@ -55,6 +56,18 @@ export async function POST(req: NextRequest) {
     // 1. Calculate final totals from cart snapshot
     const totals = calculateCartTotals(orderSession, restaurant);
 
+    // 1.5 Calculate total COGS based on real MenuItem data
+    const menuItemIds = orderSession.cart.map(item => item.menuItemId);
+    const menuItems = await MenuItemModel.find({ _id: { $in: menuItemIds } }).lean();
+    
+    let totalCogs = 0;
+    orderSession.cart.forEach(cartItem => {
+      const matchedMenu = menuItems.find(mi => mi._id.toString() === cartItem.menuItemId.toString());
+      if (matchedMenu && matchedMenu.cogs) {
+        totalCogs += matchedMenu.cogs * cartItem.quantity;
+      }
+    });
+
     // 2. Generate unique order number (e.g., ORB-A1B2C)
     const orderNumber = `ORB-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 
@@ -72,6 +85,7 @@ export async function POST(req: NextRequest) {
           tax: totals.tax,
           serviceCharge: totals.serviceCharge,
           grandTotal: totals.grandTotal,
+          cogs: totalCogs,
           status: "received",
           statusHistory: [
             {

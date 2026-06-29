@@ -14,19 +14,20 @@ import { useConfirm } from "@/components/ui/ConfirmProvider";
 
 export default function CartPage() {
   const router = useRouter();
-  const { sessionId, restaurantId } = useSessionStore();
+  const { sessionId, restaurantId, _hasHydrated } = useSessionStore();
   const { data: cartData, isLoading, updateQuantity, removeFromCart, clearCart } = useCart(sessionId);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const toast = useToast();
   const { confirm } = useConfirm();
 
   useEffect(() => {
-    if (!sessionId) {
+    if (_hasHydrated && !sessionId) {
       router.push("/");
     }
-  }, [sessionId, router]);
+  }, [sessionId, _hasHydrated, router]);
 
-  if (isLoading) return <div className="h-screen w-full flex items-center justify-center bg-neutral-50"><Loader /></div>;
+  if (!cartData || !cartData.cart) return <div className="h-screen w-full flex items-center justify-center bg-neutral-50"><Loader /></div>;
+  if (isLoading || !_hasHydrated) return <div className="h-screen w-full flex items-center justify-center bg-neutral-50"><Loader /></div>;
 
   const cartItems = cartData?.cart || [];
   const isEmpty = cartItems.length === 0;

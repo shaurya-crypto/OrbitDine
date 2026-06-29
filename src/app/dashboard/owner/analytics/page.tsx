@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 
 type TimeRange = 'today' | 'week' | 'month' | 'year' | 'all';
-type Section = 'revenue' | 'orders' | 'menu' | 'customers' | 'feedback' | 'discovery' | 'tables' | 'time' | 'operational' | 'ai_insights';
+type Section = 'revenue' | 'orders' | 'menu' | 'customers' | 'audience' | 'feedback' | 'discovery' | 'tables' | 'time' | 'operational' | 'ai_insights';
 
 export default function AnalyticsPage() {
   const { restaurantId } = useAuthStore();
@@ -46,6 +46,7 @@ export default function AnalyticsPage() {
   const tabs: { id: Section, label: string }[] = [
     { id: 'revenue', label: 'Revenue Intel' },
     { id: 'customers', label: 'Customer Intel' },
+    { id: 'audience', label: 'Audience Deep Dive' },
     { id: 'feedback', label: 'Feedback & Reviews' },
     { id: 'operational', label: 'Kitchen & Operations' },
     { id: 'ai_insights', label: 'AI Insights' },
@@ -99,7 +100,7 @@ export default function AnalyticsPage() {
               setData(null);
               setActiveSection(tab.id);
             }}
-            className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+            className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
               activeSection === tab.id 
               ? "bg-accent/10 text-accent border border-accent/20" 
               : "bg-surface border border-border text-text-secondary hover:text-text-primary hover:border-zinc-300 dark:hover:border-zinc-700"
@@ -127,6 +128,7 @@ export default function AnalyticsPage() {
             { activeSection === 'orders' && <OrdersSection data={data} /> }
             { activeSection === 'menu' && <MenuSection data={data} /> }
             { activeSection === 'customers' && <CustomersSection data={data} /> }
+            { activeSection === 'audience' && <AudienceSection data={data} /> }
             { activeSection === 'feedback' && <FeedbackSection data={data} /> }
             { activeSection === 'tables' && <TablesSection data={data} /> }
             { activeSection === 'time' && <TimeSection data={data} /> }
@@ -222,6 +224,24 @@ function RevenueSection({ data }: { data: any }) {
             <div className="mt-6 pt-4 border-t border-border">
               <p className="text-xs text-text-secondary">Confidence Score: <span className="text-green-500 font-bold">{confidenceScore}%</span></p>
             </div>
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-6">
+        <div className="lg:col-span-3">
+          <h3 className="text-lg font-medium mb-4">Orders Volume Over Time</h3>
+          <div className="w-full bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl p-6 h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={mergedChartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+                <XAxis dataKey="date" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Legend />
+                <Bar dataKey="orders" name="Actual Orders" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="predictedOrders" name="Predicted Orders" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
@@ -331,6 +351,21 @@ function MenuSection({ data }: { data: any }) {
           {(!data.hiddenGems || data.hiddenGems.length === 0) && <p className="text-text-secondary text-sm">No hidden gems detected.</p>}
         </div>
       </div>
+
+      <div className="md:col-span-2 xl:col-span-4 mt-8">
+        <h3 className="text-lg font-medium mb-4">Top Sellers Volume</h3>
+        <div className="bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl p-6 h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.topSellers.slice(0, 10)}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+              <XAxis dataKey="_id" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+              <Bar dataKey="totalSold" name="Total Sold" fill="#10B981" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
@@ -349,35 +384,33 @@ function CustomersSection({ data }: { data: any }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
           <h3 className="text-lg font-medium mb-4">Customer Segments</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-text-primary">VIPs</span>
-              <div className="w-1/2 h-2 bg-surface rounded-full overflow-hidden">
-                <div className="h-full bg-purple-500" style={{ width: `${data.segmentDistribution?.vip || 0}%` }}></div>
-              </div>
-              <span className="text-sm">{data.segmentDistribution?.vip || 0}%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-text-primary">Loyal</span>
-              <div className="w-1/2 h-2 bg-surface rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500" style={{ width: `${data.segmentDistribution?.loyal || 0}%` }}></div>
-              </div>
-              <span className="text-sm">{data.segmentDistribution?.loyal || 0}%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-text-primary">Regulars</span>
-              <div className="w-1/2 h-2 bg-surface rounded-full overflow-hidden">
-                <div className="h-full bg-green-500" style={{ width: `${data.segmentDistribution?.regular || 0}%` }}></div>
-              </div>
-              <span className="text-sm">{data.segmentDistribution?.regular || 0}%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-text-primary">At Risk</span>
-              <div className="w-1/2 h-2 bg-surface rounded-full overflow-hidden">
-                <div className="h-full bg-red-500" style={{ width: `${data.segmentDistribution?.at_risk || 0}%` }}></div>
-              </div>
-              <span className="text-sm">{data.segmentDistribution?.at_risk || 0}%</span>
-            </div>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie 
+                  data={[
+                    { name: 'VIP', value: data.segmentDistribution?.vip || 0, fill: '#8B5CF6' },
+                    { name: 'Loyal', value: data.segmentDistribution?.loyal || 0, fill: '#3B82F6' },
+                    { name: 'Regular', value: data.segmentDistribution?.regular || 0, fill: '#10B981' },
+                    { name: 'At Risk', value: data.segmentDistribution?.at_risk || 0, fill: '#EF4444' }
+                  ].filter(d => d.value > 0)}
+                  cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value"
+                >
+                  {
+                    [
+                      { name: 'VIP', value: data.segmentDistribution?.vip || 0, fill: '#8B5CF6' },
+                      { name: 'Loyal', value: data.segmentDistribution?.loyal || 0, fill: '#3B82F6' },
+                      { name: 'Regular', value: data.segmentDistribution?.regular || 0, fill: '#10B981' },
+                      { name: 'At Risk', value: data.segmentDistribution?.at_risk || 0, fill: '#EF4444' }
+                    ].filter(d => d.value > 0).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))
+                  }
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -536,6 +569,24 @@ function FeedbackSection({ data }: { data: any }) {
           )}
         </div>
       </div>
+
+      <div className="mt-8">
+        <h3 className="text-lg font-medium mb-4">Review Trend Over Time</h3>
+        <div className="bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl p-6 h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data.reviewTrend}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" />
+              <XAxis dataKey="_id" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis yAxisId="left" domain={[0, 5]} stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis yAxisId="right" orientation="right" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+              <Legend />
+              <Line yAxisId="left" type="monotone" dataKey="avgRating" stroke="#F97316" strokeWidth={3} dot={{ r: 4 }} name="Avg Rating" />
+              <Line yAxisId="right" type="monotone" dataKey="count" stroke="#3B82F6" strokeWidth={2} dot={false} name="Total Reviews" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
@@ -667,6 +718,30 @@ function DiscoverySection({ data }: { data: any }) {
         <MetricCard title="Item Clicks" value={data.events.item_click || 0} />
         <MetricCard title="Add to Cart" value={data.events.add_to_cart || 0} />
       </div>
+
+      <div className="mt-8">
+        <h3 className="text-lg font-medium mb-4">Conversion Funnel</h3>
+        <div className="bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl p-6 h-[350px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart 
+              data={[
+                { step: 'Restaurant Views', count: data.events.restaurant_view || 0 },
+                { step: 'Menu Opens', count: data.events.menu_open || 0 },
+                { step: 'Item Views', count: data.events.item_view || 0 },
+                { step: 'Add to Cart', count: data.events.add_to_cart || 0 }
+              ]}
+              layout="vertical"
+              margin={{ left: 100 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#333" />
+              <XAxis type="number" stroke="#888" fontSize={12} />
+              <YAxis dataKey="step" type="category" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+              <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+              <Bar dataKey="count" name="Events" fill="#10B981" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
@@ -713,6 +788,115 @@ function AIInsightsSection({ data }: { data: any }) {
             No active recommendations at this time.
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function AudienceSection({ data }: { data: any }) {
+  if (!data) return null;
+  
+  const churnData = [
+    { name: 'Low Risk', value: data.churnRiskBuckets?.low || 0, fill: '#10B981' },
+    { name: 'Medium Risk', value: data.churnRiskBuckets?.medium || 0, fill: '#F59E0B' },
+    { name: 'High Risk', value: data.churnRiskBuckets?.high || 0, fill: '#EF4444' },
+    { name: 'Critical', value: data.churnRiskBuckets?.critical || 0, fill: '#7F1D1D' }
+  ];
+
+  const dietaryData = [
+    { name: 'Vegan', value: data.dietaryBuckets?.vegan || 0, fill: '#10B981' },
+    { name: 'Vegetarian', value: data.dietaryBuckets?.vegetarian || 0, fill: '#84CC16' },
+    { name: 'Keto', value: data.dietaryBuckets?.keto || 0, fill: '#3B82F6' },
+    { name: 'High Protein', value: data.dietaryBuckets?.high_protein || 0, fill: '#8B5CF6' },
+    { name: 'Gluten Free', value: data.dietaryBuckets?.gluten_free || 0, fill: '#F59E0B' }
+  ].filter(d => d.value > 0);
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* AI Churn Risk Distribution */}
+        <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
+          <h3 className="text-lg font-medium mb-1">AI Churn Risk Breakdown</h3>
+          <p className="text-text-secondary text-sm mb-6">Distribution of customers based on ML churn predictions</p>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={churnData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" opacity={0.2} />
+                <XAxis dataKey="name" stroke="#888" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Bar dataKey="value" name="Customers" radius={[4, 4, 0, 0]}>
+                  {churnData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Dietary Preferences Graph */}
+        <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
+          <h3 className="text-lg font-medium mb-1">Audience Dietary Preferences</h3>
+          <p className="text-text-secondary text-sm mb-6">Based on actual user favorite items and order history tags</p>
+          <div className="h-[250px] w-full">
+            {dietaryData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={dietaryData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                    {dietaryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-text-secondary">Not enough dietary data collected yet.</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Top Customers Table */}
+      <div className="p-6 bg-zinc-50 dark:bg-zinc-900 border border-border rounded-2xl">
+        <h3 className="text-lg font-medium mb-1">Top Customers by Lifetime Value (LTV)</h3>
+        <p className="text-text-secondary text-sm mb-6">Real-time DB query tracking your highest-value diners.</p>
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-surface text-text-secondary border-b border-border">
+              <tr>
+                <th className="py-3 px-4 rounded-tl-lg font-medium">Customer Identity</th>
+                <th className="py-3 px-4 font-medium">Segment</th>
+                <th className="py-3 px-4 font-medium">Visit Freq</th>
+                <th className="py-3 px-4 font-medium">Avg Order Val</th>
+                <th className="py-3 px-4 rounded-tr-lg font-medium text-right">Lifetime Value</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/50">
+              {data.topCustomers && data.topCustomers.map((c: any) => (
+                <tr key={c._id} className="hover:bg-surface/50 transition-colors">
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-text-primary">{c.fullName || "Anonymous"}</div>
+                    <div className="text-xs text-text-secondary mt-0.5">{c.email || "No email"}</div>
+                  </td>
+                  <td className="py-4 px-4 capitalize">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${c.customerSegment === 'vip' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                      {c.customerSegment || "New"}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">{c.visitFrequency || 1} visits</td>
+                  <td className="py-4 px-4">₹{(c.averageOrderValue || 0).toFixed(2)}</td>
+                  <td className="py-4 px-4 text-right font-bold text-emerald-500">₹{(c.lifetimeValue || 0).toFixed(2)}</td>
+                </tr>
+              ))}
+              {(!data.topCustomers || data.topCustomers.length === 0) && (
+                <tr><td colSpan={5} className="py-8 text-center text-text-secondary">No customer data matched. Wait for orders to accumulate.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

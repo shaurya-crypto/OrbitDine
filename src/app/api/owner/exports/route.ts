@@ -7,6 +7,9 @@ import Restaurant from "@/models/Restaurant";
 import Order from "@/models/Order";
 import Review from "@/models/Review";
 import MenuItem from "@/models/MenuItem";
+import User from "@/models/User";
+import OrderSession from "@/models/OrderSession";
+import AnalyticsEvent from "@/models/AnalyticsEvent";
 import mongoose from "mongoose";
 
 const getJwtSecret = () => {
@@ -90,6 +93,47 @@ export async function GET(req: NextRequest) {
           Price: doc.price,
           Available: doc.available ? "Yes" : "No",
           Veg: doc.veg ? "Yes" : "No",
+          CreatedAt: doc.createdAt?.toISOString() || "",
+        });
+        break;
+      case "customers":
+        Model = User;
+        query = { 
+          $or: [
+            { restaurantId: new mongoose.Types.ObjectId(restaurantId) },
+            { savedRestaurants: new mongoose.Types.ObjectId(restaurantId) }
+          ]
+        };
+        dataMapper = (doc: any) => ({
+          ID: doc._id.toString(),
+          Name: doc.fullName,
+          Email: doc.email,
+          Segment: doc.customerSegment || "Unknown",
+          LTV: doc.lifetimeValue || 0,
+          Risk: doc.predictedChurnRisk || 0,
+          CreatedAt: doc.createdAt?.toISOString() || "",
+        });
+        break;
+      case "sessions":
+        Model = OrderSession;
+        dataMapper = (doc: any) => ({
+          ID: doc._id.toString(),
+          TableNumber: doc.tableNumber,
+          Status: doc.status,
+          TotalOrders: doc.cart?.items?.length || 0,
+          TotalSpent: doc.cart?.itemTotal || 0,
+          StartTime: doc.startTime?.toISOString() || "",
+          EndTime: doc.endTime?.toISOString() || "",
+        });
+        break;
+      case "analytics":
+        Model = AnalyticsEvent;
+        dataMapper = (doc: any) => ({
+          ID: doc._id.toString(),
+          EventType: doc.eventType,
+          Category: doc.category || "",
+          SessionId: doc.sessionId?.toString() || "",
+          UserId: doc.userId?.toString() || "",
           CreatedAt: doc.createdAt?.toISOString() || "",
         });
         break;

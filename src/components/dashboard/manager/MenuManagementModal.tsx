@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { X, Plus, Edit2, Trash2 } from "lucide-react";
 import axios from "axios";
@@ -21,6 +21,14 @@ export function MenuManagementModal({ restaurantId, onClose }: MenuManagementMod
   const [activeTab, setActiveTab] = useState<"categories" | "items">("categories");
   const toast = useToast();
   const { confirm } = useConfirm();
+
+  // Prevent background scrolling
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
 
   // Category State
   const [catName, setCatName] = useState("");

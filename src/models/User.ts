@@ -22,6 +22,8 @@ export interface IUser extends Document, ISoftDeleted {
   averageOrderValue?: number;
   lifetimeValue?: number;
   visitFrequency?: number;
+  loyaltyPoints: number;
+  rewardTier: string;
   achievements: string[];
   isVerified: boolean;
   profileImage?: string;
@@ -125,6 +127,15 @@ const UserSchema = new Schema<IUser>(
     visitFrequency: {
       type: Number,
       default: 0,
+    },
+    loyaltyPoints: {
+      type: Number,
+      default: 0,
+    },
+    rewardTier: {
+      type: String,
+      enum: ["bronze", "silver", "gold", "platinum"],
+      default: "bronze",
     },
     achievements: [
       {

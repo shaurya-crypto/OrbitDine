@@ -86,11 +86,22 @@ export async function POST(req: Request) {
       }
     }
 
+    // 4.5 Evaluate Price Hike
+    let currentPrice = menuItem.price;
+    const now = new Date();
+    if (menuItem.priceHike?.active && menuItem.priceHike.startTime && menuItem.priceHike.endTime) {
+      const start = new Date(menuItem.priceHike.startTime);
+      const end = new Date(menuItem.priceHike.endTime);
+      if (now >= start && now <= end && menuItem.priceHike.newPrice) {
+        currentPrice = menuItem.priceHike.newPrice;
+      }
+    }
+
     // 5. Create Cart Item Snapshot
     const cartItem = {
       menuItemId: menuItem._id,
       name: menuItem.name,
-      price: menuItem.price, // Trusting DB price
+      price: currentPrice, // Uses surge price if active
       image: menuItem.image,
       category: menuItem.categoryId.toString(), // Storing as string for snapshot
       quantity,

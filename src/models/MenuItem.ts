@@ -37,6 +37,12 @@ export interface IMenuItem extends Document, ISoftDeleted {
   limitedTimeOffer?: boolean;
   ltoStartDate?: Date;
   ltoEndDate?: Date;
+  priceHike?: {
+    active: boolean;
+    newPrice: number;
+    startTime: Date;
+    endTime: Date;
+  };
   sortOrder: number;
   isDeleted: boolean;
   createdAt: Date;
@@ -139,6 +145,12 @@ const MenuItemSchema = new Schema<IMenuItem>(
     },
     ltoEndDate: {
       type: Date,
+    },
+    priceHike: {
+      active: { type: Boolean, default: false },
+      newPrice: { type: Number },
+      startTime: { type: Date },
+      endTime: { type: Date },
     },
     sortOrder: {
       type: Number,

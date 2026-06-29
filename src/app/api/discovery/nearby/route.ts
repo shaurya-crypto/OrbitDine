@@ -18,7 +18,8 @@ export async function GET(request: Request) {
     let matchStage: any = { status: "active" };
 
     if (query) {
-      matchStage.$text = { $search: query };
+      // Use $regex instead of $text because $text and $geoNear both demand to be the first stage in the pipeline
+      matchStage.name = { $regex: new RegExp(query, "i") };
     }
 
     if (!hasCoordinates && city) {

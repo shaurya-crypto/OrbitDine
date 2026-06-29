@@ -9,6 +9,8 @@ interface SessionState {
   tableNumber: string | null;
   setSession: (sessionId: string, restaurantId: string, tableId: string, tableNumber?: string) => void;
   clearSession: () => void;
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
 }
 
 export const useSessionStore = create<SessionState>()(
@@ -18,12 +20,17 @@ export const useSessionStore = create<SessionState>()(
       restaurantId: null,
       tableId: null,
       tableNumber: null,
+      _hasHydrated: false,
       setSession: (sessionId, restaurantId, tableId, tableNumber) => set({ sessionId, restaurantId, tableId, tableNumber: tableNumber || null }),
       clearSession: () => set({ sessionId: null, restaurantId: null, tableId: null, tableNumber: null }),
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),
     {
       name: "orbitdine-session",
       storage: createJSONStorage(() => idbStorage),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      }
     }
   )
 );

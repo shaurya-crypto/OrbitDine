@@ -19,7 +19,7 @@ export async function PUT(req: NextRequest) {
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { fullName, phoneNumber, defaultCity, locationEnabled } = body;
+    const { fullName, phoneNumber, defaultCity, locationEnabled, profileImage } = body;
 
     await connectToDatabase();
 
@@ -30,8 +30,17 @@ export async function PUT(req: NextRequest) {
     if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
     if (defaultCity !== undefined) user.defaultCity = defaultCity;
     if (locationEnabled !== undefined) user.locationEnabled = locationEnabled;
+    if (profileImage !== undefined) user.profileImage = profileImage;
 
     await user.save();
+
+    // Fire analytics event
+    const AnalyticsEvent = (await import("@/models/AnalyticsEvent")).default;
+    await AnalyticsEvent.create({
+      customerId: userId,
+      eventType: "profile_update",
+      metadata: { locationEnabled }
+    }).catch(() => {});
 
     return NextResponse.json({ 
       message: "Settings updated successfully",
@@ -40,7 +49,8 @@ export async function PUT(req: NextRequest) {
         email: user.email,
         phoneNumber: user.phoneNumber,
         defaultCity: user.defaultCity,
-        locationEnabled: user.locationEnabled
+        locationEnabled: user.locationEnabled,
+        profileImage: user.profileImage
       }
     }, { status: 200 });
 

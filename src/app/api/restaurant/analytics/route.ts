@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { cookies } from "next/headers";
+export const dynamic = 'force-dynamic';
 import connectToDatabase from "@/lib/mongodb/db";
 import Order from "@/models/Order";
 import OrderSession from "@/models/OrderSession";
@@ -145,6 +146,41 @@ export async function GET(req: NextRequest) {
       // Staff activity (basic summary for now)
       const onlineStaff = await User.countDocuments({ roles: { $in: ["staff", "kitchen", "manager"] } });
 
+      // ----- NEW FIELDS FOR REVENUE CHARTS -----
+      const weekStart = new Date(now);
+      weekStart.setDate(weekStart.getDate() - 7);
+      weekStart.setHours(0,0,0,0);
+      
+      const weekAggregation = await Order.aggregate([
+        { $match: { restaurantId: restaurantObjId, createdAt: { $gte: weekStart }, status: { $ne: "cancelled" } } },
+        { $group: { _id: { $dateToString: { format: "%m-%d", date: "$createdAt" } }, revenue: { $sum: "$grandTotal" } } },
+        { $sort: { _id: 1 } }
+      ]);
+      const last7DaysData = weekAggregation.map(d => ({ date: d._id, revenue: d.revenue }));
+
+      const popItemsAgg = await Order.aggregate([
+        { $match: { restaurantId: restaurantObjId, createdAt: { $gte: weekStart }, status: { $ne: "cancelled" } } },
+        { $unwind: "$items" },
+        { $group: { _id: "$items.name", totalSold: { $sum: "$items.quantity" } } },
+        { $sort: { totalSold: -1 } },
+        { $limit: 5 }
+      ]);
+      const popularItems = popItemsAgg;
+
+      const orderStatusBreakdown = { received: 0, preparing: 0, ready: 0, served: 0, cancelled: 0 };
+      todayOrders.forEach(o => {
+        const s = o.status as keyof typeof orderStatusBreakdown;
+        if (orderStatusBreakdown[s] !== undefined) orderStatusBreakdown[s]++;
+      });
+
+      const ratingTrendAgg = await Review.aggregate([
+        { $match: { restaurantId: restaurantObjId, createdAt: { $gte: weekStart } } },
+        { $group: { _id: { $dateToString: { format: "%m-%d", date: "$createdAt" } }, rating: { $avg: "$rating" } } },
+        { $sort: { _id: 1 } }
+      ]);
+      const feedback = { ratingTrend: ratingTrendAgg.map(d => ({ date: d._id, rating: d.rating.toFixed(1) })) };
+      // ------------------------------------------
+
       return NextResponse.json({
         revenueToday,
         totalOrdersToday,
@@ -155,7 +191,11 @@ export async function GET(req: NextRequest) {
         peakHour,
         recentReviews,
         hourlyData,
-        staffActivity: { online: onlineStaff }
+        staffActivity: { online: onlineStaff },
+        last7DaysData,
+        popularItems,
+        orderStatusBreakdown,
+        feedback
       }, { status: 200 });
     }
 
@@ -165,7 +205,14 @@ export async function GET(req: NextRequest) {
       const ordersInPeriod = await Order.find({ restaurantId: restaurantObjId, createdAt: { $gte: startDate }, status: { $ne: "cancelled" } });
       const ordersInPrevPeriod = await Order.find({ restaurantId: restaurantObjId, createdAt: { $gte: previousStartDate, $lt: previousEndDate }, status: { $ne: "cancelled" } });
 
-      const revenuePeriod = ordersInPeriod.reduce((sum, o) => sum + o.grandTotal, 0);
+      let revenuePeriod = 0;
+      let cogsPeriod = 0;
+      
+      ordersInPeriod.forEach(o => {
+        revenuePeriod += o.grandTotal;
+        cogsPeriod += o.cogs || 0; // Fallback to 0 if COGS not defined for legacy orders
+      });
+
       const prevRevenuePeriod = ordersInPrevPeriod.reduce((sum, o) => sum + o.grandTotal, 0);
       const growthPct = prevRevenuePeriod > 0 ? ((revenuePeriod - prevRevenuePeriod) / prevRevenuePeriod) * 100 : (revenuePeriod > 0 ? 100 : 0);
 
@@ -197,6 +244,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         revenuePeriod,
+        cogsPeriod, // Export the real COGS
         prevRevenuePeriod,
         growthPct: growthPct.toFixed(1),
         chartData,
@@ -313,6 +361,52 @@ export async function GET(req: NextRequest) {
         avgChurnRisk: Math.round(avgChurnRisk),
         segmentDistribution,
         cohorts
+      }, { status: 200 });
+    }
+
+    // --- 4.5 AUDIENCE DEEP DIVE ---
+    if (section === "audience") {
+      // 1. Top Customers
+      const topCustomers = await User.find({
+        $or: [
+          { savedRestaurants: restaurantObjId },
+          { followingRestaurants: restaurantObjId },
+          { lastOrderDate: { $exists: true } } // Fallback to get some data if arrays are empty
+        ]
+      })
+      .select("fullName email lifetimeValue averageOrderValue visitFrequency predictedChurnRisk customerSegment favoriteItems")
+      .sort({ lifetimeValue: -1 })
+      .limit(50)
+      .lean();
+
+      // 2. Churn Risk Distribution
+      let churnRiskBuckets = { low: 0, medium: 0, high: 0, critical: 0 };
+      topCustomers.forEach(c => {
+        const risk = c.predictedChurnRisk || 0;
+        if (risk < 20) churnRiskBuckets.low++;
+        else if (risk < 50) churnRiskBuckets.medium++;
+        else if (risk < 80) churnRiskBuckets.high++;
+        else churnRiskBuckets.critical++;
+      });
+
+      // 3. Dietary Preferences (from favorite items)
+      const favoriteItemIds = [...new Set(topCustomers.flatMap(c => (c.favoriteItems || []).map(id => id.toString())))];
+      const menuItems = await MenuItem.find({ _id: { $in: favoriteItemIds } }).select("tags dietaryTags aiTags veg");
+      
+      const dietaryBuckets: Record<string, number> = { vegan: 0, vegetarian: 0, keto: 0, high_protein: 0, gluten_free: 0 };
+      menuItems.forEach(item => {
+         const allTags = [...(item.tags||[]), ...(item.dietaryTags||[]), ...(item.aiTags||[])].map((t: string) => t.toLowerCase());
+         if (item.veg) dietaryBuckets.vegetarian++;
+         if (allTags.some((t: string) => t.includes("vegan"))) dietaryBuckets.vegan++;
+         if (allTags.some((t: string) => t.includes("keto"))) dietaryBuckets.keto++;
+         if (allTags.some((t: string) => t.includes("protein"))) dietaryBuckets.high_protein++;
+         if (allTags.some((t: string) => t.includes("gluten"))) dietaryBuckets.gluten_free++;
+      });
+
+      return NextResponse.json({
+        topCustomers,
+        churnRiskBuckets,
+        dietaryBuckets
       }, { status: 200 });
     }
 

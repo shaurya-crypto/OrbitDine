@@ -30,6 +30,10 @@ interface MenuItemCardProps {
       carbs?: number;
       fat?: number;
     };
+    originalPrice?: number;
+    spiceLevel?: number;
+    seasonalityTags?: string[];
+    flavorProfile?: string[];
   };
   restaurantId?: string;
 }
@@ -140,10 +144,27 @@ export function MenuItemCard({ item, restaurantId }: MenuItemCardProps) {
               {tag}
             </span>
           ))}
+
+          {item.seasonalityTags?.slice(0, 1).map((tag, i) => (
+            <span key={`season-${i}`} className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300 rounded-full flex items-center gap-1">
+              🍂 {tag}
+            </span>
+          ))}
+
+          {item.spiceLevel !== undefined && item.spiceLevel > 0 && (
+            <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400 rounded-full flex items-center gap-1">
+              {Array(item.spiceLevel).fill('🌶️').join('')}
+            </span>
+          )}
         </div>
 
         <h3 className="font-semibold text-zinc-900 dark:text-white leading-tight mb-1">{item.name}</h3>
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-300 mb-2">₹{item.price.toFixed(2)}</p>
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-sm font-bold text-zinc-900 dark:text-zinc-300">₹{item.price.toFixed(2)}</p>
+          {item.originalPrice && (
+            <p className="text-xs font-medium text-zinc-400 line-through">₹{item.originalPrice.toFixed(2)}</p>
+          )}
+        </div>
         
         {item.description && (
           <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">{item.description}</p>

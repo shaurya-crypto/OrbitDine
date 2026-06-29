@@ -30,7 +30,9 @@ export async function GET(req: Request, context: any) {
       MenuItemModel.find({ restaurantId, available: true }).sort({ sortOrder: 1 }).lean(),
     ]);
 
-    // 3. Group items by category
+    const now = new Date();
+
+    // 3. Group items by category and evaluate active Price Hikes
     const groupedMenu = categories.map((category) => {
       return {
         id: category._id.toString(),
@@ -38,28 +40,43 @@ export async function GET(req: Request, context: any) {
         image: category.image,
         items: items
           .filter((item) => item.categoryId.toString() === category._id.toString())
-          .map((item) => ({
-            id: item._id.toString(),
-            name: item.name,
-            description: item.description,
-            price: item.price,
-            image: item.image,
-            veg: item.veg,
-            tags: item.tags || [],
-            addons: item.addons || [],
-            isBestseller: item.isBestseller,
-            isRecommended: item.isRecommended,
-            chefSpecial: item.chefSpecial,
-            mostOrdered: item.mostOrdered,
-            isNewArrival: item.isNewArrival,
-            limitedTimeOffer: item.limitedTimeOffer,
-            ltoStartDate: item.ltoStartDate,
-            ltoEndDate: item.ltoEndDate,
-          })),
+          .map((item) => {
+            // Evaluate Price Hike
+            let currentPrice = item.price;
+            if (item.priceHike?.active && item.priceHike.startTime && item.priceHike.endTime) {
+              const start = new Date(item.priceHike.startTime);
+              const end = new Date(item.priceHike.endTime);
+              if (now >= start && now <= end && item.priceHike.newPrice) {
+                currentPrice = item.priceHike.newPrice;
+              }
+            }
+
+            return {
+              id: item._id.toString(),
+              name: item.name,
+              description: item.description,
+              price: currentPrice, // Overridden if hike is active
+              originalPrice: currentPrice !== item.price ? item.price : undefined,
+              image: item.image,
+              veg: item.veg,
+              tags: item.tags || [],
+              addons: item.addons || [],
+              isBestseller: item.isBestseller,
+              isRecommended: item.isRecommended,
+              chefSpecial: item.chefSpecial,
+              mostOrdered: item.mostOrdered,
+              isNewArrival: item.isNewArrival,
+              limitedTimeOffer: item.limitedTimeOffer,
+              ltoStartDate: item.ltoStartDate,
+              ltoEndDate: item.ltoEndDate,
+              flavorProfile: item.flavorProfile,
+              spiceLevel: item.spiceLevel,
+              seasonalityTags: item.seasonalityTags,
+              aiTags: item.aiTags,
+            };
+          }),
       };
     });
-
-    const now = new Date();
 
     // 4. Return special categorized lists for the new UI
     const highlights = {
